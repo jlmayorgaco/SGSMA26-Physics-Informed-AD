@@ -210,14 +210,21 @@ def load_case(raw_path: Path | str) -> GridCase:
     psse_to_idx = {b.psse_num: i for i, b in enumerate(buses)}
     name_to_psse = {b.name: b.psse_num for b in buses}
 
-    # Map competition bus number k (from CSV filename "Busk_...") to PSS/E bus number
-    # by looking for name "BUSk" in the parsed bus records.
+    # Map competition bus number k → PSS/E bus number for ALL buses whose
+    # .raw name is 'BUSk' (e.g. 'BUS2', 'BUS39', 'BUS24', …).
+    # This covers all 39 competition buses, not just the 8 PMU buses, so that
+    # ext_bus_order and branch_list carry competition-numbering throughout.
     comp_to_psse: dict[int, int] = {}
+    for name, psse_num in name_to_psse.items():
+        if name.startswith("BUS"):
+            try:
+                comp_k = int(name[3:])
+                comp_to_psse[comp_k] = psse_num
+            except ValueError:
+                pass
+    # Warn if any PMU bus is missing
     for comp_k in PMU_BUS_NAMES:
-        target_name = f"BUS{comp_k}"
-        if target_name in name_to_psse:
-            comp_to_psse[comp_k] = name_to_psse[target_name]
-        else:
+        if comp_k not in comp_to_psse:
             log.warning("Competition bus BUS%d not found in .raw names", comp_k)
 
     # Build Ybus
@@ -240,19 +247,20 @@ def load_case(raw_path: Path | str) -> GridCase:
     # Generator indices
     gen_indices = sorted({psse_to_idx[g] for g in gen_psse if g in psse_to_idx})
 
-    # Branch list in competition bus numbering (best effort)
+    # psse_num → competition bus number (now covers all 39 buses)
     psse_to_comp = {v: k for k, v in comp_to_psse.items()}
+
+    # Branch list in competition bus numbering
     branch_list: list[tuple[int, int]] = []
     for br in branches:
-        fc = psse_to_comp.get(psse_to_idx.get(br.from_bus, -1), br.from_bus)
-        tc = psse_to_comp.get(psse_to_idx.get(br.to_bus, -1), br.to_bus)
+        fc = psse_to_comp.get(br.from_bus, br.from_bus)
+        tc = psse_to_comp.get(br.to_bus, br.to_bus)
         branch_list.append((fc, tc))
 
-    # ext_bus_order: competition bus number for each row in Ybus (None for non-competition buses)
+    # ext_bus_order: competition bus number for each row in Ybus
     ext_bus_order: list[int] = []
-    psse_to_comp_num = {v: k for k, v in comp_to_psse.items()}
     for b in buses:
-        ext_bus_order.append(psse_to_comp_num.get(b.psse_num, b.psse_num))
+        ext_bus_order.append(psse_to_comp.get(b.psse_num, b.psse_num))
 
     grid = GridCase(
         buses=buses,
