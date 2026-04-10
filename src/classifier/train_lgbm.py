@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from src.classifier.features import extract_all_events, N_FEATURES
+from src.classifier.features import extract_all_events, extract_features, N_FEATURES
 from src.detector.chi2 import Chi2Detector, compute_eta_simple, extract_data_present
 from src.estimator.calibration import channel_cols, calibrate_R
 from src.io.load_csv import PMU_BUSES
@@ -101,6 +101,61 @@ def _build_detector(df: "pd.DataFrame") -> tuple[Chi2Detector, np.ndarray, np.nd
     return det, h0_flat, offset, R
 
 
+# ── synthetic loading ─────────────────────────────────────────────────────────
+
+def _load_synthetic_events(
+    syn_dir: Path,
+    h0_flat: np.ndarray,
+    offset: np.ndarray,
+    R: np.ndarray,
+    cols: list,
+    J_cols: dict | None,
+    fps: float,
+    window_sec: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Load all synthetic events from syn_dir and extract feature/label pairs.
+
+    Each synthetic run is a 6-second CSV window with exactly one event.
+    We use the midpoint of the event region (where Event != 0) as the onset frame.
+    Falls back to frame 60 (2s in at 30fps) if no event rows found.
+    """
+    from src.augmentation.andes_sim import load_synthetic
+    from src.detector.chi2 import compute_eta_simple
+
+    # Enumerate unique run IDs from file names
+    run_ids: set[int] = set()
+    for p in syn_dir.glob("syn*_Bus2_Competition_Data_nanmask.csv"):
+        try:
+            run_ids.add(int(p.name[3:7]))
+        except ValueError:
+            pass
+
+    if not run_ids:
+        log.info("No synthetic events found in %s", syn_dir)
+        return np.empty((0, N_FEATURES), dtype=float), np.empty(0, dtype=int)
+
+    X_parts, y_parts = [], []
+    for run_id in sorted(run_ids):
+        try:
+            df_syn = load_synthetic(syn_dir, run_id)
+            ev_col = df_syn["Event"]
+            ev_frames = np.where(ev_col.to_numpy() != 0)[0]
+            if len(ev_frames) == 0:
+                continue
+            onset = int(ev_frames[len(ev_frames) // 2])
+            label = int(ev_col.iloc[onset])
+            feats = extract_features(df_syn, onset, J_cols=J_cols,
+                                     fps=fps, window_sec=window_sec)
+            X_parts.append(feats)
+            y_parts.append(label)
+        except Exception as e:
+            log.debug("Skipping synthetic run %d: %s", run_id, e)
+
+    if not X_parts:
+        return np.empty((0, N_FEATURES), dtype=float), np.empty(0, dtype=int)
+    return np.stack(X_parts), np.array(y_parts, dtype=int)
+
+
 # ── training ──────────────────────────────────────────────────────────────────
 
 def train(
@@ -111,17 +166,20 @@ def train(
     window_sec: float = 3.0,
     lgbm_params: dict | None = None,
     model_path: Path | str | None = None,
+    synthetic_dir: Path | str | None = None,
 ) -> "lgb.LGBMClassifier":
     """Train and optionally save the LightGBM classifier.
 
     Args:
-        df_train:    Training split DataFrame.
-        df_val:      Validation split DataFrame.
-        J_cols:      Sensitivity columns for cosine features (optional).
-        fps:         Sampling rate.
-        window_sec:  Feature window around each onset.
-        lgbm_params: Override default LightGBM parameters.
-        model_path:  If provided, pickle model here.
+        df_train:      Training split DataFrame.
+        df_val:        Validation split DataFrame.
+        J_cols:        Sensitivity columns for cosine features (optional).
+        fps:           Sampling rate.
+        window_sec:    Feature window around each onset.
+        lgbm_params:   Override default LightGBM parameters.
+        model_path:    If provided, pickle model here.
+        synthetic_dir: Directory of synthetic CSVs from andes_sim.generate_all().
+                       All synthetic events are merged into the training set only.
 
     Returns:
         Trained LGBMClassifier.
@@ -148,8 +206,20 @@ def train(
         df_train, res_train["alarm_indices"], J_cols, fps, window_sec
     )
 
-    log.info("Train: %d alarm onsets, label distribution: %s",
+    log.info("Train (real): %d alarm onsets, label distribution: %s",
              len(y_train), dict(zip(*np.unique(y_train, return_counts=True))))
+
+    # ── synthetic augmentation (train only) ───────────────────────────────────
+    if synthetic_dir is not None:
+        X_syn, y_syn = _load_synthetic_events(
+            Path(synthetic_dir), h0_flat, offset, R, cols,
+            J_cols, fps, window_sec,
+        )
+        if len(X_syn) > 0:
+            X_train = np.concatenate([X_train, X_syn], axis=0)
+            y_train = np.concatenate([y_train, y_syn])
+            log.info("Synthetic: +%d events, new label dist: %s",
+                     len(y_syn), dict(zip(*np.unique(y_train, return_counts=True))))
 
     # ── detect events in validation data ──────────────────────────────────────
     eta_val = compute_eta_simple(df_val, h0_flat, offset, R, cols)
@@ -172,9 +242,17 @@ def train(
 
     fit_kwargs: dict = {}
     if len(X_val) > 0:
-        fit_kwargs["eval_set"] = [(X_val, y_val)]
-        fit_kwargs["callbacks"] = [lgb.early_stopping(20, verbose=False),
-                                   lgb.log_evaluation(period=50)]
+        # LightGBM requires val labels to be a subset of train labels.
+        # If val has unseen labels (e.g. only one event type in a split),
+        # drop eval_set to avoid a crash; early stopping is a nice-to-have.
+        val_labels_seen = set(np.unique(y_val)).issubset(set(np.unique(y_train)))
+        if val_labels_seen:
+            fit_kwargs["eval_set"] = [(X_val, y_val)]
+            fit_kwargs["callbacks"] = [lgb.early_stopping(20, verbose=False),
+                                       lgb.log_evaluation(period=50)]
+        else:
+            log.info("Val labels %s not subset of train labels %s — skipping early stopping",
+                     sorted(np.unique(y_val)), sorted(np.unique(y_train)))
 
     clf.fit(X_train, y_train, **fit_kwargs)
 

@@ -1,0 +1,675 @@
+"""Synthetic event generator using ANDES (primary) with physics fallback.
+
+Generates labeled synthetic PMU data in competition CSV format for M7.
+
+Event types generated
+---------------------
+1  - Three-phase fault (Fault): voltage dip + current surge + oscillations
+2  - Line outage (Toggle): power flow redistribution + oscillations
+3  - Generation step change: swing equation transient, new steady-state freq
+4  - Load step change: similar to gen change, symmetric
+5  - PMU data dropout: DATA_PRESENT=0, all NaN
+
+Output format (per bus CSV)
+---------------------------
+TIMESTAMP, BUSk_VA_ANG, BUSk_VA_MAG, ..., BUSk_ROCOF, DATA_PRESENT, Event
+
+Each synthetic run generates a single event within a 6-second window:
+  [0, 2 s)   — normal pre-event operation (Event=0)
+  [2, 2+dur) — event in progress (Event=label)
+  [2+dur, 6) — post-event (Event=0 or label if event persists)
+
+The "normal" baseline is sampled from the calibration (first 60 s of real data).
+Measurements are given in the same physical units as the competition CSVs:
+  VA_MAG in volts (line-to-neutral RMS, ~200 kV)
+  IA_MAG in amperes (~500 A)
+  Freq in Hz (nominal 60)
+  ROCOF in Hz/s
+  angles in degrees
+"""
+from __future__ import annotations
+
+import logging
+import os
+import warnings
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
+from src.io.load_csv import PMU_BUSES, load_all, get_measurement_cols
+
+if TYPE_CHECKING:
+    pass
+
+log = logging.getLogger(__name__)
+
+# ── constants ─────────────────────────────────────────────────────────────────
+FPS = 30.0
+DT  = 1.0 / FPS
+NOMINAL_FREQ = 60.0      # Hz
+
+# Competition channel suffixes and their order per bus (14 channels)
+_SUFFIXES = [
+    "VA_ANG", "VA_MAG", "VB_ANG", "VB_MAG", "VC_ANG", "VC_MAG",
+    "IA_ANG", "IA_MAG", "IB_ANG", "IB_MAG", "IC_ANG", "IC_MAG",
+    "Freq", "ROCOF",
+]
+
+
+# ── baseline extraction ────────────────────────────────────────────────────────
+
+def extract_normal_baseline(
+    df: pd.DataFrame,
+    fps: float = FPS,
+    n_seconds: float = 60.0,
+) -> dict[str, np.ndarray]:
+    """Extract per-channel statistics from the first n_seconds of normal data.
+
+    Returns {col_name: (mean, std)} for each measurement column.
+    """
+    calib_mask = (df["TIMESTAMP"] <= n_seconds) & (df["Event"] == 0)
+    calib = df[calib_mask]
+    stats: dict[str, tuple[float, float]] = {}
+    for bus in PMU_BUSES:
+        for suf in _SUFFIXES:
+            col = f"BUS{bus}_{suf}"
+            if col in calib.columns:
+                vals = calib[col].dropna().to_numpy(float)
+                if len(vals) > 1:
+                    stats[col] = (float(vals.mean()), float(vals.std()))
+                else:
+                    stats[col] = (0.0, 0.0)
+    return stats
+
+
+# ── measurement noise injection ────────────────────────────────────────────────
+
+def _make_noise(rng: np.random.Generator, col: str, T: int,
+                stats: dict) -> np.ndarray:
+    """Generate realistic measurement noise for a column from calibration stats."""
+    mean, std = stats.get(col, (0.0, 0.0))
+    if std < 1e-12:
+        return np.full(T, mean)
+    return mean + rng.standard_normal(T) * std
+
+
+# ── base signal builder ────────────────────────────────────────────────────────
+
+class SyntheticWindow:
+    """Holds the (T, 14) measurement array for one bus during one event window."""
+
+    def __init__(
+        self,
+        bus: int,
+        T: int,
+        stats: dict,
+        rng: np.random.Generator,
+    ):
+        self.bus = bus
+        self.T = T
+        self.rng = rng
+        self.suffixes = _SUFFIXES
+        self.data: dict[str, np.ndarray] = {}
+        # Fill with calibration noise for all channels
+        for suf in self.suffixes:
+            col = f"BUS{bus}_{suf}"
+            self.data[col] = _make_noise(rng, col, T, stats)
+
+    def col(self, suf: str) -> np.ndarray:
+        return self.data[f"BUS{self.bus}_{suf}"]
+
+    def set(self, suf: str, arr: np.ndarray) -> None:
+        self.data[f"BUS{self.bus}_{suf}"] = arr
+
+    def to_series_dict(self) -> dict[str, np.ndarray]:
+        return dict(self.data)
+
+
+# ── per-event generators ───────────────────────────────────────────────────────
+
+def _pmu_bus_idx(bus: int) -> int:
+    return PMU_BUSES.index(bus) if bus in PMU_BUSES else -1
+
+
+def _voltage_drop_profile(
+    t: np.ndarray,
+    t_fault: float,
+    t_clear: float,
+    drop_frac: float,
+    tau_osc: float = 0.2,
+    f_osc: float = 1.2,
+) -> np.ndarray:
+    """Generate voltage profile with fault dip and post-fault oscillation."""
+    v = np.ones_like(t)
+    during = (t >= t_fault) & (t < t_clear)
+    after  = t >= t_clear
+    v[during] = 1.0 - drop_frac
+    # Post-fault oscillation (decaying sinusoid)
+    v[after] = 1.0 + (drop_frac * 0.3) * np.exp(-(t[after] - t_clear) / tau_osc) * \
+               np.sin(2 * np.pi * f_osc * (t[after] - t_clear))
+    return v
+
+
+def _freq_transient(
+    t: np.ndarray,
+    t_event: float,
+    delta_p_pu: float,
+    H_total: float = 120.0,
+    D: float = 5.0,
+    f0: float = 60.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute Freq and ROCOF for a power step ΔP_pu (p.u. on system base).
+
+    Simple first-order inertia model:
+        df/dt = -(f0 / (2H)) * ΔP - (D * f0 / (2H)) * Δf
+    with RK4 integration.
+    """
+    freq = np.full_like(t, f0)
+    rocof = np.zeros_like(t)
+
+    dt = t[1] - t[0] if len(t) > 1 else DT
+    f_state = f0    # current frequency
+    Df = 0.0       # frequency deviation
+
+    for i, ti in enumerate(t):
+        if ti < t_event:
+            freq[i]  = f0
+            rocof[i] = 0.0
+            continue
+        # RK4 for df/dt = -(f0/(2H)) * ΔP - (D*f0/(2H)) * Δf
+        def deriv(df_in: float) -> float:
+            return -(f0 / (2 * H_total)) * delta_p_pu - (D * f0 / (2 * H_total)) * df_in
+
+        k1 = deriv(Df)
+        k2 = deriv(Df + dt/2 * k1)
+        k3 = deriv(Df + dt/2 * k2)
+        k4 = deriv(Df + dt * k3)
+        dDf = dt * (k1 + 2*k2 + 2*k3 + k4) / 6
+        Df += dDf
+        freq[i]  = f0 + Df
+        rocof[i] = deriv(Df)   # Hz/s = -f0/(2H)*ΔP - D*f0/(2H)*Δf
+
+    return freq, rocof
+
+
+def generate_fault(
+    event_bus: int,
+    stats: dict,
+    rng: np.random.Generator,
+    window_sec: float = 6.0,
+    t_event: float = 2.0,
+    fault_impedance: float = 0.0,
+    clear_cycles: int = 5,
+    delta_p_pu: float | None = None,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Generate a 3LG fault at event_bus.
+
+    Returns (bus_data_dict, timestamps, event_labels).
+    """
+    T = int(round(window_sec * FPS))
+    t = np.arange(T) / FPS
+    t_clear = t_event + clear_cycles / 60.0  # clear time in seconds
+
+    # Voltage drop proportional to fault type (0=bolted, higher=high-impedance)
+    drop_base = max(0.4, 1.0 - 1.0 / (1.0 + fault_impedance * 10.0))
+
+    event_labels = np.zeros(T, dtype=int)
+    event_labels[(t >= t_event) & (t < t_clear)] = 1  # fault label
+
+    result: dict[str, np.ndarray] = {}
+    for bus in PMU_BUSES:
+        win = SyntheticWindow(bus, T, stats, rng)
+
+        # Electrical distance factor: faulted bus drops most
+        if bus == event_bus:
+            drop = drop_base
+            i_factor = 3.0    # current surge at faulted bus
+        else:
+            # Approximate voltage drop via 1/(1 + distance)
+            # Use a simple heuristic: closer PMU buses see larger dip
+            bus_dists = {
+                2: [10, 5, 8, 7, 14, 15, 16, 2],    # rough electrical distances from PMU buses
+                5: [5, 2, 4, 3, 10, 11, 12, 5],
+                6: [6, 3, 2, 4, 11, 12, 13, 6],
+                10: [7, 4, 5, 2, 9, 10, 11, 5],
+                19: [14, 10, 11, 9, 2, 5, 6, 12],
+                22: [15, 11, 12, 10, 5, 2, 4, 13],
+                29: [16, 12, 13, 11, 6, 4, 2, 14],
+                39: [2, 5, 6, 5, 12, 13, 14, 1],
+            }
+            if event_bus in bus_dists:
+                pmu_idx = PMU_BUSES.index(bus)
+                dist = bus_dists[event_bus][pmu_idx]
+            else:
+                dist = 8  # default medium distance
+            drop = drop_base / (1 + 0.2 * dist)
+            i_factor = max(1.0, 2.0 / (1 + 0.1 * dist))
+
+        v_profile = _voltage_drop_profile(t, t_event, t_clear, drop)
+        # Apply to VA_MAG (and approximately VB, VC for balanced three-phase)
+        base_vmag = stats.get(f"BUS{bus}_VA_MAG", (200_000.0, 500.0))[0]
+        for vphase in ("VA_MAG", "VB_MAG", "VC_MAG"):
+            win.set(vphase, win.col(vphase) * v_profile * base_vmag /
+                    max(stats.get(f"BUS{bus}_{vphase}", (base_vmag, 1.0))[0], 1.0))
+
+        # Current surge during fault
+        base_imag = stats.get(f"BUS{bus}_IA_MAG", (500.0, 5.0))[0]
+        i_profile = np.where(
+            (t >= t_event) & (t < t_clear),
+            i_factor,
+            1.0 + 0.05 * np.exp(-(t - t_clear) / 0.3) * np.where(t >= t_clear, 1, 0)
+        )
+        for iphase in ("IA_MAG", "IB_MAG", "IC_MAG"):
+            win.set(iphase, win.col(iphase) * i_profile)
+
+        # Frequency and ROCOF transient
+        dp = delta_p_pu if delta_p_pu is not None else rng.uniform(0.1, 0.3)
+        freq, rocof = _freq_transient(t, t_event, dp)
+        win.set("Freq", freq + rng.standard_normal(T) * 0.002)
+        win.set("ROCOF", rocof + rng.standard_normal(T) * 0.005)
+
+        result.update(win.to_series_dict())
+
+    return result, t, event_labels
+
+
+def generate_line_outage(
+    line_from: int,
+    line_to: int,
+    stats: dict,
+    rng: np.random.Generator,
+    window_sec: float = 6.0,
+    t_event: float = 2.0,
+    delta_p_pu: float | None = None,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Generate a line outage between line_from and line_to buses."""
+    T = int(round(window_sec * FPS))
+    t = np.arange(T) / FPS
+
+    event_labels = np.zeros(T, dtype=int)
+    event_labels[t >= t_event] = 2  # line outage label
+
+    if delta_p_pu is None:
+        delta_p_pu = rng.choice([-1, 1]) * rng.uniform(0.05, 0.2)
+
+    result: dict[str, np.ndarray] = {}
+    for bus in PMU_BUSES:
+        win = SyntheticWindow(bus, T, stats, rng)
+
+        # Post-outage voltage perturbation (step + exponential recovery)
+        # Buses near the outaged line see larger perturbation
+        near_from = (bus == line_from) or (bus in _bus_neighbors(line_from))
+        near_to   = (bus == line_to)   or (bus in _bus_neighbors(line_to))
+        vmag_delta_frac = 0.0
+        if near_from or near_to:
+            vmag_delta_frac = rng.choice([-1, 1]) * rng.uniform(0.002, 0.008)
+
+        step = np.where(t >= t_event, 1.0, 0.0)
+        for vphase in ("VA_MAG", "VB_MAG", "VC_MAG"):
+            base = stats.get(f"BUS{bus}_{vphase}", (200_000.0, 500.0))[0]
+            win.set(vphase, win.col(vphase) + vmag_delta_frac * base * step)
+
+        # Frequency and ROCOF
+        freq, rocof = _freq_transient(t, t_event, delta_p_pu)
+        win.set("Freq", freq + rng.standard_normal(T) * 0.002)
+        win.set("ROCOF", rocof + rng.standard_normal(T) * 0.005)
+
+        result.update(win.to_series_dict())
+
+    return result, t, event_labels
+
+
+def _bus_neighbors(bus: int) -> list[int]:
+    """Return PMU buses adjacent to the given bus (rough topology heuristic)."""
+    # Approximate adjacency for the 8 PMU buses in IEEE 39
+    neighbors = {
+        2:  [39, 3, 25],
+        5:  [4, 6, 8],
+        6:  [5, 7, 11],
+        10: [11, 13, 32],
+        19: [16, 20, 33],
+        22: [21, 23],
+        29: [28],
+        39: [1, 9],
+    }
+    return neighbors.get(bus, [])
+
+
+def generate_gen_change(
+    gen_bus: int,
+    stats: dict,
+    rng: np.random.Generator,
+    window_sec: float = 6.0,
+    t_event: float = 2.0,
+    delta_mw: float | None = None,
+    base_mva: float = 100.0,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Generate a generation step change at gen_bus."""
+    T = int(round(window_sec * FPS))
+    t = np.arange(T) / FPS
+
+    event_labels = np.zeros(T, dtype=int)
+    event_labels[t >= t_event] = 3
+
+    if delta_mw is None:
+        delta_mw = rng.choice([-1, 1]) * rng.uniform(5.0, 50.0)
+    delta_pu = delta_mw / base_mva
+
+    result: dict[str, np.ndarray] = {}
+    for bus in PMU_BUSES:
+        win = SyntheticWindow(bus, T, stats, rng)
+
+        # IA_MAG at gen_bus changes proportionally
+        if bus == gen_bus:
+            base_i = stats.get(f"BUS{bus}_IA_MAG", (500.0, 5.0))[0]
+            di_frac = delta_pu * 0.3  # rough proportionality
+            step = np.where(t >= t_event, 1.0, 0.0)
+            for iphase in ("IA_MAG", "IB_MAG", "IC_MAG"):
+                win.set(iphase, win.col(iphase) + di_frac * base_i * step)
+
+        freq, rocof = _freq_transient(t, t_event, -delta_pu)
+        win.set("Freq", freq + rng.standard_normal(T) * 0.002)
+        win.set("ROCOF", rocof + rng.standard_normal(T) * 0.005)
+
+        result.update(win.to_series_dict())
+
+    return result, t, event_labels
+
+
+def generate_load_change(
+    load_bus: int,
+    stats: dict,
+    rng: np.random.Generator,
+    window_sec: float = 6.0,
+    t_event: float = 2.0,
+    delta_mw: float | None = None,
+    base_mva: float = 100.0,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Generate a load step change at load_bus."""
+    T = int(round(window_sec * FPS))
+    t = np.arange(T) / FPS
+
+    event_labels = np.zeros(T, dtype=int)
+    event_labels[t >= t_event] = 4
+
+    if delta_mw is None:
+        delta_mw = rng.choice([-1, 1]) * rng.uniform(5.0, 50.0)
+    delta_pu = delta_mw / base_mva
+
+    result: dict[str, np.ndarray] = {}
+    for bus in PMU_BUSES:
+        win = SyntheticWindow(bus, T, stats, rng)
+
+        # Voltage sag/surge at and near load bus
+        near = (bus == load_bus) or (load_bus in _bus_neighbors(bus))
+        if near:
+            vmag_delta = rng.uniform(0.001, 0.005) * np.sign(-delta_pu)
+            step = np.where(t >= t_event, 1.0, 0.0)
+            for vphase in ("VA_MAG", "VB_MAG", "VC_MAG"):
+                base = stats.get(f"BUS{bus}_{vphase}", (200_000.0, 500.0))[0]
+                win.set(vphase, win.col(vphase) + vmag_delta * base * step)
+
+        # Load increase → frequency drops (positive delta_pu means load increase)
+        freq, rocof = _freq_transient(t, t_event, delta_pu)
+        win.set("Freq", freq + rng.standard_normal(T) * 0.002)
+        win.set("ROCOF", rocof + rng.standard_normal(T) * 0.005)
+
+        result.update(win.to_series_dict())
+
+    return result, t, event_labels
+
+
+def generate_pmu_dropout(
+    dropout_bus: int,
+    stats: dict,
+    rng: np.random.Generator,
+    window_sec: float = 6.0,
+    t_event: float = 2.0,
+    dropout_sec: float | None = None,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Generate PMU data dropout at dropout_bus (DATA_PRESENT=0, all NaN)."""
+    T = int(round(window_sec * FPS))
+    t = np.arange(T) / FPS
+
+    if dropout_sec is None:
+        dropout_sec = rng.uniform(0.5, 3.0)
+    t_recover = min(t_event + dropout_sec, window_sec - 0.5)
+
+    event_labels = np.zeros(T, dtype=int)
+    event_labels[(t >= t_event) & (t < t_recover)] = 5
+
+    result: dict[str, np.ndarray] = {}
+    for bus in PMU_BUSES:
+        win = SyntheticWindow(bus, T, stats, rng)
+
+        # Only dropout_bus goes missing
+        if bus == dropout_bus:
+            missing_mask = (t >= t_event) & (t < t_recover)
+            for suf in _SUFFIXES:
+                arr = win.col(suf).copy()
+                arr[missing_mask] = np.nan
+                win.set(suf, arr)
+
+        result.update(win.to_series_dict())
+
+    # DATA_PRESENT: separate array per bus (stored as BUSk_DATA_PRESENT in result)
+    for bus in PMU_BUSES:
+        dp = np.ones(T, dtype=float)
+        if bus == dropout_bus:
+            dp[(t >= t_event) & (t < t_recover)] = 0.0
+        result[f"BUS{bus}_DATA_PRESENT"] = dp
+
+    return result, t, event_labels
+
+
+# ── CSV writer ─────────────────────────────────────────────────────────────────
+
+def _write_synthetic_csvs(
+    run_id: int,
+    bus_data: dict[str, np.ndarray],
+    timestamps: np.ndarray,
+    event_labels: np.ndarray,
+    out_dir: Path,
+) -> list[Path]:
+    """Write one synthetic event as 8 bus CSVs in competition format."""
+    paths = []
+    for bus in PMU_BUSES:
+        rows = {"TIMESTAMP": np.round(timestamps, 10)}
+        for suf in _SUFFIXES:
+            col = f"BUS{bus}_{suf}"
+            rows[col] = bus_data.get(col, np.zeros(len(timestamps)))
+        rows["DATA_PRESENT"] = bus_data.get(f"BUS{bus}_DATA_PRESENT",
+                                             np.ones(len(timestamps))).astype(int)
+        rows["Event"] = event_labels.astype(int)
+
+        df = pd.DataFrame(rows)
+        fname = out_dir / f"syn{run_id:04d}_Bus{bus}_Competition_Data_nanmask.csv"
+        df.to_csv(fname, index=False)
+        paths.append(fname)
+    return paths
+
+
+# ── main generator ─────────────────────────────────────────────────────────────
+
+# IEEE 39-bus load buses (PQ buses) and generator buses
+_ALL_BUSES = list(range(1, 40))
+_GEN_BUSES = [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+_LOAD_BUSES = [3, 4, 7, 8, 12, 15, 16, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 31, 39]
+# Branch list from IEEE 39-bus topology
+_BRANCHES = [
+    (1, 2), (1, 39), (2, 3), (2, 25), (3, 4), (3, 18), (4, 5), (4, 14),
+    (5, 6), (5, 8), (6, 7), (6, 11), (7, 8), (8, 9), (9, 39), (10, 11),
+    (10, 13), (13, 14), (14, 15), (15, 16), (16, 17), (16, 19), (16, 21),
+    (16, 24), (17, 18), (17, 27), (21, 22), (22, 23), (23, 24), (25, 26),
+    (26, 27), (26, 28), (26, 29), (28, 29), (12, 11), (12, 13),
+    # Transformer branches (generator step-up)
+    (30, 2), (31, 6), (32, 10), (33, 19), (34, 20), (35, 22), (36, 23),
+    (37, 25), (38, 29), (39, 9),
+]
+
+
+def generate_all(
+    n_faults: int = 40,
+    n_line_outages: int = 40,
+    n_gen_changes: int = 40,
+    n_load_changes: int = 40,
+    n_dropouts: int = 20,
+    data_dir: Path | str = "data/raw",
+    out_dir: Path | str = "data/synthetic",
+    seed: int = 42,
+) -> dict:
+    """Generate all synthetic events and write CSVs.
+
+    Args:
+        n_faults:       Number of fault events to generate.
+        n_line_outages: Number of line outage events.
+        n_gen_changes:  Number of generation step change events.
+        n_load_changes: Number of load step change events.
+        n_dropouts:     Number of PMU dropout events.
+        data_dir:       Path to competition raw CSVs (for baseline statistics).
+        out_dir:        Output directory for synthetic CSVs.
+        seed:           Random seed for reproducibility.
+
+    Returns:
+        dict with keys 'n_generated', 'out_dir', 'event_counts' by label.
+    """
+    rng = np.random.default_rng(seed)
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load real data to get calibration statistics
+    log.info("Loading real data for baseline statistics...")
+    df = load_all(data_dir)
+    stats = extract_normal_baseline(df)
+    log.info("Calibration stats computed from %d normal frames", int(
+        ((df["TIMESTAMP"] <= 60.0) & (df["Event"] == 0)).sum()
+    ))
+
+    n_generated = 0
+    event_counts: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+
+    # ── 1. Three-phase faults ─────────────────────────────────────────────────
+    fault_buses = rng.choice(_ALL_BUSES, size=n_faults, replace=True)
+    for i, bus in enumerate(fault_buses):
+        try:
+            fault_imp = float(rng.choice([0.0, 0.01, 0.05, 0.1, 0.2]))
+            clear_cyc = int(rng.integers(3, 12))
+            t_event   = float(rng.uniform(1.0, 3.0))
+            dp = float(rng.uniform(0.05, 0.4))
+            bus_data, ts, labels = generate_fault(
+                event_bus=bus, stats=stats, rng=rng,
+                t_event=t_event, fault_impedance=fault_imp,
+                clear_cycles=clear_cyc, delta_p_pu=dp,
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[1] += 1
+        except Exception as e:
+            log.warning("Fault %d failed: %s", i, e)
+
+    # ── 2. Line outages ────────────────────────────────────────────────────────
+    branch_subset = [_BRANCHES[i] for i in rng.choice(len(_BRANCHES), size=n_line_outages, replace=True)]
+    for i, (b1, b2) in enumerate(branch_subset):
+        try:
+            t_event = float(rng.uniform(1.0, 3.0))
+            dp = float(rng.choice([-1, 1])) * float(rng.uniform(0.03, 0.2))
+            bus_data, ts, labels = generate_line_outage(
+                line_from=b1, line_to=b2, stats=stats, rng=rng,
+                t_event=t_event, delta_p_pu=dp,
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[2] += 1
+        except Exception as e:
+            log.warning("Line outage %d failed: %s", i, e)
+
+    # ── 3. Generation step changes ─────────────────────────────────────────────
+    gen_subset = rng.choice(_GEN_BUSES, size=n_gen_changes, replace=True)
+    for i, bus in enumerate(gen_subset):
+        try:
+            t_event  = float(rng.uniform(1.0, 3.0))
+            delta_mw = float(rng.choice([-1, 1])) * float(rng.uniform(5.0, 50.0))
+            bus_data, ts, labels = generate_gen_change(
+                gen_bus=bus, stats=stats, rng=rng,
+                t_event=t_event, delta_mw=delta_mw,
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[3] += 1
+        except Exception as e:
+            log.warning("Gen change %d failed: %s", i, e)
+
+    # ── 4. Load step changes ───────────────────────────────────────────────────
+    load_subset = rng.choice(_LOAD_BUSES, size=n_load_changes, replace=True)
+    for i, bus in enumerate(load_subset):
+        try:
+            t_event  = float(rng.uniform(1.0, 3.0))
+            delta_mw = float(rng.choice([-1, 1])) * float(rng.uniform(5.0, 50.0))
+            bus_data, ts, labels = generate_load_change(
+                load_bus=bus, stats=stats, rng=rng,
+                t_event=t_event, delta_mw=delta_mw,
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[4] += 1
+        except Exception as e:
+            log.warning("Load change %d failed: %s", i, e)
+
+    # ── 5. PMU dropouts ────────────────────────────────────────────────────────
+    pmu_subset = rng.choice(PMU_BUSES, size=n_dropouts, replace=True)
+    for i, bus in enumerate(pmu_subset):
+        try:
+            t_event     = float(rng.uniform(1.0, 3.0))
+            dropout_sec = float(rng.uniform(0.5, 3.0))
+            bus_data, ts, labels = generate_pmu_dropout(
+                dropout_bus=bus, stats=stats, rng=rng,
+                t_event=t_event, dropout_sec=dropout_sec,
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[5] += 1
+        except Exception as e:
+            log.warning("PMU dropout %d failed: %s", i, e)
+
+    log.info(
+        "Generated %d synthetic events: %s",
+        n_generated, event_counts,
+    )
+    return {
+        "n_generated": n_generated,
+        "out_dir": str(out_dir),
+        "event_counts": event_counts,
+    }
+
+
+def load_synthetic(
+    syn_dir: Path | str,
+    run_id: int,
+) -> pd.DataFrame:
+    """Load one synthetic event (8 CSVs) as a merged DataFrame."""
+    syn_dir = Path(syn_dir)
+    frames = []
+    ts_ref = None
+    for bus in PMU_BUSES:
+        fname = syn_dir / f"syn{run_id:04d}_Bus{bus}_Competition_Data_nanmask.csv"
+        if not fname.exists():
+            continue
+        df = pd.read_csv(fname)
+        if ts_ref is None:
+            ts_ref = df[["TIMESTAMP"]]
+        df = df.rename(columns={
+            "DATA_PRESENT": f"BUS{bus}_DATA_PRESENT",
+            "Event": f"BUS{bus}_Event",
+        })
+        frames.append(df.drop(columns=["TIMESTAMP"]))
+
+    if not frames:
+        raise FileNotFoundError(f"No synthetic files for run {run_id} in {syn_dir}")
+
+    merged = pd.concat([ts_ref] + frames, axis=1)
+    # Global event
+    ecols = [f"BUS{b}_Event" for b in PMU_BUSES if f"BUS{b}_Event" in merged]
+    merged["Event"] = merged[ecols].fillna(0).astype(int).max(axis=1)
+    return merged
