@@ -27,6 +27,7 @@ from src.classifier.features import extract_all_events, extract_features, N_FEAT
 from src.detector.chi2 import Chi2Detector, compute_eta_simple, extract_data_present
 from src.estimator.calibration import channel_cols, calibrate_R
 from src.io.load_csv import PMU_BUSES
+from src.io.label_utils import event_transition_frames
 
 if TYPE_CHECKING:
     import lightgbm as lgb
@@ -70,9 +71,87 @@ def _collect_labeled_events(
                               window_sec=window_sec)
 
 
+def _sample_normal_frames(
+    df: "pd.DataFrame",
+    *,
+    fps: float,
+    max_samples: int = 24,
+    guard_sec: float = 5.0,
+) -> np.ndarray:
+    """Sample stable normal-operation frames for label-0 training examples."""
+    if "Event" not in df.columns or len(df) == 0:
+        return np.empty(0, dtype=int)
+
+    ev = df["Event"].to_numpy(dtype=int)
+    candidates = np.where(ev == 0)[0]
+    if len(candidates) == 0:
+        return np.empty(0, dtype=int)
+
+    guard = max(1, int(round(guard_sec * fps)))
+    trans = event_transition_frames(df, include_label_0=True)
+    keep: list[int] = []
+    for idx in candidates.tolist():
+        if all(abs(idx - int(t)) >= guard for t in trans):
+            keep.append(int(idx))
+    if not keep:
+        return np.empty(0, dtype=int)
+
+    stride = max(1, len(keep) // max_samples)
+    sampled = np.array(keep[::stride][:max_samples], dtype=int)
+    return sampled
+
+
+def _collect_transition_events(
+    df: "pd.DataFrame",
+    J_cols: dict[int, np.ndarray] | None,
+    fps: float,
+    window_sec: float,
+    *,
+    ignore_labels: set[int] | None = None,
+    add_normal_samples: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Extract real labeled examples from ground-truth Event transitions."""
+    trans_idx = event_transition_frames(df, ignore_labels=ignore_labels or {7})
+    trans_labels = np.array([_label_at_frame(df, int(i)) for i in trans_idx], dtype=int)
+
+    X_parts: list[np.ndarray] = []
+    y_parts: list[np.ndarray] = []
+
+    if len(trans_idx) > 0:
+        X_evt, y_evt = extract_all_events(
+            df,
+            trans_idx,
+            trans_labels,
+            J_cols=J_cols,
+            fps=fps,
+            window_sec=window_sec,
+        )
+        X_parts.append(X_evt)
+        y_parts.append(y_evt)
+
+    if add_normal_samples:
+        normal_idx = _sample_normal_frames(df, fps=fps)
+        if len(normal_idx) > 0:
+            normal_labels = np.zeros(len(normal_idx), dtype=int)
+            X_norm, y_norm = extract_all_events(
+                df,
+                normal_idx,
+                normal_labels,
+                J_cols=J_cols,
+                fps=fps,
+                window_sec=window_sec,
+            )
+            X_parts.append(X_norm)
+            y_parts.append(y_norm)
+
+    if not X_parts:
+        return np.empty((0, N_FEATURES), dtype=float), np.empty(0, dtype=int)
+    return np.concatenate(X_parts, axis=0), np.concatenate(y_parts, axis=0)
+
+
 # ── calibration helpers ───────────────────────────────────────────────────────
 
-def _build_detector(df: "pd.DataFrame") -> tuple[Chi2Detector, np.ndarray, np.ndarray]:
+def _build_detector(df: "pd.DataFrame") -> tuple[Chi2Detector, np.ndarray, np.ndarray, np.ndarray]:
     """Calibrate Chi2Detector from the first 60 s of Event=0 data.
 
     Returns (detector, h0_flat, offset) needed for eta computation.
@@ -202,11 +281,16 @@ def train(
     ts_train  = df_train["TIMESTAMP"].to_numpy(float)
     res_train = det.detect(eta_train, dp_train, ts_train)
 
-    X_train, y_train = _collect_labeled_events(
-        df_train, res_train["alarm_indices"], J_cols, fps, window_sec
+    X_train, y_train = _collect_transition_events(
+        df_train,
+        J_cols,
+        fps,
+        window_sec,
+        ignore_labels={7},
+        add_normal_samples=True,
     )
 
-    log.info("Train (real): %d alarm onsets, label distribution: %s",
+    log.info("Train (real): %d labeled windows, label distribution: %s",
              len(y_train), dict(zip(*np.unique(y_train, return_counts=True))))
 
     # ── synthetic augmentation (train only) ───────────────────────────────────
@@ -227,11 +311,16 @@ def train(
     ts_val  = df_val["TIMESTAMP"].to_numpy(float)
     res_val = det.detect(eta_val, dp_val, ts_val)
 
-    X_val, y_val = _collect_labeled_events(
-        df_val, res_val["alarm_indices"], J_cols, fps, window_sec
+    X_val, y_val = _collect_transition_events(
+        df_val,
+        J_cols,
+        fps,
+        window_sec,
+        ignore_labels={7},
+        add_normal_samples=True,
     )
 
-    log.info("Val: %d alarm onsets, label distribution: %s",
+    log.info("Val: %d labeled windows, label distribution: %s",
              len(y_val), dict(zip(*np.unique(y_val, return_counts=True))))
 
     if len(X_train) == 0:

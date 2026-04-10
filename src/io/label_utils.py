@@ -78,3 +78,41 @@ def compute_dt(df: pd.DataFrame) -> np.ndarray:
     """
     ts = df["TIMESTAMP"].to_numpy(dtype=float)
     return np.diff(ts)
+
+
+def event_transition_frames(
+    df: pd.DataFrame,
+    *,
+    ignore_labels: set[int] | None = None,
+    include_label_0: bool = False,
+) -> np.ndarray:
+    """Return frame indices where the Event label changes.
+
+    This is the canonical way to collect real event onsets for classifier
+    training. It keeps direct transitions such as ``5 -> 6 -> 3`` that would be
+    merged by the debounced detector into a single long alarm.
+
+    Args:
+        df: merged DataFrame with ``Event`` column.
+        ignore_labels: labels to exclude from the returned transitions.
+        include_label_0: when True, include transitions into label 0 as well.
+
+    Returns:
+        Sorted ``(K,)`` integer array of frame indices.
+    """
+    if "Event" not in df.columns:
+        return np.empty(0, dtype=int)
+
+    ignore = set(ignore_labels or set())
+    ev = df["Event"].to_numpy(dtype=int)
+    frames: list[int] = []
+    for i in range(1, len(ev)):
+        prev, curr = int(ev[i - 1]), int(ev[i])
+        if curr == prev:
+            continue
+        if not include_label_0 and curr == 0:
+            continue
+        if curr in ignore:
+            continue
+        frames.append(i)
+    return np.array(frames, dtype=int)

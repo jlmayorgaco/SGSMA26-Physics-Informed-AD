@@ -22,6 +22,7 @@ from src.detector.chi2 import (
     Chi2Detector,
     compute_eta_simple,
     extract_data_present,
+    refine_alarm_onsets,
 )
 from src.estimator.calibration import calibrate_R, channel_cols, N_Z, MEAS_CHANNELS
 from src.io.load_csv import PMU_BUSES
@@ -317,6 +318,32 @@ class TestChi2Calibration:
         det = Chi2Detector(n_z=N_Z)
         with pytest.raises(RuntimeError):
             det.detect(np.zeros(10))
+
+
+class TestRefineAlarmOnsets:
+    def test_splits_dropout_then_physical_then_recovery(self):
+        fps = 30.0
+        n = 240
+        alarm = np.zeros(n, dtype=bool)
+        alarm[30:210] = True
+        eta = np.full(n, 20.0)
+        eta[90:140] = 6000.0
+        eta[150:190] = 5500.0
+        dp = np.ones((n, 8), dtype=float)
+        dp[30:150, 0] = 0.0
+        ts = np.arange(n) / fps
+
+        onsets = refine_alarm_onsets(
+            alarm,
+            eta,
+            dp,
+            threshold=100.0,
+            timestamps=ts,
+            fps=fps,
+            min_separation_sec=1.0,
+            confirm_sec=0.5,
+        )
+        assert onsets.tolist() == [30, 90, 150]
 
 
 # ── 4. False-alarm rate on normal operation ───────────────────────────────────

@@ -32,7 +32,7 @@ import logging
 import numpy as np
 import scipy.stats
 
-from src.detector.debounce import debounce, alarm_onsets
+from src.detector.debounce import debounce, alarm_onsets, alarm_offsets
 from src.io.load_csv import PMU_BUSES
 
 log = logging.getLogger(__name__)
@@ -90,6 +90,88 @@ def extract_data_present(df: "pd.DataFrame") -> np.ndarray:
         full[:, : dp.shape[1]] = dp
         dp = full
     return dp
+
+
+def refine_alarm_onsets(
+    alarm: np.ndarray,
+    eta: np.ndarray,
+    data_present: np.ndarray | None,
+    threshold: float,
+    timestamps: np.ndarray | None = None,
+    *,
+    fps: float = 30.0,
+    min_separation_sec: float = 5.0,
+    confirm_sec: float = 2.0,
+) -> np.ndarray:
+    """Split a long alarm block into sub-events when evidence supports it.
+
+    The debounced alarm is excellent at suppressing flicker, but it can merge
+    stacked events such as ``5 -> 6 -> 3`` into one long abnormal period. We
+    recover additional onset candidates from:
+
+    1. ``DATA_PRESENT`` transitions inside an already-active alarm block.
+    2. Large physical jumps where ``eta`` crosses the detection threshold while
+       the alarm is still active because of a concurrent cyber event.
+
+    To avoid false sub-events on the recovery edge of a pure dropout, any
+    internal candidate must be followed by sustained physical evidence
+    (``eta > threshold``) within a short confirmation window.
+    """
+    alarm = np.asarray(alarm, dtype=bool)
+    eta = np.asarray(eta, dtype=float)
+    if len(alarm) == 0:
+        return np.empty(0, dtype=int)
+
+    onsets = set(alarm_onsets(alarm).tolist())
+    offsets = alarm_offsets(alarm).tolist()
+    if alarm[-1]:
+        offsets.append(len(alarm))
+
+    min_sep = max(1, int(round(min_separation_sec * fps)))
+    confirm = max(1, int(round(confirm_sec * fps)))
+    dp_any = None
+    if data_present is not None:
+        dp_any = (np.asarray(data_present, dtype=float) < 1).any(axis=1).astype(np.int8)
+
+    start_list = sorted(onsets)
+    for seg_idx, seg_start in enumerate(start_list):
+        seg_end = next((o for o in offsets if o > seg_start), len(alarm))
+        if seg_end - seg_start <= 1:
+            continue
+
+        candidates: list[int] = []
+
+        if dp_any is not None:
+            dp_diff = np.diff(dp_any[seg_start:seg_end], prepend=dp_any[seg_start])
+            dp_changes = np.where(dp_diff != 0)[0] + seg_start
+            for idx in dp_changes:
+                if idx <= seg_start:
+                    continue
+                hi = min(seg_end, idx + confirm)
+                if np.nanmax(eta[idx:hi]) > threshold:
+                    candidates.append(int(idx))
+
+        eta_prev = eta[max(seg_start, 0): max(seg_start, 0) + (seg_end - seg_start)]
+        eta_cross = np.where(
+            (eta_prev[1:] > threshold) & (eta_prev[:-1] <= threshold)
+        )[0] + seg_start + 1
+        for idx in eta_cross:
+            if idx > seg_start:
+                candidates.append(int(idx))
+
+        for idx in sorted(set(candidates)):
+            if all(abs(idx - prev) >= min_sep for prev in onsets):
+                onsets.add(int(idx))
+
+    refined = np.array(sorted(onsets), dtype=int)
+    if timestamps is not None and len(refined) > 1:
+        ts = np.asarray(timestamps, dtype=float)
+        keep = [int(refined[0])]
+        for idx in refined[1:]:
+            if ts[idx] - ts[keep[-1]] >= min_separation_sec - 1e-9:
+                keep.append(int(idx))
+        refined = np.array(keep, dtype=int)
+    return refined
 
 
 # ── Chi-squared detector ──────────────────────────────────────────────────────
@@ -230,6 +312,14 @@ class Chi2Detector:
         alarm = debounce(raw, self.k_on, self.k_off)
 
         onset_idx = alarm_onsets(alarm)
+        onset_idx = refine_alarm_onsets(
+            alarm,
+            eta,
+            data_present,
+            float(self.threshold),
+            timestamps=timestamps,
+            fps=self.fps,
+        )
         if timestamps is not None:
             alarm_times = list(timestamps[onset_idx])
         else:

@@ -1,7 +1,8 @@
 """Feature extractor for the T1 LightGBM event classifier.
 
 For each detected event (alarm onset), extract a fixed-length feature vector from
-a 3-second window centered on the onset frame.
+a short post-onset window. The baseline is computed from the pre-event history,
+so we avoid contaminating an onset with the tail of the previous event.
 
 Feature families
 ----------------
@@ -168,9 +169,9 @@ def extract_features(
     Returns:
         feats: (N_FEATURES,) float array.
     """
-    half = int(round(fps * window_sec / 2))
-    t0 = max(0, onset_frame - half)
-    t1 = min(len(df), onset_frame + half)
+    lookahead = int(round(fps * window_sec))
+    t0 = max(0, onset_frame)
+    t1 = min(len(df), onset_frame + lookahead)
 
     window = df.iloc[t0:t1]
 
@@ -215,7 +216,11 @@ def extract_features(
     for col in _CHAN_GROUPS["Freq"]:
         if col in window.columns:
             raw_freq = window[col].to_numpy(dtype=float)
-            base_val = baseline_mean.get(col, float(np.nanmean(raw_freq)))
+            if col in baseline_mean:
+                base_val = baseline_mean[col]
+            else:
+                finite = raw_freq[np.isfinite(raw_freq)]
+                base_val = float(finite.mean()) if len(finite) > 0 else 0.0
             freq_res = raw_freq - base_val
             feats.append(_spectral_band_energy(freq_res, fps))
         else:
