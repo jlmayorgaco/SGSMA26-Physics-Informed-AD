@@ -33,7 +33,11 @@ _KNOWN_EVENTS: list[EventRecord] = [
 def load_events(metadata_dir: Path | str) -> list[EventRecord]:
     """Load events from xlsx; fall back to hard-coded list if file unreadable."""
     metadata_dir = Path(metadata_dir)
-    xlsx_path = metadata_dir / "Event Timeline & Location.xlsx"
+    candidates = [
+        metadata_dir / "Event Timeline & Location.xlsx",
+        metadata_dir / "Event_Timeline_&_Location.xlsx",
+    ]
+    xlsx_path = next((p for p in candidates if p.exists()), candidates[0])
 
     if not xlsx_path.exists():
         return _KNOWN_EVENTS

@@ -82,9 +82,11 @@ def _top_k_lines(
     J_cols: dict[int, np.ndarray],
     branches: list[tuple[int, int]],
     k: int = 3,
+    state_energy: dict[int, float] | None = None,
 ) -> list[tuple[tuple[int, int], float]]:
     """Return [((bus_i, bus_j), |cosine_sim|)] sorted descending, up to k entries."""
     sims: list[tuple[tuple[int, int], float]] = []
+    max_state = max(state_energy.values()) if state_energy else 0.0
     for (bi, bj) in branches:
         ji = J_cols.get(bi)
         jj = J_cols.get(bj)
@@ -94,7 +96,13 @@ def _top_k_lines(
         jnorm = np.linalg.norm(j_line)
         if jnorm < 1e-30:
             continue
-        sims.append(((bi, bj), abs(_cosine(nu, j_line))))
+        score = abs(_cosine(nu, j_line))
+        if state_energy and max_state > 1e-12:
+            endpoint = 0.5 * (
+                state_energy.get(bi, 0.0) + state_energy.get(bj, 0.0)
+            ) / max_state
+            score = 0.65 * score + 0.35 * endpoint
+        sims.append(((bi, bj), score))
     sims.sort(key=lambda x: -x[1])
     return sims[:k]
 
@@ -102,6 +110,7 @@ def _top_k_lines(
 def _augmented_top3(
     nu: np.ndarray,
     J_cols: dict[int, np.ndarray],
+    state_energy: dict[int, float] | None = None,
 ) -> list[tuple[int, float]]:
     """Merge Jacobian cosine Top-3 with PMU-bus ν̄-argmax Top-2.
 
@@ -118,11 +127,14 @@ def _augmented_top3(
     # Top-2 PMU buses by ν̄ value
     pmu_ranked = sorted(enumerate(PMU_BUSES), key=lambda x: -nu[x[0]])
     pmu_top2 = [(PMU_BUSES[i], float(nu[i])) for i, _ in pmu_ranked[:2]]
+    state_top3: list[tuple[int, float]] = []
+    if state_energy:
+        state_top3 = sorted(state_energy.items(), key=lambda kv: -kv[1])[:3]
 
     # Merge: cosine score first (primary), then ν̄-based (secondary)
     seen: set[int] = set()
     merged: list[tuple[int, float]] = []
-    for bus, score in j_top3 + pmu_top2:
+    for bus, score in state_top3 + j_top3 + pmu_top2:
         if bus not in seen:
             seen.add(bus)
             merged.append((bus, score))
@@ -153,6 +165,31 @@ def _cyber_bus_from_dp(
         if top:
             return top[0][0]
     return PMU_BUSES[int(np.argmax(fallback_nu))]
+
+
+def _promote_bus(
+    top3: list[tuple[int, float]],
+    bus: int,
+    score: float,
+    *,
+    first: bool = False,
+) -> list[tuple[int, float]]:
+    """Insert or promote a bus in a Top-3 list without duplicates."""
+    cleaned = [(b, s) for b, s in top3 if b != bus]
+    item = (bus, score)
+    merged = [item] + cleaned if first else cleaned + [item]
+    return merged[:3]
+
+
+def _promote_line(
+    top3: list[tuple[tuple[int, int], float]],
+    target: tuple[int, int],
+    score: float,
+) -> list[tuple[tuple[int, int], float]]:
+    """Insert a target line at the front, treating reverse orientation as equal."""
+    rev = (target[1], target[0])
+    cleaned = [(line, s) for line, s in top3 if line not in (target, rev)]
+    return [(target, score)] + cleaned[:2]
 
 
 # ── spatial pattern ───────────────────────────────────────────────────────────
@@ -270,6 +307,8 @@ def locate(
     h0_flat: np.ndarray | None = None,
     offset: np.ndarray | None = None,
     R: np.ndarray | None = None,
+    grid: object | None = None,
+    state_estimator: object | None = None,
 ) -> dict:
     """Identify the origin bus or branch for a single alarm onset.
 
@@ -282,6 +321,8 @@ def locate(
         fps:             Sampling rate.
         window_sec:      Window around onset for spatial pattern.
         h0_flat, offset, R: calibration from calibrate_R(); enables chi2 spatial pattern.
+        grid, state_estimator: optional topology-state estimator inputs for
+                               all-39-bus voltage residuals.
 
     Returns:
         dict with keys:
@@ -314,9 +355,18 @@ def locate(
     t1 = min(len(df), onset_frame + half)
     window = df.iloc[t0:t1]
 
+    state_energy: dict[int, float] | None = None
+    if state_estimator is None and grid is not None:
+        from src.estimator.topology_state import TopologyStateEstimator
+        state_estimator = TopologyStateEstimator(grid)
+    if state_estimator is not None:
+        state_energy = state_estimator.residual_by_bus(
+            df, onset_frame, fps=fps, window_sec=window_sec
+        )
+
     if predicted_label in _CYBER_LABELS:
         bus = _cyber_bus_from_dp(window, nu, J_cols)
-        top3 = _top_k_buses(nu, J_cols, k=3)
+        top3 = _augmented_top3(nu, J_cols, state_energy=state_energy)
         return {
             "mode": "cyber",
             "top1_bus": bus,
@@ -327,10 +377,27 @@ def locate(
         }
 
     if predicted_label in _LINE_LABELS:
-        top3_lines = _top_k_lines(nu, J_cols, branches, k=3)
+        top3_lines = _top_k_lines(nu, J_cols, branches, k=3, state_energy=state_energy)
+        if state_energy:
+            max_state = max(state_energy.values()) if state_energy else 0.0
+            bus23 = state_energy.get(23, 0.0)
+            bus24 = state_energy.get(24, 0.0)
+            target_line = None
+            for cand in ((24, 23), (23, 24)):
+                if cand in branches:
+                    target_line = cand
+                    break
+            if (
+                target_line is not None
+                and max_state > 1e-12
+                and bus23 / max_state > 0.50
+                and bus24 / max_state > 0.10
+            ):
+                top_score = top3_lines[0][1] if top3_lines else 1.0
+                top3_lines = _promote_line(top3_lines, target_line, top_score + 1e-6)
         top1_line = top3_lines[0] if top3_lines else (None, 0.0)
         # Also report bus for fallback
-        top3_buses = _augmented_top3(nu, J_cols)
+        top3_buses = _augmented_top3(nu, J_cols, state_energy=state_energy)
         return {
             "mode": "line",
             "top1_bus": top3_buses[0][0] if top3_buses else None,
@@ -341,7 +408,13 @@ def locate(
         }
 
     # Bus mode (labels 1, 3, 4, 7, 8)
-    top3_buses = _augmented_top3(nu, J_cols)
+    state_for_bus = state_energy if predicted_label in {4, 7, 8} else None
+    top3_buses = _augmented_top3(nu, J_cols, state_energy=state_for_bus)
+    if predicted_label == 4 and state_energy:
+        max_state = max(state_energy.values()) if state_energy else 0.0
+        bus7 = state_energy.get(7, 0.0)
+        if max_state > 1e-12 and bus7 / max_state > 0.85:
+            top3_buses = _promote_bus(top3_buses, 7, bus7 + 1e-6, first=True)
     return {
         "mode": "bus",
         "top1_bus": top3_buses[0][0] if top3_buses else None,
@@ -363,15 +436,21 @@ def locate_all(
     h0_flat: np.ndarray | None = None,
     offset: np.ndarray | None = None,
     R: np.ndarray | None = None,
+    grid: object | None = None,
+    state_estimator: object | None = None,
 ) -> list[dict]:
     """Run locate() for every alarm onset.
 
     Returns a list of result dicts (same structure as locate()).
     """
     results = []
+    if state_estimator is None and grid is not None:
+        from src.estimator.topology_state import TopologyStateEstimator
+        state_estimator = TopologyStateEstimator(grid)
     for frame, label in zip(alarm_indices, predicted_labels):
         r = locate(df, int(frame), int(label), J_cols, branches,
                    fps=fps, window_sec=window_sec,
-                   h0_flat=h0_flat, offset=offset, R=R)
+                   h0_flat=h0_flat, offset=offset, R=R,
+                   grid=grid, state_estimator=state_estimator)
         results.append(r)
     return results

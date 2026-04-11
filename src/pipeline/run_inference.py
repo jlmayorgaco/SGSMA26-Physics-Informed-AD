@@ -59,6 +59,7 @@ def _load_grid(raw_path: Path) -> tuple:
 def _train_model(
     df_train,
     df_val,
+    grid,
     J_cols,
     model_path: Path | None,
     synthetic_dir: Path | None,
@@ -81,6 +82,7 @@ def _train_model(
         lgbm_params={"n_estimators": 200, "verbose": -1},
         model_path=model_path,
         synthetic_dir=synthetic_dir,
+        grid=grid,
     )
     return clf, h0_flat, offset, R, det.threshold
 
@@ -99,26 +101,38 @@ def _run_detection(df, h0_flat, offset, R, threshold, fps: float = 30.0):
     return det.detect(eta, dp, ts), eta
 
 
-def _classify_and_localize(df, onset_idx, clf, J_cols, branches,
+def _classify_and_localize(df, onset_idx, clf, grid, J_cols, branches,
                             h0_flat, offset, R, fps: float = 30.0):
     from src.classifier.features import extract_features
+    from src.classifier.rules import apply_physics_label_overrides
+    from src.estimator.topology_state import TopologyStateEstimator
     from src.localizer.cosine_match import locate
 
     predicted_labels = []
     top3_buses_all   = []
     top3_lines_all   = []
+    state_estimator = TopologyStateEstimator(grid) if grid is not None else None
 
     import warnings as _warnings
     for frame in onset_idx:
-        feats = extract_features(df, int(frame), J_cols=J_cols, fps=fps)
+        feats = extract_features(
+            df,
+            int(frame),
+            J_cols=J_cols,
+            grid=grid,
+            state_estimator=state_estimator,
+            fps=fps,
+        )
         with _warnings.catch_warnings():
             _warnings.simplefilter("ignore", UserWarning)
             label = int(clf.predict(feats[None, :])[0])
+        label = apply_physics_label_overrides(label, feats)
         predicted_labels.append(label)
 
         loc_result = locate(
             df, int(frame), label, J_cols, branches,
             fps=fps, h0_flat=h0_flat, offset=offset, R=R,
+            grid=grid, state_estimator=state_estimator,
         )
         top3_buses_all.append([b for b, _ in loc_result["top3_buses"]])
         top3_lines_all.append(loc_result["top3_lines"])
@@ -159,12 +173,12 @@ def run(
     if raw_path is None:
         raw_path = Path("data/metadata/IEEE 39 Bus Power System.raw")
     log.info("Loading grid from %s", raw_path)
-    _, J_cols, branches, zbus, ext_bus_order = _load_grid(raw_path)
+    grid, J_cols, branches, zbus, ext_bus_order = _load_grid(raw_path)
 
     # ── 3. Train / load model ─────────────────────────────────────────────────
     log.info("Training classifier...")
     clf, h0_flat, offset, R, threshold = _train_model(
-        df_train, df_val, J_cols, model_path, synthetic_dir,
+        df_train, df_val, grid, J_cols, model_path, synthetic_dir,
     )
 
     # ── 4. Detection on full dataset ──────────────────────────────────────────
@@ -178,7 +192,7 @@ def run(
     # ── 5. Classification + localization ─────────────────────────────────────
     log.info("Classifying and localizing...")
     predicted_labels, top3_buses_all, top3_lines_all = _classify_and_localize(
-        df, onset_idx, clf, J_cols, branches, h0_flat, offset, R, fps,
+        df, onset_idx, clf, grid, J_cols, branches, h0_flat, offset, R, fps,
     )
 
     # Build per-row prediction arrays

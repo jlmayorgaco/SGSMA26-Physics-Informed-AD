@@ -216,12 +216,10 @@ def load_case(raw_path: Path | str) -> GridCase:
     # ext_bus_order and branch_list carry competition-numbering throughout.
     comp_to_psse: dict[int, int] = {}
     for name, psse_num in name_to_psse.items():
-        if name.startswith("BUS"):
-            try:
-                comp_k = int(name[3:])
-                comp_to_psse[comp_k] = psse_num
-            except ValueError:
-                pass
+        m = re.match(r"BUS(\d+)", name)
+        if m:
+            comp_k = int(m.group(1))
+            comp_to_psse[comp_k] = psse_num
     # Warn if any PMU bus is missing
     for comp_k in PMU_BUS_NAMES:
         if comp_k not in comp_to_psse:

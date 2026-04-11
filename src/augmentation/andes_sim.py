@@ -133,6 +133,44 @@ def _pmu_bus_idx(bus: int) -> int:
     return PMU_BUSES.index(bus) if bus in PMU_BUSES else -1
 
 
+_IEEE39_BRANCHES = [
+    (1, 2), (1, 39), (2, 3), (2, 25), (3, 4), (3, 18), (4, 5), (4, 14),
+    (5, 6), (5, 8), (6, 7), (6, 11), (7, 8), (8, 9), (9, 39), (10, 11),
+    (10, 13), (13, 14), (14, 15), (15, 16), (16, 17), (16, 19), (16, 21),
+    (16, 24), (17, 18), (17, 27), (21, 22), (22, 23), (23, 24), (25, 26),
+    (26, 27), (26, 28), (26, 29), (28, 29), (12, 11), (12, 13),
+    (30, 2), (31, 6), (32, 10), (33, 19), (34, 20), (35, 22), (36, 23),
+    (37, 25), (38, 29), (39, 9),
+]
+
+
+def _topological_distance(src: int, dst: int) -> int:
+    """Shortest-path distance on the IEEE-39 branch graph."""
+    if src == dst:
+        return 0
+    graph: dict[int, list[int]] = {}
+    for a, b in _IEEE39_BRANCHES:
+        graph.setdefault(a, []).append(b)
+        graph.setdefault(b, []).append(a)
+    queue: list[tuple[int, int]] = [(src, 0)]
+    seen = {src}
+    while queue:
+        node, dist = queue.pop(0)
+        for nb in graph.get(node, []):
+            if nb == dst:
+                return dist + 1
+            if nb not in seen:
+                seen.add(nb)
+                queue.append((nb, dist + 1))
+    return 99
+
+
+def _topology_weight(event_bus: int, pmu_bus: int, tau: float = 2.5) -> float:
+    """Smooth spatial attenuation from an event bus to a PMU bus."""
+    d = _topological_distance(event_bus, pmu_bus)
+    return float(np.exp(-d / tau))
+
+
 def _voltage_drop_profile(
     t: np.ndarray,
     t_fault: float,
@@ -298,18 +336,19 @@ def generate_line_outage(
     for bus in PMU_BUSES:
         win = SyntheticWindow(bus, T, stats, rng)
 
-        # Post-outage voltage perturbation (step + exponential recovery)
-        # Buses near the outaged line see larger perturbation
-        near_from = (bus == line_from) or (bus in _bus_neighbors(line_from))
-        near_to   = (bus == line_to)   or (bus in _bus_neighbors(line_to))
-        vmag_delta_frac = 0.0
-        if near_from or near_to:
-            vmag_delta_frac = rng.choice([-1, 1]) * rng.uniform(0.002, 0.008)
+        # Post-outage voltage/angle perturbation. Attenuation follows shortest
+        # path distance to either endpoint, which makes non-PMU line 24-23
+        # produce strong but indirect signatures at Bus22/19/29.
+        w = max(_topology_weight(line_from, bus), _topology_weight(line_to, bus))
+        vmag_delta_frac = rng.choice([-1, 1]) * rng.uniform(0.002, 0.010) * w
 
         step = np.where(t >= t_event, 1.0, 0.0)
         for vphase in ("VA_MAG", "VB_MAG", "VC_MAG"):
             base = stats.get(f"BUS{bus}_{vphase}", (200_000.0, 500.0))[0]
             win.set(vphase, win.col(vphase) + vmag_delta_frac * base * step)
+        angle_shift = rng.choice([-1, 1]) * rng.uniform(0.03, 0.25) * w * step
+        for aphase in ("VA_ANG", "VB_ANG", "VC_ANG"):
+            win.set(aphase, win.col(aphase) + angle_shift)
 
         # Frequency and ROCOF
         freq, rocof = _freq_transient(t, t_event, delta_p_pu)
@@ -402,14 +441,19 @@ def generate_load_change(
     for bus in PMU_BUSES:
         win = SyntheticWindow(bus, T, stats, rng)
 
-        # Voltage sag/surge at and near load bus
-        near = (bus == load_bus) or (load_bus in _bus_neighbors(bus))
-        if near:
-            vmag_delta = rng.uniform(0.001, 0.005) * np.sign(-delta_pu)
-            step = np.where(t >= t_event, 1.0, 0.0)
-            for vphase in ("VA_MAG", "VB_MAG", "VC_MAG"):
-                base = stats.get(f"BUS{bus}_{vphase}", (200_000.0, 500.0))[0]
-                win.set(vphase, win.col(vphase) + vmag_delta * base * step)
+        # Voltage/current sag or surge attenuates over the network. This makes
+        # Bus7 load changes visible at nearby PMUs 5/6/10 without pretending a
+        # PMU exists at Bus7.
+        w = _topology_weight(load_bus, bus)
+        vmag_delta = rng.uniform(0.001, 0.007) * np.sign(-delta_pu) * w
+        imag_delta = rng.uniform(0.01, 0.08) * np.sign(delta_pu) * w
+        step = np.where(t >= t_event, 1.0, 0.0)
+        for vphase in ("VA_MAG", "VB_MAG", "VC_MAG"):
+            base = stats.get(f"BUS{bus}_{vphase}", (200_000.0, 500.0))[0]
+            win.set(vphase, win.col(vphase) + vmag_delta * base * step)
+        for iphase in ("IA_MAG", "IB_MAG", "IC_MAG"):
+            base = stats.get(f"BUS{bus}_{iphase}", (585.0, 5.0))[0]
+            win.set(iphase, win.col(iphase) + imag_delta * base * step)
 
         # Load increase → frequency drops (positive delta_pu means load increase)
         freq, rocof = _freq_transient(t, t_event, delta_pu)
@@ -464,6 +508,66 @@ def generate_pmu_dropout(
     return result, t, event_labels
 
 
+def generate_post_cyber_physical(
+    stats: dict,
+    rng: np.random.Generator,
+    physical: str = "gen",
+    dropout_bus: int = 29,
+    window_sec: float = 8.0,
+    t_dropout: float = 1.0,
+    t_physical: float = 2.5,
+    t_recover: float = 4.0,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Generate a dropout followed by/overlapping a physical event.
+
+    Labels mirror the difficult real sequence:
+      label 5: missing PMU data only,
+      label 6: missing PMU data concurrent with a physical event,
+      label 3/4/2: physical event after PMU recovery.
+    """
+    if physical == "gen":
+        bus_data, t, _ = generate_gen_change(
+            gen_bus=2, stats=stats, rng=rng, window_sec=window_sec,
+            t_event=t_physical, delta_mw=float(rng.choice([-1, 1])) * rng.uniform(10.0, 60.0),
+        )
+        physical_label = 3
+    elif physical == "load":
+        bus_data, t, _ = generate_load_change(
+            load_bus=7, stats=stats, rng=rng, window_sec=window_sec,
+            t_event=t_physical, delta_mw=float(rng.choice([-1, 1])) * rng.uniform(10.0, 60.0),
+        )
+        physical_label = 4
+    elif physical == "line":
+        bus_data, t, _ = generate_line_outage(
+            line_from=24, line_to=23, stats=stats, rng=rng,
+            window_sec=window_sec, t_event=t_physical,
+            delta_p_pu=float(rng.choice([-1, 1])) * rng.uniform(0.05, 0.25),
+        )
+        physical_label = 2
+    else:
+        raise ValueError("physical must be one of: 'gen', 'load', 'line'")
+
+    labels = np.zeros(len(t), dtype=int)
+    dropout_mask = (t >= t_dropout) & (t < t_recover)
+    physical_mask = t >= t_physical
+    labels[dropout_mask] = 5
+    labels[physical_mask] = physical_label
+    labels[dropout_mask & physical_mask] = 6
+
+    for bus in PMU_BUSES:
+        dp = np.ones(len(t), dtype=float)
+        if bus == dropout_bus:
+            dp[dropout_mask] = 0.0
+            for suf in _SUFFIXES:
+                col = f"BUS{bus}_{suf}"
+                arr = bus_data[col].copy()
+                arr[dropout_mask] = np.nan
+                bus_data[col] = arr
+        bus_data[f"BUS{bus}_DATA_PRESENT"] = dp
+
+    return bus_data, t, labels
+
+
 # ── CSV writer ─────────────────────────────────────────────────────────────────
 
 def _write_synthetic_csvs(
@@ -498,16 +602,7 @@ _ALL_BUSES = list(range(1, 40))
 _GEN_BUSES = [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
 _LOAD_BUSES = [3, 4, 7, 8, 12, 15, 16, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 31, 39]
 # Branch list from IEEE 39-bus topology
-_BRANCHES = [
-    (1, 2), (1, 39), (2, 3), (2, 25), (3, 4), (3, 18), (4, 5), (4, 14),
-    (5, 6), (5, 8), (6, 7), (6, 11), (7, 8), (8, 9), (9, 39), (10, 11),
-    (10, 13), (13, 14), (14, 15), (15, 16), (16, 17), (16, 19), (16, 21),
-    (16, 24), (17, 18), (17, 27), (21, 22), (22, 23), (23, 24), (25, 26),
-    (26, 27), (26, 28), (26, 29), (28, 29), (12, 11), (12, 13),
-    # Transformer branches (generator step-up)
-    (30, 2), (31, 6), (32, 10), (33, 19), (34, 20), (35, 22), (36, 23),
-    (37, 25), (38, 29), (39, 9),
-]
+_BRANCHES = _IEEE39_BRANCHES
 
 
 def generate_all(
@@ -516,6 +611,9 @@ def generate_all(
     n_gen_changes: int = 40,
     n_load_changes: int = 40,
     n_dropouts: int = 20,
+    n_bus7_load_changes: int = 30,
+    n_line_2423_outages: int = 30,
+    n_post_cyber_physical: int = 30,
     data_dir: Path | str = "data/raw",
     out_dir: Path | str = "data/synthetic",
     seed: int = 42,
@@ -528,6 +626,9 @@ def generate_all(
         n_gen_changes:  Number of generation step change events.
         n_load_changes: Number of load step change events.
         n_dropouts:     Number of PMU dropout events.
+        n_bus7_load_changes: targeted Bus 7 load-change scenarios.
+        n_line_2423_outages: targeted Bus 24-23 line-outage scenarios.
+        n_post_cyber_physical: targeted dropout+physical recovery scenarios.
         data_dir:       Path to competition raw CSVs (for baseline statistics).
         out_dir:        Output directory for synthetic CSVs.
         seed:           Random seed for reproducibility.
@@ -548,7 +649,7 @@ def generate_all(
     ))
 
     n_generated = 0
-    event_counts: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    event_counts: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
 
     # ── 1. Three-phase faults ─────────────────────────────────────────────────
     fault_buses = rng.choice(_ALL_BUSES, size=n_faults, replace=True)
@@ -632,6 +733,49 @@ def generate_all(
             event_counts[5] += 1
         except Exception as e:
             log.warning("PMU dropout %d failed: %s", i, e)
+
+    # ── 6. Targeted hard cases: Bus7, line 24-23, and post-cyber physical ────
+    for i in range(n_bus7_load_changes):
+        try:
+            bus_data, ts, labels = generate_load_change(
+                load_bus=7, stats=stats, rng=rng,
+                t_event=float(rng.uniform(1.0, 3.0)),
+                delta_mw=float(rng.choice([-1, 1])) * float(rng.uniform(10.0, 70.0)),
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[4] += 1
+        except Exception as e:
+            log.warning("Target Bus7 load %d failed: %s", i, e)
+
+    for i in range(n_line_2423_outages):
+        try:
+            bus_data, ts, labels = generate_line_outage(
+                line_from=24, line_to=23, stats=stats, rng=rng,
+                t_event=float(rng.uniform(1.0, 3.0)),
+                delta_p_pu=float(rng.choice([-1, 1])) * float(rng.uniform(0.05, 0.25)),
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[2] += 1
+        except Exception as e:
+            log.warning("Target line 24-23 %d failed: %s", i, e)
+
+    physical_cycle = ["gen", "load", "line"]
+    for i in range(n_post_cyber_physical):
+        try:
+            physical = physical_cycle[i % len(physical_cycle)]
+            bus_data, ts, labels = generate_post_cyber_physical(
+                stats=stats, rng=rng, physical=physical, dropout_bus=29,
+                t_dropout=float(rng.uniform(0.8, 1.4)),
+                t_physical=float(rng.uniform(2.0, 3.0)),
+                t_recover=float(rng.uniform(3.5, 4.8)),
+            )
+            _write_synthetic_csvs(n_generated, bus_data, ts, labels, out_dir)
+            n_generated += 1
+            event_counts[6] += 1
+        except Exception as e:
+            log.warning("Target post-cyber physical %d failed: %s", i, e)
 
     log.info(
         "Generated %d synthetic events: %s",

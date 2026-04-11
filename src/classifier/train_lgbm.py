@@ -64,11 +64,19 @@ def _collect_labeled_events(
     J_cols: dict[int, np.ndarray] | None,
     fps: float,
     window_sec: float,
+    state_estimator: object | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Extract (X, y) for real alarm onsets, using frame labels."""
     labels = np.array([_label_at_frame(df, int(i)) for i in alarm_indices], dtype=int)
-    return extract_all_events(df, alarm_indices, labels, J_cols=J_cols, fps=fps,
-                              window_sec=window_sec)
+    return extract_all_events(
+        df,
+        alarm_indices,
+        labels,
+        J_cols=J_cols,
+        state_estimator=state_estimator,
+        fps=fps,
+        window_sec=window_sec,
+    )
 
 
 def _sample_normal_frames(
@@ -109,6 +117,7 @@ def _collect_transition_events(
     *,
     ignore_labels: set[int] | None = None,
     add_normal_samples: bool = True,
+    state_estimator: object | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Extract real labeled examples from ground-truth Event transitions."""
     trans_idx = event_transition_frames(df, ignore_labels=ignore_labels or {7})
@@ -123,6 +132,7 @@ def _collect_transition_events(
             trans_idx,
             trans_labels,
             J_cols=J_cols,
+            state_estimator=state_estimator,
             fps=fps,
             window_sec=window_sec,
         )
@@ -138,6 +148,7 @@ def _collect_transition_events(
                 normal_idx,
                 normal_labels,
                 J_cols=J_cols,
+                state_estimator=state_estimator,
                 fps=fps,
                 window_sec=window_sec,
             )
@@ -191,6 +202,7 @@ def _load_synthetic_events(
     J_cols: dict | None,
     fps: float,
     window_sec: float,
+    state_estimator: object | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Load all synthetic events from syn_dir and extract feature/label pairs.
 
@@ -224,6 +236,7 @@ def _load_synthetic_events(
             onset = int(ev_frames[len(ev_frames) // 2])
             label = int(ev_col.iloc[onset])
             feats = extract_features(df_syn, onset, J_cols=J_cols,
+                                     state_estimator=state_estimator,
                                      fps=fps, window_sec=window_sec)
             X_parts.append(feats)
             y_parts.append(label)
@@ -246,6 +259,7 @@ def train(
     lgbm_params: dict | None = None,
     model_path: Path | str | None = None,
     synthetic_dir: Path | str | None = None,
+    grid: object | None = None,
 ) -> "lgb.LGBMClassifier":
     """Train and optionally save the LightGBM classifier.
 
@@ -259,6 +273,7 @@ def train(
         model_path:    If provided, pickle model here.
         synthetic_dir: Directory of synthetic CSVs from andes_sim.generate_all().
                        All synthetic events are merged into the training set only.
+        grid:          optional GridCase for topology-estimated state features.
 
     Returns:
         Trained LGBMClassifier.
@@ -269,6 +284,10 @@ def train(
         raise ImportError("lightgbm not installed — run: pip install lightgbm") from exc
 
     params = {**LGBM_DEFAULTS, **(lgbm_params or {})}
+    state_estimator = None
+    if grid is not None:
+        from src.estimator.topology_state import TopologyStateEstimator
+        state_estimator = TopologyStateEstimator(grid)
 
     # ── detect events in training data ────────────────────────────────────────
     # Use full df for calibration (calibration uses first 60s regardless of split)
@@ -288,6 +307,7 @@ def train(
         window_sec,
         ignore_labels={7},
         add_normal_samples=True,
+        state_estimator=state_estimator,
     )
 
     log.info("Train (real): %d labeled windows, label distribution: %s",
@@ -297,7 +317,7 @@ def train(
     if synthetic_dir is not None:
         X_syn, y_syn = _load_synthetic_events(
             Path(synthetic_dir), h0_flat, offset, R, cols,
-            J_cols, fps, window_sec,
+            J_cols, fps, window_sec, state_estimator=state_estimator,
         )
         if len(X_syn) > 0:
             X_train = np.concatenate([X_train, X_syn], axis=0)
@@ -318,6 +338,7 @@ def train(
         window_sec,
         ignore_labels={7},
         add_normal_samples=True,
+        state_estimator=state_estimator,
     )
 
     log.info("Val: %d labeled windows, label distribution: %s",
@@ -367,6 +388,8 @@ def predict(
     R: np.ndarray,
     threshold: float,
     J_cols: dict[int, np.ndarray] | None = None,
+    grid: object | None = None,
+    state_estimator: object | None = None,
     fps: float = 30.0,
     window_sec: float = 3.0,
 ) -> dict:
@@ -384,10 +407,23 @@ def predict(
     det_result = det.detect(eta, dp, ts)
 
     onset_idx = det_result["alarm_indices"]
+    if state_estimator is None and grid is not None:
+        from src.estimator.topology_state import TopologyStateEstimator
+        state_estimator = TopologyStateEstimator(grid)
     predicted_labels = []
     for frame in onset_idx:
-        feats = extract_features(df, int(frame), J_cols=J_cols, fps=fps, window_sec=window_sec)
+        feats = extract_features(
+            df,
+            int(frame),
+            J_cols=J_cols,
+            grid=grid,
+            state_estimator=state_estimator,
+            fps=fps,
+            window_sec=window_sec,
+        )
         pred = int(clf.predict(feats[None, :])[0])
+        from src.classifier.rules import apply_physics_label_overrides
+        pred = apply_physics_label_overrides(pred, feats)
         predicted_labels.append(pred)
 
     return {

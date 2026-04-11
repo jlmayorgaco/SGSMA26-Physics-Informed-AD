@@ -23,6 +23,7 @@ from src.augmentation.andes_sim import (
     generate_line_outage,
     generate_load_change,
     generate_pmu_dropout,
+    generate_post_cyber_physical,
     load_synthetic,
     _write_synthetic_csvs,
 )
@@ -191,6 +192,16 @@ class TestGenerateLoadChange:
         for col, arr in bus_data.items():
             assert np.all(np.isfinite(arr))
 
+    def test_bus7_affects_nearby_pmus(self, minimal_stats, rng):
+        bus_data, ts, labels = generate_load_change(
+            7, minimal_stats, rng, t_event=2.0, delta_mw=50.0
+        )
+        post = labels == 4
+        pre = ts < 2.0
+        d_bus6 = abs(bus_data["BUS6_VA_MAG"][post].mean() - bus_data["BUS6_VA_MAG"][pre].mean())
+        d_bus29 = abs(bus_data["BUS29_VA_MAG"][post].mean() - bus_data["BUS29_VA_MAG"][pre].mean())
+        assert d_bus6 > d_bus29
+
 
 # ── generate_pmu_dropout ───────────────────────────────────────────────────────
 
@@ -239,6 +250,27 @@ class TestGeneratePmuDropout:
         dropout_mask = labels == 5
         assert np.all(dp[dropout_mask] == 0), "DATA_PRESENT should be 0 during dropout"
         assert np.all(dp[~dropout_mask] == 1), "DATA_PRESENT should be 1 outside dropout"
+
+
+class TestGeneratePostCyberPhysical:
+    def test_labels_include_5_6_and_physical(self, minimal_stats, rng):
+        bus_data, ts, labels = generate_post_cyber_physical(
+            minimal_stats, rng, physical="gen", dropout_bus=29,
+            t_dropout=1.0, t_physical=2.0, t_recover=3.0,
+        )
+        assert 5 in labels
+        assert 6 in labels
+        assert 3 in labels
+        assert np.any(bus_data["BUS29_DATA_PRESENT"][labels == 6] == 0)
+
+    def test_other_pmus_remain_valid_during_overlap(self, minimal_stats, rng):
+        bus_data, ts, labels = generate_post_cyber_physical(
+            minimal_stats, rng, physical="load", dropout_bus=29,
+            t_dropout=1.0, t_physical=2.0, t_recover=3.0,
+        )
+        overlap = labels == 6
+        assert np.all(np.isfinite(bus_data["BUS6_VA_MAG"][overlap]))
+        assert np.all(np.isnan(bus_data["BUS29_VA_MAG"][overlap]))
 
 
 # ── CSV writer and loader ──────────────────────────────────────────────────────
@@ -323,6 +355,8 @@ class TestRealDataGeneration:
         result = generate_all(
             n_faults=2, n_line_outages=2, n_gen_changes=2,
             n_load_changes=2, n_dropouts=1,
+            n_bus7_load_changes=0, n_line_2423_outages=0,
+            n_post_cyber_physical=0,
             data_dir=DATA_DIR, out_dir=tmp_path, seed=0,
         )
         assert result["n_generated"] == 9
@@ -349,6 +383,8 @@ class TestRealDataGeneration:
         generate_all(
             n_faults=1, n_line_outages=0, n_gen_changes=1,
             n_load_changes=0, n_dropouts=0,
+            n_bus7_load_changes=0, n_line_2423_outages=0,
+            n_post_cyber_physical=0,
             data_dir=DATA_DIR, out_dir=tmp_path, seed=0,
         )
         for run_id in [0, 1]:

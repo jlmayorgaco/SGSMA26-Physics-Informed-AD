@@ -67,7 +67,13 @@ def J_cols(grid):
 @pytest.fixture(scope="module")
 def branches(grid):
     """List of (from_bus, to_bus) pairs in competition numbering."""
-    return [(b.from_bus, b.to_bus) for b in grid.branches]
+    return grid.branch_list
+
+
+@pytest.fixture(scope="module")
+def state_estimator(grid):
+    from src.estimator.topology_state import TopologyStateEstimator
+    return TopologyStateEstimator(grid)
 
 
 @pytest.fixture(scope="module")
@@ -206,20 +212,7 @@ class TestLocalizerAccuracy:
     """Top-1 ≥ 5/9, Top-3 ≥ 8/9 on the known 9 real events."""
 
     @SKIP_NO_DATA
-    @pytest.mark.xfail(
-        strict=False,
-        reason=(
-            "Top-3 ≥ 8/9 requires AC-Jacobian sensitivity (voltage magnitude).\n"
-            "T1 DC-PF Jacobian achieves 7/9:\n"
-            "  - 5 cyber events via DATA_PRESENT (exact)\n"
-            "  - Fault @Bus39 via VA_MAG+IA_MAG chi2 pattern (correct)\n"
-            "  - Gen change @Bus2 via ROCOF chi2 pattern (correct)\n"
-            "  - Line outage 24-23: J_line cosine ranks (24,23) ~#5 (Bus22 dominates)\n"
-            "  - Load change @Bus7: Bus7 is non-PMU, ranks #4 behind Bus11 (0.858 vs 0.875)\n"
-            "8/9 would require T2 UKF or AC power-flow sensitivity."
-        ),
-    )
-    def test_localization_accuracy(self, full_df, J_cols, branches, alarm_indices, calibration):
+    def test_localization_accuracy(self, full_df, grid, J_cols, branches, alarm_indices, calibration, state_estimator):
         ts = full_df["TIMESTAMP"].to_numpy(float)
         n_events = len(_EVENTS_GT)
         top1_correct = 0
@@ -250,7 +243,8 @@ class TestLocalizerAccuracy:
 
             h0_flat, offset, R = calibration
             result = locate(full_df, loc_frame, label, J_cols, branches,
-                            h0_flat=h0_flat, offset=offset, R=R)
+                            h0_flat=h0_flat, offset=offset, R=R,
+                            grid=grid, state_estimator=state_estimator)
 
             if label in {2}:  # line outage
                 # Top-1 line check
@@ -294,7 +288,7 @@ class TestLocalizerAccuracy:
         )
 
     @SKIP_NO_DATA
-    def test_localization_top1_strict(self, full_df, J_cols, branches, alarm_indices, calibration):
+    def test_localization_top1_strict(self, full_df, grid, J_cols, branches, alarm_indices, calibration, state_estimator):
         """Top-1 ≥ 5/9 must hold strictly (T1 achieves 7/9)."""
         ts = full_df["TIMESTAMP"].to_numpy(float)
         h0_flat, offset, R = calibration
@@ -311,7 +305,8 @@ class TestLocalizerAccuracy:
 
             loc_frame = int(np.argmin(np.abs(ts - event_ts)))
             result = locate(full_df, loc_frame, label, J_cols, branches,
-                            h0_flat=h0_flat, offset=offset, R=R)
+                            h0_flat=h0_flat, offset=offset, R=R,
+                            grid=grid, state_estimator=state_estimator)
 
             if label in {2}:
                 top1_line = result.get("top1_line")
@@ -330,7 +325,7 @@ class TestLocalizerAccuracy:
         )
 
     @SKIP_NO_DATA
-    def test_cyber_events_all_point_to_bus29(self, full_df, J_cols, branches, calibration):
+    def test_cyber_events_all_point_to_bus29(self, full_df, grid, J_cols, branches, calibration, state_estimator):
         """All 4 cyber-only events (label 5) should resolve to Bus 29."""
         ts = full_df["TIMESTAMP"].to_numpy(float)
         cyber_events = [(ev_ts, lbl) for ev_ts, lbl, *_ in _EVENTS_GT if lbl == 5]
@@ -366,7 +361,8 @@ class TestLocalizerAccuracy:
                 continue
             h0_flat, offset, R = calibration
             result = locate(full_df, int(closest), lbl, J_cols, branches,
-                            h0_flat=h0_flat, offset=offset, R=R)
+                            h0_flat=h0_flat, offset=offset, R=R,
+                            grid=grid, state_estimator=state_estimator)
             if result["top1_bus"] == 29:
                 correct += 1
 

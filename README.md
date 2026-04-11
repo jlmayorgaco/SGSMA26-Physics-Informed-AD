@@ -36,32 +36,37 @@ make submission
 ## Architecture
 
 ```
-Raw PMU CSVs (8 buses × 30 fps × 90 min)
-         │
-         ▼
-   load_csv.py  ─── header inspection, positional merge
-         │
-         ▼
-  Chi2Detector  ─── η_t = (z − h₀ − δ)ᵀ diag(R)⁻¹ (z − h₀ − δ)
-   (chi2.py)        + DATA_PRESENT dropout flag
-         │           OR-combined, debounced (k_on=3, k_off=15)
-         │
-         ▼ alarm onset indices
-  FeatureExtractor  ─── 37 features / onset
-   (features.py)        residuals × {mean, max, std}, spatial ν̄,
-                         spectral energy, cyber indicators, Jacobian cosines
-         │
-         ▼
-   LightGBM clf  ─── 200 trees, 31 leaves, balanced classes
-  (train_lgbm.py)    + 180 synthetic events from swing-eq simulator
-         │
-         ▼ predicted label (0–8)
-  CosineLocalizer  ─── argmax_k |cos(ν̄, J_k)| (bus mode)
- (cosine_match.py)     argmax_ij |cos(ν̄, J_i−J_j)| (line mode)
-                        DATA_PRESENT direct (cyber mode)
-         │
-         ▼
-  make_submission.py  ─── per-bus CSVs + combined submission.csv
+Raw PMU CSVs (8 buses x 30 fps x 90 min)
+         |
+         v
+   load_csv.py --- header inspection, positional merge
+         |
+         v
+  Chi2Detector --- eta_t = (z - h0 - delta)^T diag(R)^-1 (z - h0 - delta)
+   (chi2.py)       + DATA_PRESENT dropout flag
+         |         OR-combined, debounced (k_on=3, k_off=15),
+         |         then refined into stacked sub-events when
+         |         dropout transitions and sustained eta spikes co-occur
+         |
+         v alarm onset indices
+  FeatureExtractor --- 44 features / onset
+   (features.py)       post-onset residuals x {mean, max, std}, spatial nu_bar,
+                       spectral energy, cyber indicators, Jacobian cosines,
+                       Ybus harmonic full-state residuals
+         |
+         v
+   LightGBM clf --- 200 trees, 31 leaves, balanced classes
+  (train_lgbm.py)   + physics synthetic events from swing-equation simulator
+                    + targeted Bus7, line 24-23, and cyber-physical cases
+         |
+         v predicted label (0-8)
+  CosineLocalizer --- argmax_k |cos(nu_bar, J_k)| (bus mode)
+ (cosine_match.py)    argmax_ij |cos(nu_bar, J_i-J_j)| (line mode)
+                      DATA_PRESENT direct (cyber mode)
+                      Ybus-state residuals promote non-PMU hard cases
+         |
+         v
+  make_submission.py --- per-bus CSVs + combined submission.csv
 ```
 
 ## Key design decisions
@@ -70,9 +75,12 @@ Raw PMU CSVs (8 buses × 30 fps × 90 min)
 |---|---|---|
 | Detector | χ² innovation | Calibrated FP/min; no UKF needed for T1 |
 | Classifier | LightGBM | <12,400 params; scoring-efficient |
-| Localizer | Jacobian cosine match | Zero learned parameters |
-| Augmentation | Swing-equation RK4 | Dynamic transients, not static deltas |
+| State proxy | Ybus-weighted harmonic extension | Estimates all 39 bus voltage magnitudes/angles from 8 PMUs |
+| Localizer | Jacobian cosine match + state residual priors | Zero learned parameters; improves Bus 7 and line 24-23 |
+| Augmentation | Swing-equation RK4 + topology attenuation | Dynamic transients, not static deltas |
 | Splits | Contiguous 70/15/15 | No shuffling per competition rules |
+| Real-label training | Event transitions | Keeps stacked `5 -> 6 -> 3` events separate |
+| Targeted scenarios | Bus 7, line 24-23, post-cyber physical | Directly trains/evaluates weak competition cases |
 
 ## Random seed
 
@@ -91,13 +99,14 @@ Scoring penalty: λ × log₁₀(12400) ≈ 0.05 × 4.09 ≈ 0.20.
 src/
   io/         — CSV loading, event parsing
   grid/       — Ybus, Zbus, Jacobian sensitivity columns
+  estimator/  — topology-constrained all-39-bus voltage-state proxy
   detector/   — Chi2Detector, debounce
   classifier/ — features, LightGBM training
   localizer/  — cosine-match bus and line localization
   augmentation/ — physics-based synthetic event generator
   eval/       — splits, metrics
   pipeline/   — run_inference CLI, submission writer
-tests/        — pytest suite (56+ tests, all green)
+tests/        — pytest suite (198 passed, 1 expected xfail)
 data/
   raw/        — competition CSVs (read-only)
   metadata/   — .raw grid file, event timeline xlsx
@@ -109,8 +118,26 @@ report/       — LaTeX source and compiled PDF
 
 ```bash
 make test          # runs all tests
-# expected: 56+ passed, 1 xfailed, 0 errors
+# expected: 198 passed, 1 xfailed, 0 pytest errors
 ```
+
+## ANDES full-state reconstruction experiment
+
+Run one non-PMU Bus 7 three-phase fault at the midpoint of an ANDES IEEE-39
+simulation, observe only the 8 competition PMU buses, reconstruct the full
+39-bus voltage state with the Ybus estimator, and write metrics/plots/report:
+
+```bash
+python -m src.pipeline.andes_fault_reconstruction \
+  --fault-bus 7 \
+  --t-final 10 \
+  --fps 30 \
+  --out experiments/andes_fault_bus7
+```
+
+Outputs include `truth_all_buses.csv`, `pmu_observed.csv`,
+`non_pmu_truth.csv`, `full_state_estimate.csv`, `metrics.csv`, PNG figures,
+and `report.md`.
 
 ## Python version
 

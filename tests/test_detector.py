@@ -342,6 +342,7 @@ class TestRefineAlarmOnsets:
             fps=fps,
             min_separation_sec=1.0,
             confirm_sec=0.5,
+            min_remaining_sec=1.0,
         )
         assert onsets.tolist() == [30, 90, 150]
 

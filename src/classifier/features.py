@@ -14,8 +14,9 @@ Feature families
 4. Cyber indicators: NaN count, PMU missing count, longest NaN run — shape 3
 5. Cosine similarity of ν̄ to the top-K sensitivity columns J_k — shape 3 (top-3 values)
    + argmax bus (ordinal) — shape 1; total 4 features
+6. Topology-estimated 39-bus voltage-state residual features — shape 7
 
-Total: 12 + 10 + 8 + 3 + 4 = 37 features per event.
+Total: 12 + 10 + 8 + 3 + 4 + 7 = 44 features per event.
 """
 from __future__ import annotations
 
@@ -54,10 +55,13 @@ FEATURE_NAMES += [
     "nan_count", "pmu_missing_count", "longest_nan_run", # 3 features
     "cosine_top1", "cosine_top2", "cosine_top3",         # 3 features
     "cosine_argmax_bus",                                  # 1 feature
+    "state_top1_bus", "state_top1_energy", "state_entropy",
+    "state_bus7_energy", "state_bus23_energy", "state_bus24_energy",
+    "state_line_24_23_energy",
 ]
-# Total = 37
+# Total = 44
 
-N_FEATURES = len(FEATURE_NAMES)  # 37
+N_FEATURES = len(FEATURE_NAMES)  # 44
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -153,18 +157,22 @@ def extract_features(
     df: "pd.DataFrame",
     onset_frame: int,
     J_cols: dict[int, np.ndarray] | None = None,
+    grid: object | None = None,
+    state_estimator: object | None = None,
     fps: float = 30.0,
     window_sec: float = 3.0,
 ) -> np.ndarray:
-    """Extract a 37-element feature vector for a single alarm onset.
+    """Extract a fixed-length feature vector for a single alarm onset.
 
     Args:
         df:          Merged DataFrame (all buses, aligned by row).
         onset_frame: Row index of the alarm onset.
         J_cols:      {bus_number: sensitivity_column (len 8)} from compute_jacobians.
                      If None, cosine similarity features are 0.
+        grid:        optional GridCase used to build topology-state features.
+        state_estimator: optional pre-built TopologyStateEstimator.
         fps:         Sampling rate in frames per second.
-        window_sec:  Window half-width on each side of onset (total = window_sec).
+        window_sec:  Post-onset window length in seconds.
 
     Returns:
         feats: (N_FEATURES,) float array.
@@ -266,6 +274,19 @@ def extract_features(
     else:
         feats.extend([0.0, 0.0, 0.0, 0.0])
 
+    # ── Family 6: topology-estimated full IEEE-39 voltage state ───────────────
+    if state_estimator is None and grid is not None:
+        from src.estimator.topology_state import TopologyStateEstimator
+        state_estimator = TopologyStateEstimator(grid)
+    if state_estimator is not None:
+        from src.estimator.topology_state import state_feature_summary
+        state_feats, _ = state_feature_summary(
+            df, onset_frame, state_estimator, fps=fps, window_sec=window_sec
+        )
+        feats.extend(state_feats)
+    else:
+        feats.extend([0.0] * 7)
+
     arr = np.array(feats, dtype=float)
     # Replace any remaining inf/nan with 0
     arr = np.where(np.isfinite(arr), arr, 0.0)
@@ -278,6 +299,8 @@ def extract_all_events(
     alarm_indices: np.ndarray,
     labels: np.ndarray,
     J_cols: dict[int, np.ndarray] | None = None,
+    grid: object | None = None,
+    state_estimator: object | None = None,
     fps: float = 30.0,
     window_sec: float = 3.0,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -288,6 +311,8 @@ def extract_all_events(
         alarm_indices: (K,) int array of onset frame indices.
         labels:        (K,) int array of event labels (0-8).
         J_cols:        Sensitivity columns from compute_jacobians.
+        grid:          optional GridCase used to build topology-state features.
+        state_estimator: optional pre-built TopologyStateEstimator.
         fps:           Sampling rate.
         window_sec:    Window size around each onset.
 
@@ -297,8 +322,19 @@ def extract_all_events(
     """
     X_rows = []
     y_rows = []
+    if state_estimator is None and grid is not None:
+        from src.estimator.topology_state import TopologyStateEstimator
+        state_estimator = TopologyStateEstimator(grid)
     for idx, label in zip(alarm_indices, labels):
-        feats = extract_features(df, int(idx), J_cols=J_cols, fps=fps, window_sec=window_sec)
+        feats = extract_features(
+            df,
+            int(idx),
+            J_cols=J_cols,
+            grid=grid,
+            state_estimator=state_estimator,
+            fps=fps,
+            window_sec=window_sec,
+        )
         X_rows.append(feats)
         y_rows.append(int(label))
     X = np.stack(X_rows, axis=0) if X_rows else np.zeros((0, N_FEATURES))

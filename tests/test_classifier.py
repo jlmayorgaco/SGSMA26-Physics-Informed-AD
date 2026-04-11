@@ -120,7 +120,7 @@ def real_alarm_indices(full_df, full_eta_and_dp, fitted_detector):
 
 class TestFeatureVector:
     def test_feature_count(self):
-        assert N_FEATURES == 37
+        assert N_FEATURES == 44
 
     def test_feature_names_length(self):
         assert len(FEATURE_NAMES) == N_FEATURES
@@ -181,6 +181,24 @@ class TestFeatureVector:
         X, y = extract_all_events(synthetic_df, np.array([], dtype=int), np.array([], dtype=int))
         assert X.shape == (0, N_FEATURES)
         assert y.shape == (0,)
+
+    def test_physics_override_fault_not_missing(self):
+        from src.classifier.rules import apply_physics_label_overrides
+
+        feats = np.zeros(N_FEATURES)
+        feats[FEATURE_NAMES.index("VA_MAG_max")] = 100_000.0
+        feats[FEATURE_NAMES.index("IA_MAG_max")] = 2_000.0
+        feats[FEATURE_NAMES.index("pmu_missing_count")] = 0.0
+        assert apply_physics_label_overrides(6, feats) == 1
+
+    def test_physics_override_bus7_load(self):
+        from src.classifier.rules import apply_physics_label_overrides
+
+        feats = np.zeros(N_FEATURES)
+        feats[FEATURE_NAMES.index("state_top1_energy")] = 10.0
+        feats[FEATURE_NAMES.index("state_bus7_energy")] = 9.0
+        feats[FEATURE_NAMES.index("pmu_missing_count")] = 0.0
+        assert apply_physics_label_overrides(3, feats) == 4
 
 
 # ── real-data tests ───────────────────────────────────────────────────────────

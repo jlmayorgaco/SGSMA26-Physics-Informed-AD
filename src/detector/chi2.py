@@ -102,6 +102,7 @@ def refine_alarm_onsets(
     fps: float = 30.0,
     min_separation_sec: float = 5.0,
     confirm_sec: float = 2.0,
+    min_remaining_sec: float = 20.0,
 ) -> np.ndarray:
     """Split a long alarm block into sub-events when evidence supports it.
 
@@ -129,6 +130,7 @@ def refine_alarm_onsets(
 
     min_sep = max(1, int(round(min_separation_sec * fps)))
     confirm = max(1, int(round(confirm_sec * fps)))
+    min_remaining = max(1, int(round(min_remaining_sec * fps)))
     dp_any = None
     if data_present is not None:
         dp_any = (np.asarray(data_present, dtype=float) < 1).any(axis=1).astype(np.int8)
@@ -147,16 +149,31 @@ def refine_alarm_onsets(
             for idx in dp_changes:
                 if idx <= seg_start:
                     continue
+                if seg_end - idx < min_remaining:
+                    continue
                 hi = min(seg_end, idx + confirm)
-                if np.nanmax(eta[idx:hi]) > threshold:
+                lo = max(seg_start, idx - confirm)
+                prev_missing = bool(dp_any[idx - 1]) if idx > 0 else False
+                curr_missing = bool(dp_any[idx])
+                pre_support = np.nanmax(eta[lo:idx]) > threshold if idx > lo else False
+                post_support = np.nanmax(eta[idx:hi]) > threshold
+                if prev_missing and (not curr_missing) and not pre_support:
+                    continue
+                if post_support:
                     candidates.append(int(idx))
 
-        eta_prev = eta[max(seg_start, 0): max(seg_start, 0) + (seg_end - seg_start)]
+        eta_prev = eta[seg_start:seg_end]
         eta_cross = np.where(
             (eta_prev[1:] > threshold) & (eta_prev[:-1] <= threshold)
         )[0] + seg_start + 1
         for idx in eta_cross:
-            if idx > seg_start:
+            if idx <= seg_start or seg_end - idx < min_remaining:
+                continue
+            if dp_any is not None and dp_any[max(seg_start, idx - 1)] == 0:
+                continue
+            hi = min(seg_end, idx + confirm)
+            support = eta[idx:hi] > threshold
+            if support.any() and support.mean() >= 0.5:
                 candidates.append(int(idx))
 
         for idx in sorted(set(candidates)):
@@ -164,6 +181,22 @@ def refine_alarm_onsets(
                 onsets.add(int(idx))
 
     refined = np.array(sorted(onsets), dtype=int)
+    if dp_any is not None and len(refined) > 0:
+        filtered: list[int] = []
+        for idx in refined.tolist():
+            keep_idx = True
+            if idx > 0 and not bool(dp_any[idx]):
+                lo = max(1, idx - confirm)
+                rel = np.where((dp_any[lo - 1:idx - 1] == 1) & (dp_any[lo:idx] == 0))[0]
+                if len(rel) > 0:
+                    change_idx = lo + int(rel[-1])
+                    pre_lo = max(0, change_idx - confirm)
+                    if np.nanmax(eta[pre_lo:change_idx]) <= threshold:
+                        keep_idx = False
+            if keep_idx:
+                filtered.append(int(idx))
+        refined = np.array(filtered, dtype=int)
+
     if timestamps is not None and len(refined) > 1:
         ts = np.asarray(timestamps, dtype=float)
         keep = [int(refined[0])]
