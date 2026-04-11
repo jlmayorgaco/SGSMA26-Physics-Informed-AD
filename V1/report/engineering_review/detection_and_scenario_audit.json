@@ -1,0 +1,1099 @@
+{
+  "summary": {
+    "visible_detection_after_bad_data_detector": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "fp_per_min": 0.0,
+      "mean_delay_sec": 0.04750000000054414,
+      "delays_sec": [
+        0.03399999999965031,
+        0.033999999999650754,
+        0.03299999999580905,
+        0.06700000001001172,
+        0.0669999999954598,
+        0.0669999999954598,
+        0.06700000001001172,
+        0.06699999999591455,
+        0.06699999999455031,
+        0.0,
+        0.0,
+        0.06700000001001172
+      ]
+    },
+    "main_chi2_data_present_detector_only": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.8571428571428571,
+      "fp_per_min": 0.0,
+      "mean_delay_sec": 0.052111111112379954,
+      "delays_sec": [
+        0.06700000001001172,
+        0.0669999999954598,
+        0.0669999999954598,
+        0.06700000001001172,
+        0.06699999999591455,
+        0.06699999999455031,
+        0.0,
+        0.0,
+        0.06700000001001172
+      ]
+    },
+    "classification_on_matched_visible_alarms": {
+      "macro_f1": 1.0,
+      "weighted_f1": 1.0
+    },
+    "sample_level_per_bus_predictions": {
+      "macro_f1_0_8": 0.860749184510204,
+      "macro_f1_visible_0_7": 0.9683428325739795,
+      "weighted_f1": 0.9988057148908125
+    },
+    "interpretation": "The 1.0 detection result is a visible labeled-data audit, not a hidden-test guarantee. The detector path does not use Event labels for alarm firing; Event is used here only for scoring and training labels. Calibration uses first-60-second robust candidates filtered by DATA_PRESENT and phase consistency, not Event == 0."
+  },
+  "thresholds": {
+    "eta_threshold": 4780.219554142464,
+    "bad_data_phase_unbalance_threshold": 0.04,
+    "chi2_k_on_frames": 3,
+    "chi2_k_off_frames": 15,
+    "bad_data_k_on_frames": 2,
+    "bad_data_k_off_frames": 5
+  },
+  "alarms": [
+    {
+      "alarm_id": 1,
+      "alarm_frame": 99,
+      "timestamp_s": 3.3000000000029104,
+      "timestamp_min": 0.0550000000000485,
+      "detector_source": "phase_unbalance_bad_data",
+      "eta": 17.05055091581526,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.0035668970269450316,
+      "bad_data_score": 0.0790462427619889,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 7,
+      "predicted_label_name": "bad_data",
+      "predicted_location_bus": 2,
+      "top3_buses": [
+        2,
+        19,
+        5
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 1,
+        "label": 7,
+        "label_name": "bad_data",
+        "start_frame": 98,
+        "end_frame": 119,
+        "start_s": 3.26600000000326,
+        "end_s": 3.966000000000349,
+        "duration_s": 0.6999999999970887,
+        "true_bus": 2
+      },
+      "state_features": {
+        "top_bus": 2,
+        "top_energy": 2.186985833023528,
+        "entropy": 3.1136083960493073,
+        "bus7_energy": 0.4186775223059193,
+        "bus23_energy": 0.2035003400451721,
+        "bus24_energy": 0.07161449833381707,
+        "line_24_23_energy": 0.2694432609008496
+      },
+      "state_top10": [
+        {
+          "bus": 2,
+          "energy": 2.186985833023528
+        },
+        {
+          "bus": 30,
+          "energy": 2.1869858010267933
+        },
+        {
+          "bus": 25,
+          "energy": 1.808134176208199
+        },
+        {
+          "bus": 37,
+          "energy": 1.80813412800883
+        },
+        {
+          "bus": 3,
+          "energy": 1.0469125204284335
+        },
+        {
+          "bus": 1,
+          "energy": 0.9824893346074377
+        },
+        {
+          "bus": 26,
+          "energy": 0.7021438380677174
+        },
+        {
+          "bus": 18,
+          "energy": 0.6715038368482276
+        },
+        {
+          "bus": 27,
+          "energy": 0.581589603947884
+        },
+        {
+          "bus": 31,
+          "energy": 0.5094045839436717
+        }
+      ],
+      "plot": "figures/event_01_label7_bad_data.png"
+    },
+    {
+      "alarm_id": 2,
+      "alarm_frame": 10032,
+      "timestamp_s": 334.3999999999942,
+      "timestamp_min": 5.573333333333236,
+      "detector_source": "phase_unbalance_bad_data",
+      "eta": 257.927817352176,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.0539573160669283,
+      "bad_data_score": 0.07940260588930417,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 7,
+      "predicted_label_name": "bad_data",
+      "predicted_location_bus": 39,
+      "top3_buses": [
+        39,
+        22,
+        10
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 2,
+        "label": 7,
+        "label_name": "bad_data",
+        "start_frame": 10031,
+        "end_frame": 10053,
+        "start_s": 334.36599999999453,
+        "end_s": 335.09999999999127,
+        "duration_s": 0.7339999999967404,
+        "true_bus": 39
+      },
+      "state_features": {
+        "top_bus": 39,
+        "top_energy": 1.2833315524612912,
+        "entropy": 3.3929736109770796,
+        "bus7_energy": 0.23690422348581372,
+        "bus23_energy": 0.09646813329186456,
+        "bus24_energy": 0.0628218004385785,
+        "line_24_23_energy": 0.11329129971850758
+      },
+      "state_top10": [
+        {
+          "bus": 39,
+          "energy": 1.2833315524612912
+        },
+        {
+          "bus": 1,
+          "energy": 0.7937644960174326
+        },
+        {
+          "bus": 9,
+          "energy": 0.7680607200285966
+        },
+        {
+          "bus": 38,
+          "energy": 0.34608345709633725
+        },
+        {
+          "bus": 29,
+          "energy": 0.34605545312212305
+        },
+        {
+          "bus": 10,
+          "energy": 0.3196465388319844
+        },
+        {
+          "bus": 32,
+          "energy": 0.31960995064119346
+        },
+        {
+          "bus": 28,
+          "energy": 0.31779326993961216
+        },
+        {
+          "bus": 5,
+          "energy": 0.30257763699183304
+        },
+        {
+          "bus": 11,
+          "energy": 0.2841443139933436
+        }
+      ],
+      "plot": "figures/event_02_label7_bad_data.png"
+    },
+    {
+      "alarm_id": 3,
+      "alarm_frame": 10097,
+      "timestamp_s": 336.5659999999916,
+      "timestamp_min": 5.609433333333194,
+      "detector_source": "phase_unbalance_bad_data",
+      "eta": 267.7249784525522,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.056006837221638885,
+      "bad_data_score": 0.08159346646841228,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 7,
+      "predicted_label_name": "bad_data",
+      "predicted_location_bus": 39,
+      "top3_buses": [
+        39,
+        10,
+        2
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 3,
+        "label": 7,
+        "label_name": "bad_data",
+        "start_frame": 10096,
+        "end_frame": 10127,
+        "start_s": 336.5329999999958,
+        "end_s": 337.5659999999916,
+        "duration_s": 1.032999999995809,
+        "true_bus": 39
+      },
+      "state_features": {
+        "top_bus": 39,
+        "top_energy": 2.39351011494465,
+        "entropy": 2.888545409210557,
+        "bus7_energy": 0.10850377166465415,
+        "bus23_energy": 0.25059258604428764,
+        "bus24_energy": 0.11296208528820449,
+        "line_24_23_energy": 0.31940783642232917
+      },
+      "state_top10": [
+        {
+          "bus": 39,
+          "energy": 2.39351011494465
+        },
+        {
+          "bus": 9,
+          "energy": 1.4833376207651399
+        },
+        {
+          "bus": 1,
+          "energy": 1.4580960000438241
+        },
+        {
+          "bus": 22,
+          "energy": 0.2890310613544677
+        },
+        {
+          "bus": 35,
+          "energy": 0.289005623824934
+        },
+        {
+          "bus": 23,
+          "energy": 0.25059258604428764
+        },
+        {
+          "bus": 36,
+          "energy": 0.25054540041800477
+        },
+        {
+          "bus": 30,
+          "energy": 0.2501767805988144
+        },
+        {
+          "bus": 2,
+          "energy": 0.25014766401686706
+        },
+        {
+          "bus": 29,
+          "energy": 0.21110771395117628
+        }
+      ],
+      "plot": "figures/event_03_label7_bad_data.png"
+    },
+    {
+      "alarm_id": 4,
+      "alarm_frame": 16099,
+      "timestamp_s": 536.6330000000016,
+      "timestamp_min": 8.94388333333336,
+      "detector_source": "data_present_missing",
+      "eta": 17.217290763404687,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.0036017782380904344,
+      "bad_data_score": 0.008551936867409347,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 5,
+      "predicted_label_name": "missing_data",
+      "predicted_location_bus": 29,
+      "top3_buses": [
+        29,
+        38,
+        28
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 4,
+        "label": 5,
+        "label_name": "missing_data",
+        "start_frame": 16097,
+        "end_frame": 16908,
+        "start_s": 536.5659999999916,
+        "end_s": 563.5999999999913,
+        "duration_s": 27.03399999999965,
+        "true_bus": 29
+      },
+      "state_features": {
+        "top_bus": 29,
+        "top_energy": 55.97652388931348,
+        "entropy": 2.1289922638486773,
+        "bus7_energy": 0.22482064791460646,
+        "bus23_energy": 0.4115363698422467,
+        "bus24_energy": 2.2435885685359898,
+        "line_24_23_energy": 3.1596146678828614
+      },
+      "state_top10": [
+        {
+          "bus": 29,
+          "energy": 55.97652388931348
+        },
+        {
+          "bus": 38,
+          "energy": 55.97649390768297
+        },
+        {
+          "bus": 28,
+          "energy": 47.91828098538166
+        },
+        {
+          "bus": 26,
+          "energy": 22.76738020965743
+        },
+        {
+          "bus": 27,
+          "energy": 14.894065844738316
+        },
+        {
+          "bus": 17,
+          "energy": 5.64714316528438
+        },
+        {
+          "bus": 25,
+          "energy": 5.5130759208965765
+        },
+        {
+          "bus": 37,
+          "energy": 5.513032562813327
+        },
+        {
+          "bus": 18,
+          "energy": 4.109956749678873
+        },
+        {
+          "bus": 16,
+          "energy": 2.552850994059228
+        }
+      ],
+      "plot": "figures/event_04_label5_missing_data.png"
+    },
+    {
+      "alarm_id": 5,
+      "alarm_frame": 18432,
+      "timestamp_s": 614.3999999999942,
+      "timestamp_min": 10.239999999999903,
+      "detector_source": "data_present_missing",
+      "eta": 26.75980060631318,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.0055980275180297,
+      "bad_data_score": 0.01636177587345296,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 5,
+      "predicted_label_name": "missing_data",
+      "predicted_location_bus": 29,
+      "top3_buses": [
+        29,
+        38,
+        28
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 5,
+        "label": 5,
+        "label_name": "missing_data",
+        "start_frame": 18430,
+        "end_frame": 19302,
+        "start_s": 614.3329999999987,
+        "end_s": 643.3999999999942,
+        "duration_s": 29.06699999999546,
+        "true_bus": 29
+      },
+      "state_features": {
+        "top_bus": 29,
+        "top_energy": 42.24628491284729,
+        "entropy": 2.2568583229277595,
+        "bus7_energy": 0.42520552511365356,
+        "bus23_energy": 0.5375794762158311,
+        "bus24_energy": 0.9909451271314669,
+        "line_24_23_energy": 1.2176279525892846
+      },
+      "state_top10": [
+        {
+          "bus": 29,
+          "energy": 42.24628491284729
+        },
+        {
+          "bus": 38,
+          "energy": 42.24625183443102
+        },
+        {
+          "bus": 28,
+          "energy": 36.146371024208186
+        },
+        {
+          "bus": 26,
+          "energy": 17.10770438821001
+        },
+        {
+          "bus": 27,
+          "energy": 11.002799451710057
+        },
+        {
+          "bus": 25,
+          "energy": 4.364246667190552
+        },
+        {
+          "bus": 37,
+          "energy": 4.3641984206022535
+        },
+        {
+          "bus": 17,
+          "energy": 3.832933198158828
+        },
+        {
+          "bus": 18,
+          "energy": 2.8121738212645235
+        },
+        {
+          "bus": 34,
+          "energy": 1.302624251898855
+        }
+      ],
+      "plot": "figures/event_05_label5_missing_data.png"
+    },
+    {
+      "alarm_id": 6,
+      "alarm_frame": 35197,
+      "timestamp_s": 1173.232999999993,
+      "timestamp_min": 19.553883333333214,
+      "detector_source": "chi2_or_data_present",
+      "eta": 529053396.76849145,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 110675.54340888422,
+      "bad_data_score": 0.22439843664454226,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 1,
+      "predicted_label_name": "fault",
+      "predicted_location_bus": 39,
+      "top3_buses": [
+        39,
+        9,
+        1
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 6,
+        "label": 1,
+        "label_name": "fault",
+        "start_frame": 35195,
+        "end_frame": 35343,
+        "start_s": 1173.1659999999974,
+        "end_s": 1178.0999999999913,
+        "duration_s": 4.93399999999383,
+        "true_bus": 39
+      },
+      "state_features": {
+        "top_bus": 39,
+        "top_energy": 4.482908055779228,
+        "entropy": 3.4183562104304954,
+        "bus7_energy": 1.9180831474782731,
+        "bus23_energy": 1.0356439816734402,
+        "bus24_energy": 0.7248985471611549,
+        "line_24_23_energy": 1.191016698929583
+      },
+      "state_top10": [
+        {
+          "bus": 39,
+          "energy": 4.482908055779228
+        },
+        {
+          "bus": 9,
+          "energy": 3.3244389910564847
+        },
+        {
+          "bus": 1,
+          "energy": 2.850749840916351
+        },
+        {
+          "bus": 6,
+          "energy": 1.9432861464866167
+        },
+        {
+          "bus": 31,
+          "energy": 1.9432531133001774
+        },
+        {
+          "bus": 7,
+          "energy": 1.9180831474782731
+        },
+        {
+          "bus": 8,
+          "energy": 1.9068944805303105
+        },
+        {
+          "bus": 11,
+          "energy": 1.7054463332607408
+        },
+        {
+          "bus": 34,
+          "energy": 1.6680986683222918
+        },
+        {
+          "bus": 20,
+          "energy": 1.6680811467395025
+        }
+      ],
+      "plot": "figures/event_06_label1_fault.png"
+    },
+    {
+      "alarm_id": 7,
+      "alarm_frame": 71259,
+      "timestamp_s": 2375.300000000003,
+      "timestamp_min": 39.58833333333338,
+      "detector_source": "chi2_or_data_present",
+      "eta": 19146.03022941142,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 4.005261685693864,
+      "bad_data_score": 0.01735786489638999,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 2,
+      "predicted_label_name": "line_outage",
+      "predicted_location_bus": 35,
+      "top3_buses": [
+        35,
+        22,
+        36
+      ],
+      "top3_lines": [
+        {
+          "line": [
+            23,
+            24
+          ],
+          "score": 0.9699557893082557
+        },
+        {
+          "line": [
+            22,
+            23
+          ],
+          "score": 0.9699547893082556
+        },
+        {
+          "line": [
+            22,
+            35
+          ],
+          "score": 0.9127214241697449
+        }
+      ],
+      "matched_event": {
+        "event_id": 7,
+        "label": 2,
+        "label_name": "line_outage",
+        "start_frame": 71257,
+        "end_frame": 71382,
+        "start_s": 2375.232999999993,
+        "end_s": 2379.399999999994,
+        "duration_s": 4.167000000001281,
+        "true_bus": 24
+      },
+      "state_features": {
+        "top_bus": 35,
+        "top_energy": 6.984742997293767,
+        "entropy": 2.9123888114823204,
+        "bus7_energy": 0.06546507077291966,
+        "bus23_energy": 5.951341993443213,
+        "bus24_energy": 2.190447698071386,
+        "line_24_23_energy": 7.831789141129127
+      },
+      "state_top10": [
+        {
+          "bus": 35,
+          "energy": 6.984742997293767
+        },
+        {
+          "bus": 22,
+          "energy": 6.9847209571650595
+        },
+        {
+          "bus": 36,
+          "energy": 5.951382928537239
+        },
+        {
+          "bus": 23,
+          "energy": 5.951341993443213
+        },
+        {
+          "bus": 21,
+          "energy": 4.22101051434799
+        },
+        {
+          "bus": 24,
+          "energy": 2.190447698071386
+        },
+        {
+          "bus": 19,
+          "energy": 2.1629489674079156
+        },
+        {
+          "bus": 33,
+          "energy": 2.1629259556655187
+        },
+        {
+          "bus": 20,
+          "energy": 2.162904655212343
+        },
+        {
+          "bus": 34,
+          "energy": 2.162877147393099
+        }
+      ],
+      "plot": "figures/event_07_label2_line_outage.png"
+    },
+    {
+      "alarm_id": 8,
+      "alarm_frame": 77542,
+      "timestamp_s": 2584.732999999993,
+      "timestamp_min": 43.078883333333216,
+      "detector_source": "data_present_missing",
+      "eta": 24.33563663709443,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.005090903537266514,
+      "bad_data_score": 0.018767059044078997,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 5,
+      "predicted_label_name": "missing_data",
+      "predicted_location_bus": 29,
+      "top3_buses": [
+        29,
+        28,
+        38
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 8,
+        "label": 5,
+        "label_name": "missing_data",
+        "start_frame": 77540,
+        "end_frame": 83282,
+        "start_s": 2584.665999999997,
+        "end_s": 2776.065999999992,
+        "duration_s": 191.3999999999951,
+        "true_bus": 29
+      },
+      "state_features": {
+        "top_bus": 28,
+        "top_energy": 3556.066255945833,
+        "entropy": 1.1467927547954562,
+        "bus7_energy": 0.03608817616927018,
+        "bus23_energy": 0.35247235611311223,
+        "bus24_energy": 1.5075300969654575,
+        "line_24_23_energy": 2.08505896739163
+      },
+      "state_top10": [
+        {
+          "bus": 28,
+          "energy": 3556.066255945833
+        },
+        {
+          "bus": 29,
+          "energy": 3548.6078221519415
+        },
+        {
+          "bus": 38,
+          "energy": 3548.607793812356
+        },
+        {
+          "bus": 26,
+          "energy": 20.668141224969382
+        },
+        {
+          "bus": 27,
+          "energy": 13.358924448827477
+        },
+        {
+          "bus": 17,
+          "energy": 4.774431696267519
+        },
+        {
+          "bus": 37,
+          "energy": 4.732404963905487
+        },
+        {
+          "bus": 25,
+          "energy": 4.7323618503818965
+        },
+        {
+          "bus": 18,
+          "energy": 3.423660308087335
+        },
+        {
+          "bus": 16,
+          "energy": 1.8192761493205163
+        }
+      ],
+      "plot": "figures/event_08_label5_missing_data.png"
+    },
+    {
+      "alarm_id": 9,
+      "alarm_frame": 88075,
+      "timestamp_s": 2935.8329999999987,
+      "timestamp_min": 48.930549999999975,
+      "detector_source": "data_present_missing",
+      "eta": 12.957247068175636,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 0.00271059664130847,
+      "bad_data_score": 0.011472881435279081,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 5,
+      "predicted_label_name": "missing_data",
+      "predicted_location_bus": 29,
+      "top3_buses": [
+        29,
+        38,
+        28
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 9,
+        "label": 5,
+        "label_name": "missing_data",
+        "start_frame": 88073,
+        "end_frame": 89290,
+        "start_s": 2935.766000000004,
+        "end_s": 2976.3329999999987,
+        "duration_s": 40.56699999999455,
+        "true_bus": 29
+      },
+      "state_features": {
+        "top_bus": 38,
+        "top_energy": 57.99480226054733,
+        "entropy": 2.248669349414017,
+        "bus7_energy": 0.6496511671339271,
+        "bus23_energy": 0.2952593813259162,
+        "bus24_energy": 1.9835898632153581,
+        "line_24_23_energy": 2.827755104160079
+      },
+      "state_top10": [
+        {
+          "bus": 38,
+          "energy": 57.99480226054733
+        },
+        {
+          "bus": 29,
+          "energy": 57.99477026198936
+        },
+        {
+          "bus": 28,
+          "energy": 49.56367069794877
+        },
+        {
+          "bus": 26,
+          "energy": 23.248933978792465
+        },
+        {
+          "bus": 27,
+          "energy": 15.065572226827348
+        },
+        {
+          "bus": 17,
+          "energy": 5.454854283886987
+        },
+        {
+          "bus": 37,
+          "energy": 5.078444907925816
+        },
+        {
+          "bus": 25,
+          "energy": 5.078396089413644
+        },
+        {
+          "bus": 18,
+          "energy": 3.8269458325136587
+        },
+        {
+          "bus": 39,
+          "energy": 2.453602081983844
+        }
+      ],
+      "plot": "figures/event_09_label5_missing_data.png"
+    },
+    {
+      "alarm_id": 10,
+      "alarm_frame": 89291,
+      "timestamp_s": 2976.3659999999945,
+      "timestamp_min": 49.606099999999905,
+      "detector_source": "data_present_missing",
+      "eta": 14643393.949516065,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 3063.3308331677626,
+      "bad_data_score": 0.021422368306307765,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 6,
+      "predicted_label_name": "missing_data_plus_physical",
+      "predicted_location_bus": 29,
+      "top3_buses": [
+        29,
+        4,
+        14
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 10,
+        "label": 6,
+        "label_name": "missing_data_plus_physical",
+        "start_frame": 89291,
+        "end_frame": 89844,
+        "start_s": 2976.3659999999945,
+        "end_s": 2994.800000000003,
+        "duration_s": 18.434000000008382,
+        "true_bus": 29
+      },
+      "state_features": {
+        "top_bus": 4,
+        "top_energy": 3240.470685876144,
+        "entropy": 2.7167434865833413,
+        "bus7_energy": 0.7911828949965654,
+        "bus23_energy": 230.5760348833182,
+        "bus24_energy": 1083.5102459132029,
+        "line_24_23_energy": 1509.977351428145
+      },
+      "state_top10": [
+        {
+          "bus": 4,
+          "energy": 3240.470685876144
+        },
+        {
+          "bus": 14,
+          "energy": 3020.943897770613
+        },
+        {
+          "bus": 3,
+          "energy": 3004.823886016441
+        },
+        {
+          "bus": 26,
+          "energy": 2625.5884849867284
+        },
+        {
+          "bus": 28,
+          "energy": 2625.5883960240403
+        },
+        {
+          "bus": 29,
+          "energy": 2625.5883851453664
+        },
+        {
+          "bus": 38,
+          "energy": 2625.5883665257065
+        },
+        {
+          "bus": 18,
+          "energy": 2316.585540317079
+        },
+        {
+          "bus": 27,
+          "energy": 2288.243995620962
+        },
+        {
+          "bus": 17,
+          "energy": 1892.043075842666
+        }
+      ],
+      "plot": "figures/event_10_label6_missing_data_plus_physical.png"
+    },
+    {
+      "alarm_id": 11,
+      "alarm_frame": 89845,
+      "timestamp_s": 2994.8329999999987,
+      "timestamp_min": 49.91388333333331,
+      "detector_source": "chi2_or_data_present",
+      "eta": 75991.79900074535,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 15.897135715218777,
+      "bad_data_score": 0.017234049662285145,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 3,
+      "predicted_label_name": "generation_change",
+      "predicted_location_bus": 2,
+      "top3_buses": [
+        2,
+        30,
+        25
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 11,
+        "label": 3,
+        "label_name": "generation_change",
+        "start_frame": 89845,
+        "end_frame": 98818,
+        "start_s": 2994.8329999999987,
+        "end_s": 3293.933,
+        "duration_s": 299.1000000000013,
+        "true_bus": 2
+      },
+      "state_features": {
+        "top_bus": 38,
+        "top_energy": 45.0451741251316,
+        "entropy": 3.114533379277235,
+        "bus7_energy": 2.2772130696500725,
+        "bus23_energy": 6.522999733006785,
+        "bus24_energy": 4.459992782085979,
+        "line_24_23_energy": 7.554503208467188
+      },
+      "state_top10": [
+        {
+          "bus": 38,
+          "energy": 45.0451741251316
+        },
+        {
+          "bus": 29,
+          "energy": 45.04514979281225
+        },
+        {
+          "bus": 28,
+          "energy": 37.17078061724661
+        },
+        {
+          "bus": 2,
+          "energy": 19.09877354753009
+        },
+        {
+          "bus": 30,
+          "energy": 19.098744350636338
+        },
+        {
+          "bus": 26,
+          "energy": 12.597670804239343
+        },
+        {
+          "bus": 1,
+          "energy": 12.47889094751123
+        },
+        {
+          "bus": 25,
+          "energy": 11.021420301442626
+        },
+        {
+          "bus": 37,
+          "energy": 11.021383195494064
+        },
+        {
+          "bus": 39,
+          "energy": 8.629750102614276
+        }
+      ],
+      "plot": "figures/event_11_label3_generation_change.png"
+    },
+    {
+      "alarm_id": 12,
+      "alarm_frame": 116334,
+      "timestamp_s": 3877.800000000003,
+      "timestamp_min": 64.63000000000005,
+      "detector_source": "chi2_or_data_present",
+      "eta": 5689.557903598579,
+      "eta_threshold": 4780.219554142464,
+      "eta_over_threshold": 1.1902294108370182,
+      "bad_data_score": 0.013626450704238215,
+      "bad_data_threshold": 0.04,
+      "predicted_label": 4,
+      "predicted_label_name": "load_change",
+      "predicted_location_bus": 7,
+      "top3_buses": [
+        7,
+        31,
+        6
+      ],
+      "top3_lines": [],
+      "matched_event": {
+        "event_id": 12,
+        "label": 4,
+        "label_name": "load_change",
+        "start_frame": 116332,
+        "end_frame": 125463,
+        "start_s": 3877.732999999993,
+        "end_s": 4182.099999999991,
+        "duration_s": 304.36699999999837,
+        "true_bus": 7
+      },
+      "state_features": {
+        "top_bus": 31,
+        "top_energy": 8.1640432355291,
+        "entropy": 3.2723183697455855,
+        "bus7_energy": 7.594874788759631,
+        "bus23_energy": 1.5947032095762226,
+        "bus24_energy": 0.3600365354466792,
+        "line_24_23_energy": 2.212036546640994
+      },
+      "state_top10": [
+        {
+          "bus": 31,
+          "energy": 8.1640432355291
+        },
+        {
+          "bus": 6,
+          "energy": 8.163980125385446
+        },
+        {
+          "bus": 5,
+          "energy": 7.9923594157143
+        },
+        {
+          "bus": 7,
+          "energy": 7.594874788759631
+        },
+        {
+          "bus": 8,
+          "energy": 7.31003743471816
+        },
+        {
+          "bus": 11,
+          "energy": 6.719296558322038
+        },
+        {
+          "bus": 12,
+          "energy": 6.175640016067772
+        },
+        {
+          "bus": 32,
+          "energy": 6.015500525994629
+        },
+        {
+          "bus": 10,
+          "energy": 6.01545004271572
+        },
+        {
+          "bus": 13,
+          "energy": 5.625350815017156
+        }
+      ],
+      "plot": "figures/event_12_label4_load_change.png"
+    }
+  ]
+}

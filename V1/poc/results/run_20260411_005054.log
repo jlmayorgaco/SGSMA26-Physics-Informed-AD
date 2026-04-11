@@ -1,0 +1,22 @@
+2026-04-11 00:50:54,848 [poc.evaluation.ablation] INFO - Environment: python=3.13.9 platform=Windows-11-10.0.26200-SP0 seed=42
+2026-04-11 00:50:54,858 [poc.evaluation.ablation] INFO - Loading real competition data from C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\data\raw
+2026-04-11 00:50:54,917 [src.io.load_csv] INFO - Header check passed: ANG before MAG as documented.
+2026-04-11 00:51:01,842 [src.io.load_csv] INFO - Merged DataFrame: 161379 rows × 130 cols (expected 161 379 rows)
+2026-04-11 00:51:01,857 [src.io.load_csv] INFO - Global event distribution: {np.int8(0): 133721, np.int8(4): 9132, np.int8(3): 8974, np.int8(5): 8646, np.int8(6): 554, np.int8(1): 149, np.int8(2): 126, np.int8(7): 77}
+2026-04-11 00:51:20,750 [poc.evaluation.ablation] INFO - Loaded 196 synthetic scenarios for full ablation
+2026-04-11 00:51:21,530 [poc.evaluation.ablation] INFO - E1_LSE x C1_RULES: real macro-F1=0.661 synthetic macro-F1=0.333 params=0 score=0.661
+2026-04-11 00:51:22,498 [poc.evaluation.ablation] INFO - E1_LSE x C2_LGBM: real macro-F1=0.000 synthetic macro-F1=0.643 params=49600 score=-0.141
+2026-04-11 00:51:22,792 [poc.evaluation.ablation] INFO - E1_LSE x C3_TCN: real macro-F1=0.048 synthetic macro-F1=0.000 params=11817 score=-0.075
+2026-04-11 00:51:23,841 [poc.evaluation.ablation] INFO - E1_LSE x C4_TRANSFORMER: real macro-F1=0.119 synthetic macro-F1=0.655 params=33481 score=-0.017
+2026-04-11 00:51:24,992 [poc.evaluation.ablation] INFO - E2_EKF x C1_RULES: real macro-F1=0.700 synthetic macro-F1=0.333 params=14374 score=0.575
+2026-04-11 00:51:25,572 [poc.evaluation.ablation] INFO - E2_EKF x C2_LGBM: real macro-F1=0.143 synthetic macro-F1=1.000 params=63974 score=-0.001
+2026-04-11 00:51:25,725 [poc.evaluation.ablation] INFO - E2_EKF x C3_TCN: real macro-F1=0.048 synthetic macro-F1=0.000 params=26191 score=-0.085
+2026-04-11 00:51:25,928 [poc.evaluation.ablation] INFO - E2_EKF x C4_TRANSFORMER: real macro-F1=0.057 synthetic macro-F1=0.600 params=47855 score=-0.083
+2026-04-11 00:51:27,893 [poc.evaluation.ablation] INFO - E3_UKF x C1_RULES: real macro-F1=0.700 synthetic macro-F1=0.333 params=17594 score=0.573
+2026-04-11 00:51:28,471 [poc.evaluation.ablation] INFO - E3_UKF x C2_LGBM: real macro-F1=0.143 synthetic macro-F1=0.655 params=67194 score=-0.002
+2026-04-11 00:51:28,640 [poc.evaluation.ablation] INFO - E3_UKF x C3_TCN: real macro-F1=0.048 synthetic macro-F1=0.000 params=29411 score=-0.086
+2026-04-11 00:51:28,793 [poc.evaluation.ablation] INFO - E3_UKF x C4_TRANSFORMER: real macro-F1=0.057 synthetic macro-F1=0.643 params=51075 score=-0.084
+2026-04-11 00:55:03,857 [poc.evaluation.ablation] INFO - E4_GNN x C1_RULES: real macro-F1=0.550 synthetic macro-F1=0.148 params=3054 score=0.445
+2026-04-11 00:55:04,699 [poc.evaluation.ablation] INFO - E4_GNN x C2_LGBM: real macro-F1=0.000 synthetic macro-F1=0.655 params=52654 score=-0.142
+2026-04-11 00:55:04,861 [poc.evaluation.ablation] INFO - E4_GNN x C3_TCN: real macro-F1=0.000 synthetic macro-F1=0.148 params=14871 score=-0.125
+2026-04-11 00:55:05,088 [poc.evaluation.ablation] INFO - E4_GNN x C4_TRANSFORMER: real macro-F1=0.143 synthetic macro-F1=0.532 params=36535 score=0.006
