@@ -73,8 +73,13 @@ def _train_model(
         log.info("Loading saved model from %s", model_path)
         with open(model_path, "rb") as f:
             bundle = pickle.load(f)
-        return (bundle["clf"], bundle["h0_flat"], bundle["offset"],
-                bundle["R"], bundle["threshold"])
+        if "clf" in bundle:
+            return (bundle["clf"], bundle["h0_flat"], bundle["offset"],
+                    bundle["R"], bundle["threshold"])
+        if "model" in bundle:
+            log.info("Loaded benchmark-selected classifier: %s", bundle.get("selected_model", "unknown"))
+            return bundle["model"], h0_flat, offset, R, det.threshold
+        raise KeyError(f"Unrecognized model bundle keys: {sorted(bundle)}")
 
     clf = train(
         df_train, df_val,

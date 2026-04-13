@@ -1,0 +1,137 @@
+{
+  "seed": 20260411,
+  "metadata_dir": "data/metadata",
+  "output_dir": "data/synthetic_v2",
+  "n_scenarios": 5000,
+  "fps": 30,
+  "duration_sec": 12.0,
+  "nominal_frequency_hz": 60.0,
+  "pre_event_min_sec": 1.0,
+  "pmu_buses": [2, 5, 6, 10, 19, 22, 29, 39],
+  "output_buses": "all",
+  "filename_style": "pmu_prefix",
+  "allow_raw_data_sampling": false,
+  "topology": {
+    "electrical_distance_tau": 2.6,
+    "minimum_observable_weight": 0.035
+  },
+  "base_current_a": {
+    "2": 585.0,
+    "5": 520.0,
+    "6": 500.0,
+    "10": 430.0,
+    "19": 650.0,
+    "22": 560.0,
+    "29": 410.0,
+    "39": 700.0
+  },
+  "noise": {
+    "voltage_mag_std_frac": 0.0015,
+    "current_mag_std_frac": 0.006,
+    "angle_std_deg": 0.05,
+    "frequency_std_hz": 0.003,
+    "rocof_std_hz_per_s": 0.02,
+    "nan_probability_normal": 0.0
+  },
+  "event_mix": {
+    "fault": 0.22,
+    "line_outage": 0.16,
+    "generation_change": 0.16,
+    "load_change": 0.16,
+    "pmu_dropout": 0.10,
+    "bad_data": 0.10,
+    "cyber_physical": 0.06,
+    "multi_event": 0.04
+  },
+  "coverage_first": [
+    {
+      "kind": "fault",
+      "nodes": [7],
+      "fault_mode": "three_phase"
+    },
+    {
+      "kind": "line_outage",
+      "line": [24, 23]
+    },
+    {
+      "kind": "generation_change",
+      "nodes": [2],
+      "mode": "ramp_down"
+    },
+    {
+      "kind": "load_change",
+      "nodes": [7],
+      "mode": "load_increase"
+    },
+    {
+      "kind": "pmu_dropout",
+      "pmu_bus": 29
+    },
+    {
+      "kind": "bad_data",
+      "pmu_bus": 29,
+      "mode": "current_spike"
+    },
+    {
+      "kind": "cyber_physical",
+      "pmu_bus": 29,
+      "physical_kind": "generation_change",
+      "physical_nodes": [2],
+      "mode": "ramp_down"
+    },
+    {
+      "kind": "multi_event"
+    }
+  ],
+  "event_types": {
+    "fault": {
+      "duration_sec": [0.10, 0.45],
+      "severity": [0.20, 0.85],
+      "fault_modes": ["three_phase", "single_line_ground_A", "single_line_ground_B", "single_line_ground_C", "line_line_AB", "line_line_BC", "line_line_CA"]
+    },
+    "line_outage": {
+      "duration_sec": [3.0, 8.5],
+      "severity": [0.20, 0.75]
+    },
+    "generation_change": {
+      "duration_sec": [3.0, 9.0],
+      "severity": [0.15, 0.65],
+      "modes": ["trip", "ramp_up", "ramp_down"]
+    },
+    "load_change": {
+      "duration_sec": [3.0, 9.0],
+      "severity": [0.15, 0.70],
+      "modes": ["load_increase", "load_decrease"]
+    },
+    "pmu_dropout": {
+      "duration_sec": [0.7, 4.5],
+      "severity": [1.0, 1.0]
+    },
+    "bad_data": {
+      "duration_sec": [0.35, 3.5],
+      "severity": [0.10, 0.60],
+      "modes": ["voltage_scale", "current_spike", "angle_bias", "frequency_bias"]
+    },
+    "cyber_physical": {
+      "duration_sec": [2.0, 5.5],
+      "severity": [0.20, 0.70],
+      "physical_modes": ["fault", "load_change", "generation_change"]
+    },
+    "multi_event": {
+      "duration_sec": [2.0, 7.0],
+      "severity": [0.15, 0.65],
+      "max_events": 3
+    }
+  },
+  "review": {
+    "plot_first_n_scenarios": 8,
+    "plot_buses_per_scenario": [2, 5, 6, 10, 19, 22, 29, 39],
+    "include_current_plots": true,
+    "include_frequency_plots": true
+  },
+  "training": {
+    "feature_buses": [2, 5, 6, 10, 19, 22, 29, 39],
+    "hidden_truth_buses": "non_pmu_outputs_only",
+    "notes": "Models must use only the 8 guideline PMU buses as features. The generated non-PMU bus CSVs are hidden truth/review artifacts for localization evaluation, never model inputs."
+  }
+}

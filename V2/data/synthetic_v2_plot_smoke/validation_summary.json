@@ -1,0 +1,40 @@
+{
+  "dataset_root": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\data\\synthetic_v2_plot_smoke",
+  "scenario_dirs": 8,
+  "output_buses_per_scenario": 39,
+  "bus_csv_files": 312,
+  "review_png_files": 0,
+  "engineering_review_markdown": 0,
+  "aggregate_label_counts": {
+    "0": 75529,
+    "1": 429,
+    "2": 8736,
+    "3": 15636,
+    "4": 4836,
+    "5": 112,
+    "6": 81,
+    "7": 168,
+    "8": 7105
+  },
+  "event_kind_counts": {
+    "ambiguous_overlap": 1,
+    "bad_data": 2,
+    "cyber_physical_overlap": 1,
+    "fault": 1,
+    "generation_change": 3,
+    "line_outage": 1,
+    "load_change": 2,
+    "pmu_dropout": 2
+  },
+  "branch_model_source": "psse_raw_branch_reactance",
+  "andes": {
+    "available": true,
+    "case_path": "C:\\Users\\walla\\anaconda3\\Lib\\site-packages\\andes\\cases\\ieee39\\ieee39_full.xlsx",
+    "engine_used": "ieee39_topology_surrogate_with_andes_case_reference",
+    "note": "The synthetic generator is ANDES-aware and records the IEEE 39 case when available, but uses a fast topology/swing-response surrogate by default.",
+    "version": "2.0.0"
+  },
+  "filename_style": "pmu_prefix",
+  "errors": [],
+  "passed": true
+}

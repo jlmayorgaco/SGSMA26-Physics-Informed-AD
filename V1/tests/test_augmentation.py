@@ -24,7 +24,9 @@ from src.augmentation.andes_sim import (
     generate_load_change,
     generate_pmu_dropout,
     generate_post_cyber_physical,
+    generate_scenario_dataset,
     load_synthetic,
+    scenario_counts_for_total,
     _write_synthetic_csvs,
 )
 
@@ -319,6 +321,49 @@ class TestCsvWriteLoad:
                     "NaN values should survive CSV roundtrip"
                 )
 
+    def test_dropout_event_label_is_pmu_local_in_csv(self, minimal_stats, rng):
+        bus_data, ts, labels = generate_pmu_dropout(
+            29, minimal_stats, rng, t_event=2.0, dropout_sec=1.0
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            _write_synthetic_csvs(0, bus_data, ts, labels, out_dir)
+            bus29 = pd.read_csv(out_dir / "syn0000_Bus29_Competition_Data_nanmask.csv")
+            bus2 = pd.read_csv(out_dir / "syn0000_Bus2_Competition_Data_nanmask.csv")
+            assert set(bus29["Event"].unique()) == {0, 5}
+            assert set(bus2["Event"].unique()) == {0}
+            assert bus29.loc[bus29["Event"] == 5, "DATA_PRESENT"].eq(0).all()
+
+    def test_bad_data_event_label_is_pmu_local_in_csv(self, minimal_stats, rng):
+        from src.augmentation.andes_sim import generate_bad_data
+
+        bus_data, ts, labels = generate_bad_data(
+            39, minimal_stats, rng, t_event=2.0, duration_sec=0.8
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            _write_synthetic_csvs(0, bus_data, ts, labels, out_dir)
+            bus39 = pd.read_csv(out_dir / "syn0000_Bus39_Competition_Data_nanmask.csv")
+            bus2 = pd.read_csv(out_dir / "syn0000_Bus2_Competition_Data_nanmask.csv")
+            assert set(bus39["Event"].unique()) == {0, 7}
+            assert set(bus2["Event"].unique()) == {0}
+            assert bus39.loc[bus39["Event"] == 7, "DATA_PRESENT"].eq(1).all()
+
+    def test_cyber_physical_labels_match_raw_semantics_in_csv(self, minimal_stats, rng):
+        bus_data, ts, labels = generate_post_cyber_physical(
+            minimal_stats, rng, physical="gen", dropout_bus=29,
+            t_dropout=1.0, t_physical=2.0, t_recover=3.0,
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            _write_synthetic_csvs(0, bus_data, ts, labels, out_dir)
+            bus29 = pd.read_csv(out_dir / "syn0000_Bus29_Competition_Data_nanmask.csv")
+            bus2 = pd.read_csv(out_dir / "syn0000_Bus2_Competition_Data_nanmask.csv")
+            assert {5, 6}.issubset(set(bus29["Event"].unique()))
+            assert 6 not in set(bus2["Event"].unique())
+            assert 3 in set(bus2["Event"].unique())
+            assert bus29.loc[bus29["Event"].isin([5, 6]), "DATA_PRESENT"].eq(0).all()
+
 
 # ── extract_normal_baseline ────────────────────────────────────────────────────
 
@@ -342,6 +387,47 @@ class TestExtractNormalBaseline:
                 mean, std = stats[col]
                 assert np.isfinite(mean)
                 assert np.isfinite(std)
+
+
+# ── scenario-level generator interface ─────────────────────────────────────────
+
+class TestScenarioDataset:
+    def test_default_5000_mix_exact(self):
+        counts = scenario_counts_for_total(5000)
+        assert sum(counts.values()) == 5000
+        assert counts[1] == 850
+        assert counts[8] == 400
+        assert set(counts) == set(range(1, 9))
+
+    def test_small_mix_keeps_schema_labels(self):
+        counts = scenario_counts_for_total(16)
+        assert sum(counts.values()) == 16
+        assert all(v >= 1 for v in counts.values())
+
+    @SKIP_NO_DATA
+    def test_generate_dataset_smoke_manifest_and_cache(self, tmp_path):
+        out = tmp_path / "synthetic"
+        manifest = out / "manifest.json"
+        cache = out / "features_smoke.npz"
+        result = generate_scenario_dataset(
+            n_scenarios=8,
+            data_dir=DATA_DIR,
+            out_dir=out,
+            manifest=manifest,
+            feature_cache=cache,
+            seed=123,
+        )
+        assert result["requested_scenarios"] == 8
+        assert result["feature_cache_summary"]["label_counts"] == result["requested_label_mix"]
+        assert manifest.exists()
+        assert cache.exists()
+        data = np.load(cache)
+        assert data["X"].shape[0] == 8
+        assert data["X"].shape[1] > 0
+        first_bus = pd.read_csv(out / "syn0000_Bus2_Competition_Data_nanmask.csv")
+        assert list(first_bus.columns)[0] == "TIMESTAMP"
+        assert "DATA_PRESENT" in first_bus.columns
+        assert "Event" in first_bus.columns
 
 
 # ── real-data integration test ─────────────────────────────────────────────────

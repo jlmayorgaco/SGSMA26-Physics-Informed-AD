@@ -42,7 +42,7 @@ This report documents the complete SGSMA 2026 submission pipeline for detecting,
 classifying, and localizing power-system anomalies in the IEEE 39-bus system using
 only eight PMU streams. The final system combines a calibrated residual detector,
 explicit cyber-data-quality guards, a phase-unbalance bad-data detector, a compact
-44-feature LightGBM classifier, topology-aware localization, and a Ybus-based
+44-feature benchmark-selected classifier, topology-aware localization, and a Ybus-based
 all-bus voltage-state proxy. The visible-data alarm audit gives detection
 precision, recall, and F1 equal to 1.000. This does not mean that the algorithm
 is mathematically perfect or guaranteed to win hidden-test scoring. It means
@@ -237,7 +237,7 @@ DATA\_PRESENT missing OR three-phase bad-data unbalance
 $5\rightarrow6\rightarrow3$
 
 \vspace{0.5em}
-\textbf{Classifier}: 44 features around each onset, LightGBM, physics guards,
+\textbf{Classifier}: 44 features around each onset, benchmark-selected compact model, physics guards,
 label-7 force from bad-data detector
 
 \vspace{0.5em}
@@ -407,52 +407,68 @@ missing PMU should not be classified as a pure physical event on that PMU.\\
 
 \subsection{Classifier model}
 
-The production classifier is LightGBM:
+The production classifier is no longer hard-coded to one algorithm. The
+pipeline trains a ten-model compact benchmark and writes the selected estimator
+to \texttt{models/best\_event\_classifier.pkl}. Inference loads that registry
+bundle when it exists; otherwise it falls back to the original compact LightGBM
+training path. Physics guards still run after the model prediction, so missing
+data, cyber+physical overlaps, and phase-bad-data cases remain explainable even
+when the selected statistical classifier changes.
 
-\begin{itemize}
-  \item 200 estimators;
-  \item 31 leaves;
-  \item learning rate 0.05;
-  \item balanced class weights;
-  \item seed 42;
-  \item physics guards after prediction.
-\end{itemize}
+The model-size term uses an effective parameter count rather than raw file size
+alone. For a tree ensemble this is based on tree node/leaf counts; for sparse
+linear models it is the number of nonzero coefficients; for deterministic
+physics rules it is zero. The serialized size is still recorded in the registry
+so a very large model is visible during review.
 
-The effective learned parameter count is conservatively bounded by
+\subsection{Ten-model compact benchmark}
+
+The benchmark harness now compares exactly ten compact classifiers on the same
+44-feature physics-informed windows. The output files
+\texttt{report/model\_benchmark.csv} and \texttt{report/model\_benchmark.json}
+record visible-real macro-F1, visible-real weighted-F1, synthetic-heldout
+macro-F1, parameter count, serialized size, prediction time, and the penalized
+selection score for every model.
+
+The production classifier is selected by
 
 \begin{equation}
-  N_{\theta} \le 200 \times 31 \times 2 = 12400,
+  S =
+  0.7F^{\mathrm{visible}}_{\mathrm{macro}}
+  +0.3F^{\mathrm{synthetic}}_{\mathrm{macro}}
+  -0.05\log_{10}(N_{\theta}+1),
+  \label{eq:model_selection}
 \end{equation}
 
-which keeps the scoring penalty small:
-
-\begin{equation}
-  0.05\log_{10}(12400) \approx 0.20.
-\end{equation}
-
-\subsection{Five-model comparison}
-
-Five classifiers were compared on the same visible-transition probe. Extra Trees
-has the best probe macro-F1, but the production path keeps LightGBM because the
-full pipeline combines it with physics guards, deterministic cyber/bad-data
-logic, and lower inference cost.
+where $N_{\theta}$ is the effective parameter count. This makes the selection
+auditable: a slightly larger model must earn its complexity by improving
+visible-real and synthetic-heldout macro-F1.
 
 \begin{table}[H]
 \centering
-\caption{Five-model event-classifier comparison on the public visible-transition probe.}
-\begin{tabular}{lrrrr}
+\caption{Ten compact models in the benchmark registry.}
+\begin{tabular}{lp{0.58\linewidth}}
 \toprule
-Model & Accuracy & Macro-F1 & Weighted-F1 & Predict sec \\
+Model & Role in the comparison \\
 \midrule
-Extra Trees & 0.972 & 0.979 & 0.974 & 0.064 \\
-Random Forest & 0.944 & 0.813 & 0.937 & 0.067 \\
-LightGBM & 0.917 & 0.797 & 0.913 & 0.0068 \\
-Histogram Gradient Boosting & 0.917 & 0.797 & 0.913 & 0.030 \\
-RBF SVM & 0.278 & 0.683 & 0.280 & 0.0037 \\
+Physics rules & Deterministic explainable lower bound. \\
+GaussianNB & Small probabilistic baseline. \\
+L1 logistic regression & Sparse linear classifier. \\
+Linear SVM/SGD & Margin-based compact linear model. \\
+Pruned decision tree & Single transparent nonlinear tree. \\
+Small random forest & Low-depth bagged trees. \\
+Small extra trees & Low-depth randomized trees. \\
+Histogram gradient boosting & Compact sklearn boosted-tree model. \\
+LightGBM tiny & Very small production-style boosted tree. \\
+LightGBM small & Stronger boosted tree with still-small footprint. \\
 \bottomrule
 \end{tabular}
 \label{tab:model_benchmark}
 \end{table}
+
+The selected model bundle is written to
+\texttt{models/best\_event\_classifier.pkl}, and the registry with the complete
+comparison is written to \texttt{models/model\_registry.json}.
 
 The final matched-alarm classification score is 1.000 because the alarm set
 after physics guards contains one or more correctly classified visible events
@@ -611,39 +627,57 @@ The official \PredLoc{} field is bus-valued, so the submission writes a
 deterministic endpoint for line events, while the engineering JSON keeps the
 Top-3 line candidates.
 
+\subsection{Transparent physics score table}
+
+The localizer now keeps a per-bus score table rather than a single opaque score.
+Each candidate bus records Jacobian cosine evidence, reconstructed \Ybus{}
+residual energy, Zbus electrical-distance prior, direct PMU residual evidence,
+and a safe swing residual derived from frequency/ROCOF. The swing term is a
+fallback feature: it uses the measured PMU channels and Zbus spreading, and it
+does not import the optional UKF/ANDES/SymPy stack during normal inference. This
+keeps the Windows pipeline stable while preserving the electromechanical cue
+from the swing equation.
+
 \section{Synthetic and ANDES Evidence}
 
 \subsection{Synthetic augmentation}
 
 Synthetic training data is generated from calibration statistics and
-physics-shaped perturbations. The final synthetic training set has 620 events:
+physics-shaped perturbations. The production generator now creates 5000
+scenario IDs, and each scenario writes the same eight PMU CSV streams used by
+the competition schema. The CSVs remain reproducible artifacts under
+\texttt{data/synthetic/}; training prefers the generated feature cache
+\texttt{data/synthetic/features\_v1\_5000.npz} for speed.
 
 \begin{table}[H]
 \centering
-\caption{Synthetic event counts used for training augmentation.}
+\caption{Default 5000-scenario synthetic event mix. Targeted hard cases are
+included inside their parent labels, not double-counted.}
 \begin{tabular}{lr}
 \toprule
 Synthetic event class & Count \\
 \midrule
-Faults, label 1 & 80 \\
-General line outages, label 2 & 80 \\
-Generation changes, label 3 & 80 \\
-Load changes, label 4 & 80 \\
-PMU dropouts, label 5 & 40 \\
-Bad-data corruptions, label 7 & 80 \\
-Targeted Bus 7 load changes & 60 \\
-Targeted Bus 24--23 outages & 60 \\
-Post-cyber physical events, label-6 style & 60 \\
+Faults, label 1 & 850 \\
+Line outages, label 2 & 700 \\
+Generation changes, label 3 & 650 \\
+Load changes, label 4 & 700 \\
+PMU dropouts, label 5 & 550 \\
+Cyber+physical overlaps, label 6 & 500 \\
+Bad-data corruptions, label 7 & 650 \\
+Unknown/multi-event scenarios, label 8 & 400 \\
 \midrule
-Total & 620 \\
+Total & 5000 \\
 \bottomrule
 \end{tabular}
 \label{tab:synthetic_counts}
 \end{table}
 
 The important point is that the synthetic set is not merely random noise. It
-targets the weak cases: non-PMU Bus 7, line 24--23, post-cyber recovery plus
-physical events, and label-7 bad-data.
+targets the weak cases: non-PMU Bus 7 load/fault signatures, the Bus 24--23
+line outage, Bus 2 generation changes, Bus 29 cyber+physical overlaps, all
+eight PMU buses for dropout and bad-data cases, several fault impedances, and
+balanced/unbalanced fault subtypes. The manifest records the scenario mix,
+targeted coverage, seed, and feature-cache summary.
 
 \subsection{ANDES Bus 7 reconstruction experiment}
 
@@ -679,12 +713,142 @@ enough signal for localization features while remaining compact and robust.
   \label{fig:andes_rmse}
 \end{figure}
 
+\subsection{Label-by-label simulation suite}
+
+The report now includes one reproducible simulation bundle for each competition
+label 1--7. These are generated by
+\texttt{python -m src.pipeline.generate\_event\_simulations} and written under
+\texttt{experiments/event\_simulations/}. Each bundle contains the eight PMU CSV
+streams, metadata JSON, a short markdown summary, PMU plots, reconstructed
+\Ybus{} residual plots, topology/candidate-score plots, and line-candidate
+evidence where relevant.
+
+\begin{table}[H]
+\centering
+\caption{Simulation bundles used as report evidence.}
+\scriptsize
+\begin{tabular}{cllp{0.44\linewidth}}
+\toprule
+Label & Event & Target example & Main visible evidence \\
+\midrule
+1 & Fault & Bus 7 hidden fault & Voltage dip, current surge, \Ybus{} residual concentration. \\
+2 & Line outage & Line 24--23 & Endpoint residuals and line-candidate scores. \\
+3 & Generation change & Bus 2 generation step & Frequency/ROCOF transient and PMU spatial pattern. \\
+4 & Load change & Bus 7 load step & Non-PMU bus localization from topology and \Ybus{}. \\
+5 & Missing data & Bus 29 dropout & \DataPresent{} transition and NaN-only PMU evidence. \\
+6 & Cyber+physical & Bus 29 dropout plus generation change & Split cyber and physical evidence. \\
+7 & Bad data & Bus 29 phase corruption & Phase inconsistency while \DataPresent{} remains true. \\
+\bottomrule
+\end{tabular}
+\label{tab:event_simulation_suite}
+\end{table}
+
+\subsubsection{Simulation label 1: fault}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_01_fault/figures/pmu_overview.png}
+  \caption{Synthetic label-1 Bus 7 fault. The PMU-only view shows voltage and
+  current disturbance even though Bus 7 is not directly measured.}
+  \label{fig:sim_label1}
+\end{figure}
+
+\subsubsection{Simulation label 2: line outage}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_02_line_outage/figures/topology_candidates.png}
+  \caption{Synthetic label-2 Bus 24--23 line outage. The topology plot makes the
+  branch interpretation visible instead of reducing the event to an unexplained
+  single bus.}
+  \label{fig:sim_label2}
+\end{figure}
+
+\subsubsection{Simulation label 3: generation change}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_03_generation_change/figures/pmu_overview.png}
+  \caption{Synthetic label-3 Bus 2 generation step. The frequency and ROCOF
+  traces provide the electromechanical cue used by the classifier.}
+  \label{fig:sim_label3}
+\end{figure}
+
+\subsubsection{Simulation label 4: load change}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_04_load_change/figures/ybus_residuals.png}
+  \caption{Synthetic label-4 Bus 7 load change. The reconstructed all-bus
+  residual plot is used to explain how the eight PMUs can still point at a
+  hidden bus.}
+  \label{fig:sim_label4}
+\end{figure}
+
+\subsubsection{Simulation label 5: pure missing data}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_05_missing_data/figures/pmu_overview.png}
+  \caption{Synthetic label-5 pure PMU dropout. This separate example is important
+  because missing data should be solved by \DataPresent{} and NaN semantics, not
+  by pretending a physical grid transient occurred.}
+  \label{fig:sim_label5}
+\end{figure}
+
+\subsubsection{Simulation label 6: cyber plus physical}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_06_missing_data_plus_physical/figures/pmu_overview.png}
+  \caption{Synthetic label-6 cyber+physical overlap. The Bus 29 dropout is
+  explicit, while the remaining PMUs keep physical generation-change evidence.}
+  \label{fig:sim_label6}
+\end{figure}
+
+\subsubsection{Simulation label 7: bad data}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{../experiments/event_simulations/label_07_bad_data/figures/candidate_scores.png}
+  \caption{Synthetic label-7 bad-data corruption. The score table keeps the
+  evidence visible: phase/data-quality inconsistency is not treated as a network
+  fault.}
+  \label{fig:sim_label7}
+\end{figure}
+
 \section{Engineering-Review Examples}
 
 This section walks through representative alarms. The plots come from
 \texttt{report/engineering\_review/figures/}. Each plot shows observed PMU-bus
 voltage, estimated hidden-bus voltage when relevant, detector statistic, and
 bad-data score.
+
+\begin{table}[H]
+\centering
+\caption{Compact visible-alarm map linking labels, sources, localizer outputs,
+and review plots.}
+\scriptsize
+\begin{tabular}{rrrrlp{0.30\linewidth}}
+\toprule
+Alarm & Time min & Label & Pred. loc. & Source & Plot artifact \\
+\midrule
+1 & 0.055 & 7 & Bus 2 & bad-data guard & event\_01\_label7\_bad\_data.png \\
+2 & 5.573 & 7 & Bus 39 & bad-data guard & event\_02\_label7\_bad\_data.png \\
+3 & 5.609 & 7 & Bus 39 & bad-data guard & event\_03\_label7\_bad\_data.png \\
+4 & 8.944 & 5 & Bus 29 & \DataPresent{} & event\_04\_label5\_missing\_data.png \\
+5 & 10.240 & 5 & Bus 29 & \DataPresent{} & event\_05\_label5\_missing\_data.png \\
+6 & 19.554 & 1 & Bus 39 & chi-square residual & event\_06\_label1\_fault.png \\
+7 & 39.588 & 2 & line 23--24 Top-1 & chi-square residual & event\_07\_label2\_line\_outage.png \\
+8 & 43.079 & 5 & Bus 29 & \DataPresent{} & event\_08\_label5\_missing\_data.png \\
+9 & 48.931 & 5 & Bus 29 & \DataPresent{} & event\_09\_label5\_missing\_data.png \\
+10 & 49.606 & 6 & Bus 29 & cyber+physical split & event\_10\_label6\_missing\_data\_plus\_physical.png \\
+11 & 49.914 & 3 & Bus 2 & chi-square residual & event\_11\_label3\_generation\_change.png \\
+12 & 64.630 & 4 & Bus 7 & chi-square residual & event\_12\_label4\_load\_change.png \\
+\bottomrule
+\end{tabular}
+\label{tab:visible_alarm_map}
+\end{table}
 
 \subsection{Example A: label 7 bad data}
 
@@ -925,7 +1089,7 @@ fixes this:
 \toprule
 Check & Result \\
 \midrule
-Full tests & 205 passed, 1 expected xfail, exit code 0 \\
+Full tests & 214 passed, 1 expected xfail, exit code 0 \\
 Prediction validation & ok: true \\
 Per-bus row count & 161379 rows each \\
 Combined submission rows & $8\times161379$ \\
@@ -989,6 +1153,12 @@ sample-level and localization details, and transparent about hidden-test risks.
   \item \texttt{report/engineering\_review/ieee39\_topology.json}: topology,
   PMU flags, branches, and deterministic layout coordinates.
   \item \texttt{report/engineering\_review/figures/}: topology and alarm plots.
+  \item \texttt{report/model\_benchmark.csv} and
+  \texttt{report/model\_benchmark.json}: ten-model compact benchmark outputs.
+  \item \texttt{report/localization\_explanations.json}: per-alarm Ybus/Zbus,
+  Jacobian, and PMU-direct localization evidence.
+  \item \texttt{experiments/event\_simulations/}: seven label-specific
+  simulation bundles with metadata, plots, and PMU CSVs.
   \item \texttt{experiments/andes\_fault\_bus7/}: ANDES Bus 7 reconstruction
   experiment.
 \end{itemize}

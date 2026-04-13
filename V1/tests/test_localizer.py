@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from src.localizer.cosine_match import locate, locate_all, compute_nu, _cosine
+from src.localizer.physics_scores import fault_subtype_hint, reconstruct_complex_voltage
 from src.io.load_csv import PMU_BUSES
 
 DATA_DIR = Path("data/raw")
@@ -205,11 +206,34 @@ class TestLocateUnit:
         assert len(results) == 3
         assert results[1]["mode"] == "cyber"  # label 5
 
+    def test_fault_subtype_three_phase_hint(self, simple_df):
+        df = simple_df.copy()
+        for phase in ("A", "B", "C"):
+            df[f"BUS39_V{phase}_MAG"] = 200_000.0
+            df.loc[95:115, f"BUS39_V{phase}_MAG"] = 120_000.0
+        hint = fault_subtype_hint(df, 100)
+        assert hint["fault_subtype"] == "three_phase"
+
+    def test_fault_subtype_single_phase_hint(self, simple_df):
+        df = simple_df.copy()
+        for phase in ("A", "B", "C"):
+            df[f"BUS39_V{phase}_MAG"] = 200_000.0
+        df.loc[95:115, "BUS39_VA_MAG"] = 120_000.0
+        hint = fault_subtype_hint(df, 100)
+        assert hint["fault_subtype"] == "single_line_ground_A"
+
 
 # ── real-data localization accuracy ──────────────────────────────────────────
 
 class TestLocalizerAccuracy:
     """Top-1 ≥ 5/9, Top-3 ≥ 8/9 on the known 9 real events."""
+
+    @SKIP_NO_DATA
+    def test_ybus_complex_reconstruction_returns_all_buses(self, full_df, grid):
+        v = reconstruct_complex_voltage(full_df, grid, 0, 30)
+        assert v.shape == (39,)
+        assert np.all(np.isfinite(v.real))
+        assert np.all(np.isfinite(v.imag))
 
     @SKIP_NO_DATA
     def test_localization_accuracy(self, full_df, grid, J_cols, branches, alarm_indices, calibration, state_estimator):

@@ -38,6 +38,7 @@ from src.pipeline.run_inference import (
     _run_detection,
     _train_model,
 )
+from src.localizer.cosine_match import locate
 
 
 LABEL_NAMES = {
@@ -428,12 +429,26 @@ def generate_review(
     coords = _plot_topology(grid, fig_dir / "ieee39_topology_engineering_review.png", event_buses)
 
     scenarios: list[dict] = []
+    localization_explanations: list[dict] = []
     bad_indices = set(int(i) for i in det_result.get("bad_data_indices", []))
     bad_score = np.asarray(det_result.get("bad_data_score", np.zeros(len(df))), dtype=float)
     for pos, frame in enumerate(onset_idx.tolist()):
         matched_idx = alignment.get(pos)
         matched = dict(segments[matched_idx]) if matched_idx is not None else None
         label = int(predicted_labels[pos])
+        loc_full = locate(
+            df,
+            int(frame),
+            label,
+            J_cols,
+            branches,
+            fps=fps,
+            h0_flat=h0_flat,
+            offset=offset,
+            R=R,
+            grid=grid,
+            state_estimator=estimator,
+        )
         state_features, state_by_bus = state_feature_summary(df, int(frame), estimator, fps=fps)
         detector_source = "phase_unbalance_bad_data" if int(frame) in bad_indices else "chi2_or_data_present"
         if detector_source != "phase_unbalance_bad_data" and (dp[int(frame)] < 1).any():
@@ -472,7 +487,21 @@ def generate_review(
                 {"bus": int(bus), "energy": float(score)}
                 for bus, score in sorted(state_by_bus.items(), key=lambda item: -item[1])[:10]
             ],
+            "localization_score_table": loc_full.get("score_table", [])[:10],
+            "fault_subtype": loc_full.get("fault_subtype"),
         }
+        localization_explanations.append(
+            {
+                "alarm_id": pos + 1,
+                "alarm_frame": int(frame),
+                "predicted_label": label,
+                "predicted_label_name": LABEL_NAMES.get(label, "unknown"),
+                "top3_buses": scenario["top3_buses"],
+                "top3_lines": scenario["top3_lines"],
+                "score_table": loc_full.get("score_table", [])[:10],
+                "fault_subtype": loc_full.get("fault_subtype"),
+            }
+        )
         plot_path = fig_dir / f"event_{pos + 1:02d}_label{label}_{LABEL_NAMES.get(label, 'unknown')}.png"
         _plot_event(
             df=df,
@@ -567,6 +596,7 @@ def generate_review(
     }
 
     _write_json(out_dir / "detection_and_scenario_audit.json", audit)
+    _write_json(out_dir.parent / "localization_explanations.json", localization_explanations)
     _write_json(out_dir / "per_bus_sample_metrics.json", per_bus_sample_metrics)
     _write_json(out_dir / "units.json", UNITS)
     _write_json(out_dir / "ieee39_topology.json", topology)

@@ -30,6 +30,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from src.io.load_csv import PMU_BUSES
+from src.localizer.physics_scores import (
+    combined_bus_scores,
+    fault_subtype_hint,
+    swing_residual_by_bus,
+    top_buses_from_scores,
+    ybus_residual_by_bus,
+)
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -356,12 +363,32 @@ def locate(
     window = df.iloc[t0:t1]
 
     state_energy: dict[int, float] | None = None
+    ybus_energy: dict[int, float] | None = None
+    swing_energy: dict[int, float] | None = None
     if state_estimator is None and grid is not None:
         from src.estimator.topology_state import TopologyStateEstimator
         state_estimator = TopologyStateEstimator(grid)
     if state_estimator is not None:
         state_energy = state_estimator.residual_by_bus(
             df, onset_frame, fps=fps, window_sec=window_sec
+        )
+    if grid is not None:
+        ybus_energy = ybus_residual_by_bus(
+            df, grid, onset_frame, fps=fps, window_sec=window_sec
+        )
+    swing_energy = swing_residual_by_bus(
+        df, onset_frame, grid=grid, fps=fps, window_sec=window_sec
+    )
+
+    score_table = []
+    if grid is not None and J_cols:
+        score_table = combined_bus_scores(
+            nu=nu,
+            J_cols=J_cols,
+            grid=grid,
+            ybus_energy=ybus_energy,
+            state_energy=state_energy,
+            swing_energy=swing_energy,
         )
 
     if predicted_label in _CYBER_LABELS:
@@ -373,6 +400,7 @@ def locate(
             "top3_buses": [(bus, 1.0)] + [(b, s) for b, s in top3 if b != bus][:2],
             "top1_line": None,
             "top3_lines": [],
+            "score_table": score_table[:10],
             "nu": nu,
         }
 
@@ -386,6 +414,7 @@ def locate(
             "top3_buses": ranked,
             "top1_line": None,
             "top3_lines": [],
+            "score_table": score_table[:10],
             "nu": nu,
         }
 
@@ -417,24 +446,41 @@ def locate(
             "top3_buses": top3_buses,
             "top1_line": top1_line[0] if top3_lines else None,
             "top3_lines": top3_lines,
+            "score_table": score_table[:10],
             "nu": nu,
         }
 
     # Bus mode (labels 1, 3, 4, 7, 8)
     state_for_bus = state_energy if predicted_label in {4, 7, 8} else None
     top3_buses = _augmented_top3(nu, J_cols, state_energy=state_for_bus)
+    if score_table:
+        physics_top3 = top_buses_from_scores(score_table, k=3)
+        seen: set[int] = set()
+        merged: list[tuple[int, float]] = []
+        for bus, score in top3_buses + physics_top3:
+            if bus not in seen:
+                seen.add(bus)
+                merged.append((int(bus), float(score)))
+            if len(merged) == 3:
+                break
+        top3_buses = merged
     if predicted_label == 4 and state_energy:
         max_state = max(state_energy.values()) if state_energy else 0.0
         bus7 = state_energy.get(7, 0.0)
         if max_state > 1e-12 and bus7 / max_state > 0.85:
             top3_buses = _promote_bus(top3_buses, 7, bus7 + 1e-6, first=True)
+    extra: dict = {}
+    if predicted_label == 1:
+        extra["fault_subtype"] = fault_subtype_hint(df, onset_frame, fps=fps)
     return {
         "mode": "bus",
         "top1_bus": top3_buses[0][0] if top3_buses else None,
         "top3_buses": top3_buses,
         "top1_line": None,
         "top3_lines": [],
+        "score_table": score_table[:10],
         "nu": nu,
+        **extra,
     }
 
 

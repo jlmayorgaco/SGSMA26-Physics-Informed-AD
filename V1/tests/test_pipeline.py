@@ -8,6 +8,54 @@ import numpy as np
 import pandas as pd
 import pytest
 
+class TestModelBenchmarkHarness:
+    def test_model_zoo_has_exactly_ten_models(self):
+        from src.pipeline.benchmark_models import _model_zoo
+
+        models = _model_zoo(seed=42)
+        assert len(models) == 10
+        assert "physics_rules" in models
+        assert "lightgbm_tiny" in models
+        assert "lightgbm_small" in models
+
+    def test_parameter_count_and_size_reported(self):
+        from src.pipeline.benchmark_models import (
+            PhysicsRulesClassifier,
+            parameter_count,
+            serialized_size_bytes,
+        )
+
+        X = np.zeros((3, 44), dtype=float)
+        y = np.array([0, 1, 1])
+        model = PhysicsRulesClassifier().fit(X, y)
+        assert parameter_count(model) == 0
+        assert serialized_size_bytes(model) > 0
+
+
+class TestEventSimulationPipeline:
+    @pytest.mark.skipif(
+        not Path("data/raw").exists() or not Path("data/metadata/IEEE 39 Bus Power System.raw").exists(),
+        reason="data/raw or RAW metadata not present",
+    )
+    def test_generate_label_simulation_smoke(self, tmp_path):
+        from src.pipeline.generate_event_simulations import generate_simulations
+
+        records = generate_simulations(
+            data_dir=Path("data/raw"),
+            raw_path=Path("data/metadata/IEEE 39 Bus Power System.raw"),
+            out_dir=tmp_path / "event_simulations",
+            labels=[1, 5, 7],
+            seed=7,
+        )
+        assert len(records) == 3
+        for rec in records:
+            sim_dir = Path(rec["path"])
+            assert (sim_dir / "metadata.json").exists()
+            assert (sim_dir / "figures" / "pmu_overview.png").exists()
+            assert (sim_dir / "figures" / "ybus_residuals.png").exists()
+            assert (sim_dir / "figures" / "candidate_scores.png").exists()
+            assert (sim_dir / "figures" / "topology_candidates.png").exists()
+
 DATA_DIR = Path("data/raw")
 SKIP_NO_DATA = pytest.mark.skipif(
     not DATA_DIR.exists(),

@@ -1,23 +1,21 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 build/
-.venv/
-venv/
-*.egg
+dist/
+models/
 
-# Data (large files, gitignored per CLAUDE.md)
 data/synthetic/
+data/synthetic_smoke/
 data/processed/
 data/splits/
 poc/data_synth/
 
-# Jupyter
-.ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
-
-# Report build artifacts
+experiments/event_simulations/
 report/*.aux
 report/*.bbl
 report/*.blg
@@ -26,16 +24,7 @@ report/*.fls
 report/*.log
 report/*.out
 report/*.synctex.gz
+report/*.toc
 report/*.pdf
 
-# Submission archive
 submission_sgsma2026.zip
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp

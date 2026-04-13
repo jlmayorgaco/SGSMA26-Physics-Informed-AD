@@ -219,6 +219,7 @@ def _load_synthetic_events(
     fps: float,
     window_sec: float,
     state_estimator: object | None = None,
+    feature_cache_path: Path | str | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Load all synthetic events from syn_dir and extract feature/label pairs.
 
@@ -226,8 +227,29 @@ def _load_synthetic_events(
     We use the midpoint of the event region (where Event != 0) as the onset frame.
     Falls back to frame 60 (2s in at 30fps) if no event rows found.
     """
-    from src.augmentation.andes_sim import load_synthetic
+    from src.augmentation.andes_sim import load_synthetic, scenario_label_and_onset
     from src.detector.chi2 import compute_eta_simple
+
+    cache_candidates: list[Path] = []
+    if feature_cache_path is not None:
+        cache_candidates.append(Path(feature_cache_path))
+    cache_candidates.extend([
+        syn_dir / "features_v1_5000.npz",
+        syn_dir / "features_smoke.npz",
+    ])
+    for cache_path in cache_candidates:
+        if not cache_path.exists():
+            continue
+        try:
+            data = np.load(cache_path, allow_pickle=False)
+            X_cache = np.asarray(data["X"], dtype=float)
+            y_cache = np.asarray(data["y"], dtype=int)
+            if X_cache.ndim == 2 and X_cache.shape[1] == N_FEATURES and len(y_cache) == len(X_cache):
+                log.info("Synthetic feature cache: %s (%d windows)", cache_path, len(y_cache))
+                return X_cache, y_cache
+            log.warning("Ignoring malformed synthetic feature cache %s", cache_path)
+        except Exception as exc:
+            log.warning("Could not read synthetic feature cache %s: %s", cache_path, exc)
 
     # Enumerate unique run IDs from file names
     run_ids: set[int] = set()
@@ -246,11 +268,9 @@ def _load_synthetic_events(
         try:
             df_syn = load_synthetic(syn_dir, run_id)
             ev_col = df_syn["Event"]
-            ev_frames = np.where(ev_col.to_numpy() != 0)[0]
-            if len(ev_frames) == 0:
+            label, onset = scenario_label_and_onset(ev_col.to_numpy())
+            if label == 0:
                 continue
-            onset = int(ev_frames[len(ev_frames) // 2])
-            label = int(ev_col.iloc[onset])
             feats = extract_features(df_syn, onset, J_cols=J_cols,
                                      state_estimator=state_estimator,
                                      fps=fps, window_sec=window_sec)
@@ -275,6 +295,7 @@ def train(
     lgbm_params: dict | None = None,
     model_path: Path | str | None = None,
     synthetic_dir: Path | str | None = None,
+    feature_cache_path: Path | str | None = None,
     grid: object | None = None,
 ) -> "lgb.LGBMClassifier":
     """Train and optionally save the LightGBM classifier.
@@ -289,6 +310,7 @@ def train(
         model_path:    If provided, pickle model here.
         synthetic_dir: Directory of synthetic CSVs from andes_sim.generate_all().
                        All synthetic events are merged into the training set only.
+        feature_cache_path: Optional .npz cache from andes_sim; preferred when present.
         grid:          optional GridCase for topology-estimated state features.
 
     Returns:
@@ -334,6 +356,7 @@ def train(
         X_syn, y_syn = _load_synthetic_events(
             Path(synthetic_dir), h0_flat, offset, R, cols,
             J_cols, fps, window_sec, state_estimator=state_estimator,
+            feature_cache_path=feature_cache_path,
         )
         if len(X_syn) > 0:
             X_train = np.concatenate([X_train, X_syn], axis=0)
