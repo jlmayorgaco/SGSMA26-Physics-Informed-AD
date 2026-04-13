@@ -12,6 +12,9 @@ import math
 from pathlib import Path
 from typing import Any, Iterable
 
+import matplotlib
+
+matplotlib.use("Agg", force=True)
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D

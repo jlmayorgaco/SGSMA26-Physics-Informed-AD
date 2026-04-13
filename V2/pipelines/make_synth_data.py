@@ -186,6 +186,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--duration-sec", type=float, default=None)
     parser.add_argument("--no-plots", action="store_true", help="Skip PNG/markdown review artifacts.")
+    parser.add_argument(
+        "--plot-all",
+        action="store_true",
+        help="Write review plots/reports for every generated scenario.",
+    )
+    parser.add_argument(
+        "--plot-first-n",
+        type=int,
+        default=None,
+        help="Write review plots/reports for only the first N generated scenarios.",
+    )
+    parser.add_argument(
+        "--plot-buses",
+        default=None,
+        help='Review buses to plot: "pmu", "all", or comma-separated bus numbers.',
+    )
     return parser.parse_args()
 
 
@@ -279,6 +295,23 @@ def resolve_output_buses(config: dict[str, Any]) -> list[int]:
     if isinstance(output_buses, str) and output_buses.lower() == "all":
         return list(range(1, 40))
     return sorted({int(bus) for bus in output_buses})
+
+
+def parse_plot_bus_option(value: str, pmu_buses: list[int]) -> str | list[int]:
+    """Parse a CLI plot-bus selector into the review config shape."""
+
+    token = str(value).strip().lower()
+    if token == "all":
+        return "all"
+    if token in {"pmu", "pmus"}:
+        return [int(bus) for bus in pmu_buses]
+    buses = [int(part.strip()) for part in str(value).split(",") if part.strip()]
+    if not buses:
+        raise ValueError("--plot-buses must be 'pmu', 'all', or comma-separated bus numbers.")
+    invalid = [bus for bus in buses if bus < 1 or bus > 39]
+    if invalid:
+        raise ValueError(f"--plot-buses contains invalid IEEE-39 bus numbers: {invalid}")
+    return sorted(set(buses))
 
 
 def parse_raw_branch_model(metadata_dir: Path) -> tuple[list[tuple[int, int]], dict[tuple[int, int], float], str]:
@@ -1310,6 +1343,8 @@ def plot_and_report_scenario(
     buses_option = review.get("plot_buses_per_scenario", review.get("plot_pmu_buses_per_scenario", "all"))
     if buses_option == "all":
         buses = sorted(frames)
+    elif isinstance(buses_option, str) and buses_option.lower() in {"pmu", "pmus"}:
+        buses = [int(bus) for bus in config.get("pmu_buses", PMU_BUSES) if int(bus) in frames]
     elif isinstance(buses_option, list):
         buses = [int(bus) for bus in buses_option if int(bus) in frames]
     else:
@@ -1322,9 +1357,14 @@ def plot_and_report_scenario(
             plot_paths.append(plot_current_phases(frames[bus], bus, events, plot_dir))
         if bool(review.get("include_frequency_plots", True)):
             plot_paths.append(plot_frequency_rocof(frames[bus], bus, events, plot_dir))
+    branches = [
+        (int(branch[0]), int(branch[1]))
+        for branch in scenario.get("ieee39_branches", IEEE39_BRANCHES)
+        if len(branch) >= 2
+    ]
     plot_paths.append(
         plot_ieee39_diagram(
-            IEEE39_BRANCHES,
+            branches,
             config.get("pmu_buses", PMU_BUSES),
             events,
             plot_dir,
@@ -1536,6 +1576,16 @@ def apply_cli_overrides(config: dict[str, Any], args: argparse.Namespace) -> dic
         config["seed"] = int(args.seed)
     if args.duration_sec is not None:
         config["duration_sec"] = float(args.duration_sec)
+    review = config.setdefault("review", {})
+    if getattr(args, "plot_all", False):
+        review["plot_first_n_scenarios"] = "all"
+    elif getattr(args, "plot_first_n", None) is not None:
+        review["plot_first_n_scenarios"] = int(args.plot_first_n)
+    if getattr(args, "plot_buses", None) is not None:
+        review["plot_buses_per_scenario"] = parse_plot_bus_option(
+            args.plot_buses,
+            [int(bus) for bus in config.get("pmu_buses", PMU_BUSES)],
+        )
     return config
 
 

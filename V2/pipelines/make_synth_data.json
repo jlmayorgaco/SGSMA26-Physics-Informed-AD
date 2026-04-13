@@ -125,7 +125,7 @@
   },
   "review": {
     "plot_first_n_scenarios": 8,
-    "plot_buses_per_scenario": [2, 5, 6, 10, 19, 22, 29, 39],
+    "plot_buses_per_scenario": "all",
     "include_current_plots": true,
     "include_frequency_plots": true
   },
