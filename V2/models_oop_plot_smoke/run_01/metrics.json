@@ -392,103 +392,103 @@
   "bus_state_top_features": [
     {
       "feature": "BUS2_Freq_mean_minus_nominal",
-      "importance": 0.02118255000302655
+      "importance": 0.021182550003026546
     },
     {
       "feature": "BUS39_Freq_mean_minus_nominal",
-      "importance": 0.01895339014459948
+      "importance": 0.018953390144599475
     },
     {
       "feature": "BUS39_Freq_min",
-      "importance": 0.01837282082046747
+      "importance": 0.018372820820467466
     },
     {
       "feature": "BUS5_Freq_mean",
-      "importance": 0.0182947768219958
+      "importance": 0.018294776821995797
     },
     {
       "feature": "BUS19_Freq_max",
-      "importance": 0.017785553521032026
-    },
-    {
-      "feature": "BUS39_Freq_mean",
-      "importance": 0.01751901374985683
+      "importance": 0.017785553521032022
     },
     {
       "feature": "BUS10_Freq_mean",
-      "importance": 0.017481804845614672
+      "importance": 0.01748180484561467
+    },
+    {
+      "feature": "BUS39_Freq_mean",
+      "importance": 0.01722000278612149
     },
     {
       "feature": "BUS10_Freq_max",
-      "importance": 0.015604801820706999
+      "importance": 0.015604801820706997
     },
     {
       "feature": "BUS2_Freq_max_abs_nominal_dev",
-      "importance": 0.015055252754311473
+      "importance": 0.01505525275431147
     },
     {
       "feature": "BUS6_Freq_min",
-      "importance": 0.01314425461870251
+      "importance": 0.013144254618702509
     },
     {
       "feature": "BUS5_Freq_max_abs_nominal_dev",
-      "importance": 0.013131754513285337
+      "importance": 0.013131754513285335
     },
     {
       "feature": "grid_frequency_deviation_max",
-      "importance": 0.012971386278443756
+      "importance": 0.012971386278443754
     },
     {
       "feature": "BUS29_Freq_mean",
-      "importance": 0.012588364063971055
+      "importance": 0.012588364063971054
     },
     {
       "feature": "BUS2_Freq_max",
-      "importance": 0.012178767361028313
+      "importance": 0.012178767361028311
     },
     {
       "feature": "BUS2_Freq_min",
-      "importance": 0.011956857537021762
+      "importance": 0.01195685753702176
     },
     {
       "feature": "BUS5_Freq_max",
-      "importance": 0.011760014816846725
+      "importance": 0.011760014816846723
     },
     {
       "feature": "BUS6_Freq_mean",
-      "importance": 0.011689185297062952
+      "importance": 0.01168918529706295
     },
     {
       "feature": "BUS6_Freq_mean_minus_nominal",
-      "importance": 0.011635267030943357
+      "importance": 0.01149791913771108
     },
     {
       "feature": "BUS5_Freq_min",
-      "importance": 0.010155642361854948
+      "importance": 0.010155642361854946
     },
     {
       "feature": "BUS19_Freq_mean",
-      "importance": 0.00983414605746483
+      "importance": 0.009834146057464828
     },
     {
       "feature": "BUS22_Freq_mean",
-      "importance": 0.00860072049376249
+      "importance": 0.008600720493762488
     },
     {
       "feature": "BUS2_Freq_mean",
-      "importance": 0.008392773454240882
+      "importance": 0.00839277345424088
     },
     {
       "feature": "BUS22_Freq_max",
-      "importance": 0.008242206528154923
+      "importance": 0.008242206528154921
     },
     {
       "feature": "BUS19_Freq_max_abs_nominal_dev",
-      "importance": 0.008198296028729943
+      "importance": 0.008198296028729941
     },
     {
       "feature": "BUS19_Freq_mean_minus_nominal",
-      "importance": 0.008130336534843801
+      "importance": 0.0081303365348438
     }
   ],
   "selection_score": 0.23788011569237152,
@@ -497,7 +497,7 @@
   ],
   "model_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\run_01\\pmu_grid_model.pkl",
   "report_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\run_01\\metrics.json",
-  "serialized_size_bytes": 11308866,
+  "serialized_size_bytes": 11301138,
   "figures": [
     "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\figures\\run_01_sim_split.png"
   ]

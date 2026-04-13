@@ -2,7 +2,7 @@
   "best_run": 1,
   "best_model_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\pmu_grid_model.pkl",
   "history_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\pmu_grid_training_history.csv",
-  "elapsed_sec": 4.575,
+  "elapsed_sec": 3.545,
   "n_runs": 1,
   "n_samples": 103,
   "n_features": 1030,
@@ -83,6 +83,6 @@
     "selection_score": 0.23788011569237152,
     "model_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\run_01\\pmu_grid_model.pkl",
     "report_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V2\\models_oop_plot_smoke\\run_01\\metrics.json",
-    "serialized_size_bytes": 11308866
+    "serialized_size_bytes": 11301138
   }
 }
