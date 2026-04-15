@@ -205,9 +205,31 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def deep_merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Merge config dictionaries while keeping nested defaults reusable."""
+
+    merged = json.loads(json.dumps(base))
+    for key, value in override.items():
+        if (
+            isinstance(value, dict)
+            and isinstance(merged.get(key), dict)
+        ):
+            merged[key] = deep_merge_config(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
 def load_config(path: Path) -> dict[str, Any]:
+    path = Path(path)
     with path.open("r", encoding="utf-8") as handle:
         config = json.load(handle)
+    parent_config = config.pop("extends", None)
+    if parent_config:
+        parent_path = Path(parent_config)
+        if not parent_path.is_absolute():
+            parent_path = path.parent / parent_path
+        config = deep_merge_config(load_config(parent_path), config)
     if config.get("allow_raw_data_sampling", False):
         raise ValueError(
             "Synthetic V2 data must not sample hackathon raw PMU files. "
@@ -295,6 +317,45 @@ def resolve_output_buses(config: dict[str, Any]) -> list[int]:
     if isinstance(output_buses, str) and output_buses.lower() == "all":
         return list(range(1, 40))
     return sorted({int(bus) for bus in output_buses})
+
+
+def raw_like_profile(config: dict[str, Any]) -> dict[str, Any]:
+    """Return fixed raw-like calibration constants without sampling raw files."""
+
+    return dict(config.get("raw_like_profile", {}))
+
+
+def raw_like_enabled(config: dict[str, Any]) -> bool:
+    return bool(config.get("raw_like_profile", {}).get("enabled", False))
+
+
+def profile_bus_value(profile: dict[str, Any], bus: int, key: str, fallback: float) -> float:
+    by_bus = profile.get("pmu_bus_profile", {})
+    bus_profile = by_bus.get(str(bus), {})
+    if key in bus_profile:
+        return float(bus_profile[key])
+    defaults = profile.get("defaults", {})
+    if key in defaults:
+        return float(defaults[key])
+    return float(fallback)
+
+
+def colored_noise(
+    rng: np.random.Generator,
+    n: int,
+    std: float,
+    phi: float,
+) -> np.ndarray:
+    """Generate simple AR(1)-like noise for raw PMU drift/jitter."""
+
+    if n <= 0 or std <= 0:
+        return np.zeros(max(n, 0), dtype=float)
+    white = rng.normal(0.0, std * math.sqrt(max(1e-6, 1.0 - phi * phi)), n)
+    values = np.zeros(n, dtype=float)
+    values[0] = rng.normal(0.0, std)
+    for index in range(1, n):
+        values[index] = phi * values[index - 1] + white[index]
+    return values
 
 
 def parse_plot_bus_option(value: str, pmu_buses: list[int]) -> str | list[int]:
@@ -813,7 +874,9 @@ def sample_scenario_events(
     forced_spec: str | dict[str, Any] | None = None,
 ) -> list[EventSpec]:
     kind = forced_kind_from_spec(forced_spec) or choose_weighted(config["event_mix"], rng)
-    if kind == "cyber_physical":
+    if kind == "normal":
+        events = []
+    elif kind == "cyber_physical":
         physical_override = forced_spec.get("physical_kind") if isinstance(forced_spec, dict) else None
         events = sample_cyber_physical(config, rng, pmu_buses, physical_kind_override=physical_override)
     elif kind == "multi_event":
@@ -844,38 +907,91 @@ def create_base_frames(
     rng: np.random.Generator,
 ) -> dict[int, pd.DataFrame]:
     noise = config["noise"]
+    profile = raw_like_profile(config)
     nominal_frequency = float(config.get("nominal_frequency_hz", 60.0))
-    common_freq = nominal_frequency + rng.normal(0.0, float(noise["frequency_std_hz"]), len(t))
-    common_freq += 0.0015 * np.sin(2.0 * np.pi * 0.17 * t + rng.uniform(0.0, 2.0 * np.pi))
+    if raw_like_enabled(config):
+        nominal_frequency = float(profile.get("system_frequency_mean_hz", nominal_frequency))
+        common_freq = nominal_frequency + colored_noise(
+            rng,
+            len(t),
+            float(profile.get("system_frequency_std_hz", noise.get("frequency_std_hz", 0.003))),
+            float(profile.get("frequency_ar_phi", 0.985)),
+        )
+        common_freq += float(profile.get("system_frequency_drift_hz", 0.006)) * np.sin(
+            2.0 * np.pi * float(profile.get("system_frequency_drift_hz_per_sec", 0.0016)) * t
+            + rng.uniform(0.0, 2.0 * np.pi)
+        )
+    else:
+        common_freq = nominal_frequency + rng.normal(0.0, float(noise["frequency_std_hz"]), len(t))
+        common_freq += 0.0015 * np.sin(2.0 * np.pi * 0.17 * t + rng.uniform(0.0, 2.0 * np.pi))
     scenario_angle_offset = float(rng.uniform(-4.0, 4.0))
     frames: dict[int, pd.DataFrame] = {}
 
     for bus in pmu_buses:
         meta = metadata[bus]
         prefix = f"BUS{bus}"
-        slow_voltage = 0.0008 * np.sin(2.0 * np.pi * 0.09 * t + rng.uniform(0.0, 2.0 * np.pi))
-        slow_current = 0.0030 * np.sin(2.0 * np.pi * 0.07 * t + rng.uniform(0.0, 2.0 * np.pi))
+        if raw_like_enabled(config):
+            v_base = profile_bus_value(profile, bus, "voltage_mag_v", meta.line_neutral_voltage_v)
+            i_base = profile_bus_value(profile, bus, "current_mag_a", meta.base_current_a)
+            slow_voltage = colored_noise(
+                rng,
+                len(t),
+                float(profile.get("voltage_slow_std_frac", 0.010)),
+                float(profile.get("voltage_slow_ar_phi", 0.998)),
+            )
+            slow_current = colored_noise(
+                rng,
+                len(t),
+                float(profile.get("current_slow_std_frac", 0.025)),
+                float(profile.get("current_slow_ar_phi", 0.997)),
+            )
+            angle_wobble = colored_noise(
+                rng,
+                len(t),
+                float(profile.get("angle_slow_std_deg", 0.22)),
+                float(profile.get("angle_slow_ar_phi", 0.995)),
+            )
+            v_noise_std = float(profile.get("voltage_white_std_frac", noise["voltage_mag_std_frac"]))
+            i_noise_std = float(profile.get("current_white_std_frac", noise["current_mag_std_frac"]))
+            angle_noise_std = float(profile.get("angle_white_std_deg", noise["angle_std_deg"]))
+        else:
+            v_base = meta.line_neutral_voltage_v
+            i_base = meta.base_current_a
+            slow_voltage = 0.0008 * np.sin(2.0 * np.pi * 0.09 * t + rng.uniform(0.0, 2.0 * np.pi))
+            slow_current = 0.0030 * np.sin(2.0 * np.pi * 0.07 * t + rng.uniform(0.0, 2.0 * np.pi))
+            angle_wobble = 0.02 * np.sin(2.0 * np.pi * 0.13 * t + rng.uniform(0.0, 2.0 * np.pi))
+            v_noise_std = float(noise["voltage_mag_std_frac"])
+            i_noise_std = float(noise["current_mag_std_frac"])
+            angle_noise_std = float(noise["angle_std_deg"])
         base_angle = meta.theta_deg - 60.0 + scenario_angle_offset
-        angle_wobble = 0.02 * np.sin(2.0 * np.pi * 0.13 * t + rng.uniform(0.0, 2.0 * np.pi))
 
         df = pd.DataFrame({"TIMESTAMP": t})
         for phase, offset in PHASE_OFFSETS.items():
-            v_mag_noise = rng.normal(0.0, float(noise["voltage_mag_std_frac"]), len(t))
-            i_mag_noise = rng.normal(0.0, float(noise["current_mag_std_frac"]), len(t))
-            angle_noise = rng.normal(0.0, float(noise["angle_std_deg"]), len(t))
-            current_angle_noise = rng.normal(0.0, float(noise["angle_std_deg"]) * 1.8, len(t))
+            v_mag_noise = rng.normal(0.0, v_noise_std, len(t))
+            i_mag_noise = rng.normal(0.0, i_noise_std, len(t))
+            angle_noise = rng.normal(0.0, angle_noise_std, len(t))
+            current_angle_noise = rng.normal(0.0, angle_noise_std * 1.8, len(t))
             v_angle = wrap_degrees(base_angle + offset + angle_wobble + angle_noise)
             i_angle = wrap_degrees(v_angle + 158.0 + current_angle_noise)
             phase_balance = 1.0 + rng.normal(0.0, 0.0008)
             df[f"{prefix}_V{phase}_ANG"] = v_angle
-            df[f"{prefix}_V{phase}_MAG"] = meta.line_neutral_voltage_v * phase_balance * (
+            df[f"{prefix}_V{phase}_MAG"] = v_base * phase_balance * (
                 1.0 + slow_voltage + v_mag_noise
             )
             df[f"{prefix}_I{phase}_ANG"] = i_angle
-            df[f"{prefix}_I{phase}_MAG"] = meta.base_current_a * (1.0 + slow_current + i_mag_noise)
+            df[f"{prefix}_I{phase}_MAG"] = i_base * (1.0 + slow_current + i_mag_noise)
 
-        df[f"{prefix}_Freq"] = common_freq + rng.normal(0.0, float(noise["frequency_std_hz"]) * 0.25, len(t))
-        df[f"{prefix}_ROCOF"] = 0.0
+        if raw_like_enabled(config):
+            bus_freq_bias = profile_bus_value(profile, bus, "frequency_bias_hz", 0.0)
+            df[f"{prefix}_Freq"] = (
+                common_freq
+                + bus_freq_bias
+                + rng.normal(0.0, float(profile.get("frequency_white_std_hz", 0.004)), len(t))
+            )
+            df[f"{prefix}_ROCOF"] = rng.normal(0.0, float(profile.get("rocof_std_hz_per_s", 0.007)), len(t))
+        else:
+            df[f"{prefix}_Freq"] = common_freq + rng.normal(0.0, float(noise["frequency_std_hz"]) * 0.25, len(t))
+            df[f"{prefix}_ROCOF"] = 0.0
         df["DATA_PRESENT"] = 1
         df["Event"] = 0
         frames[bus] = df[bus_columns(bus)]
@@ -1185,6 +1301,8 @@ def recompute_rocof(
     config: dict[str, Any],
     rng: np.random.Generator,
 ) -> None:
+    if not bool(config.get("noise", {}).get("rocof_from_frequency", True)):
+        return
     fps = float(config["fps"])
     noise_std = float(config.get("noise", {}).get("rocof_std_hz_per_s", 0.02))
     for bus, df in frames.items():

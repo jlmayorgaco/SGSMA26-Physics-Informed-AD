@@ -246,6 +246,8 @@ def extract_window_features(
                 features.update(_stats(col, window[col], include_level=True, nominal=nominal_frequency_hz))
             elif suffix == "ROCOF":
                 features.update(_stats(col, window[col], include_level=True, nominal=0.0))
+            elif suffix.endswith("_MAG") or suffix.endswith("_ANG"):
+                features.update(_stats(col, window[col], include_level=True))
             else:
                 features.update(_stats(col, window[col]))
 

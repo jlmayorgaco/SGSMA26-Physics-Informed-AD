@@ -1,0 +1,503 @@
+{
+  "scenario_id": "SIM_0001",
+  "subset_name": "global",
+  "estimator_name": "static_ybus",
+  "estimator_summary_full_run": {
+    "scenario_id": "SIM_0001",
+    "representation": "positive_sequence",
+    "n_total_buses": 39,
+    "n_pmu_buses": 8,
+    "n_hidden_buses": 31,
+    "n_timestamps": 901,
+    "mag_rmse_overall": 6531.833100722905,
+    "mag_rmse_normal": 4048.3257926309843,
+    "mag_rmse_event": 13488.717457716708,
+    "angle_mae_deg_overall": 0.23677960561652123,
+    "angle_mae_deg_normal": 0.2353364503395278,
+    "angle_mae_deg_event": 0.244429337784081
+  },
+  "subset_metrics": {
+    "overall": {
+      "n_samples": 27931,
+      "mag_mean_true": 200135.30680918795,
+      "mag_rmse": 6531.833100722905,
+      "mag_mae": 4001.4841899114854,
+      "mag_nrmse_pct": 3.263708540417835,
+      "mag_mape_pct": 2.1454316022324966,
+      "mag_r2": 0.8202291977903232,
+      "angle_mae_deg": 0.23677960561652123,
+      "angle_rmse_deg": 0.2968559324113816
+    },
+    "normal_only": {
+      "n_samples": 23498,
+      "mag_mean_true": 204900.14807744668,
+      "mag_rmse": 4048.3257926309843,
+      "mag_mae": 3265.9128162692446,
+      "mag_nrmse_pct": 1.975755425565055,
+      "mag_mape_pct": 1.5967055395696534,
+      "mag_r2": -1.9298849051078162,
+      "angle_mae_deg": 0.2353364503395278,
+      "angle_rmse_deg": 0.29454509431834164
+    },
+    "event_only": {
+      "n_samples": 4433,
+      "mag_mean_true": 174878.31603058582,
+      "mag_rmse": 13488.717457716708,
+      "mag_mae": 7900.526855791337,
+      "mag_nrmse_pct": 7.713201821635543,
+      "mag_mape_pct": 5.054063458864911,
+      "mag_r2": 0.7428068949380224,
+      "angle_mae_deg": 0.244429337784081,
+      "angle_rmse_deg": 0.30881636939281165
+    }
+  },
+  "ranking": {
+    "best_buses_by_mag_nrmse_pct": [
+      {
+        "bus_id": 13,
+        "mag_nrmse_pct": 0.987374084883046,
+        "angle_mae_deg": 0.19997382621246085
+      },
+      {
+        "bus_id": 9,
+        "mag_nrmse_pct": 1.0723926491757236,
+        "angle_mae_deg": 0.2140909762392126
+      },
+      {
+        "bus_id": 33,
+        "mag_nrmse_pct": 1.1687436353690668,
+        "angle_mae_deg": 0.27037244921289494
+      },
+      {
+        "bus_id": 21,
+        "mag_nrmse_pct": 1.228798852256866,
+        "angle_mae_deg": 0.17166706192510053
+      },
+      {
+        "bus_id": 28,
+        "mag_nrmse_pct": 1.3232824974689197,
+        "angle_mae_deg": 0.1655320489883497
+      }
+    ],
+    "worst_buses_by_mag_nrmse_pct": [
+      {
+        "bus_id": 31,
+        "mag_nrmse_pct": 9.274052561961383,
+        "angle_mae_deg": 0.2741136041930424
+      },
+      {
+        "bus_id": 12,
+        "mag_nrmse_pct": 8.821061809529581,
+        "angle_mae_deg": 0.19270302759457789
+      },
+      {
+        "bus_id": 7,
+        "mag_nrmse_pct": 5.645412785838979,
+        "angle_mae_deg": 0.3300307825550805
+      },
+      {
+        "bus_id": 32,
+        "mag_nrmse_pct": 4.796229568925885,
+        "angle_mae_deg": 0.2526519493014703
+      },
+      {
+        "bus_id": 8,
+        "mag_nrmse_pct": 4.124678196896926,
+        "angle_mae_deg": 0.2602943270776724
+      }
+    ]
+  },
+  "per_bus_metrics": [
+    {
+      "n_samples": 901,
+      "mag_mean_true": 193891.0028292132,
+      "mag_rmse": 1914.4295148555047,
+      "mag_mae": 1630.9952416887706,
+      "mag_nrmse_pct": 0.987374084883046,
+      "mag_mape_pct": 0.854818965665836,
+      "mag_r2": 0.9922984125847847,
+      "angle_mae_deg": 0.19997382621246085,
+      "angle_rmse_deg": 0.24341998878087237,
+      "bus_id": 13
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 197018.4897956373,
+      "mag_rmse": 2112.8118020854376,
+      "mag_mae": 1728.115149715567,
+      "mag_nrmse_pct": 1.0723926491757236,
+      "mag_mape_pct": 0.9223464525987624,
+      "mag_r2": 0.9807730060530516,
+      "angle_mae_deg": 0.2140909762392126,
+      "angle_rmse_deg": 0.2527715586823874,
+      "bus_id": 9
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 205125.49792108167,
+      "mag_rmse": 2397.3912014717494,
+      "mag_mae": 1865.4025949124818,
+      "mag_nrmse_pct": 1.1687436353690668,
+      "mag_mape_pct": 0.9216068011255076,
+      "mag_r2": 0.6760641384058306,
+      "angle_mae_deg": 0.27037244921289494,
+      "angle_rmse_deg": 0.32945463027258326,
+      "bus_id": 33
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 203763.7526384471,
+      "mag_rmse": 2503.8466537367576,
+      "mag_mae": 2076.8512496554104,
+      "mag_nrmse_pct": 1.228798852256866,
+      "mag_mape_pct": 1.0251925475768635,
+      "mag_r2": 0.8055430142613549,
+      "angle_mae_deg": 0.17166706192510053,
+      "angle_rmse_deg": 0.21391637246614562,
+      "bus_id": 21
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 204131.44896561292,
+      "mag_rmse": 2701.235735991656,
+      "mag_mae": 2251.160902517506,
+      "mag_nrmse_pct": 1.3232824974689197,
+      "mag_mape_pct": 1.1039705808465101,
+      "mag_r2": -2.0363639385990187,
+      "angle_mae_deg": 0.1655320489883497,
+      "angle_rmse_deg": 0.2019651120165015,
+      "bus_id": 28
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 200815.7432758886,
+      "mag_rmse": 2819.014163963667,
+      "mag_mae": 2077.867714020102,
+      "mag_nrmse_pct": 1.4037814555658588,
+      "mag_mape_pct": 1.0825381857613303,
+      "mag_r2": 0.9214144367035293,
+      "angle_mae_deg": 0.2456589617874593,
+      "angle_rmse_deg": 0.29663071978925554,
+      "bus_id": 15
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 195897.41119285158,
+      "mag_rmse": 2815.780429984073,
+      "mag_mae": 2364.9037910278175,
+      "mag_nrmse_pct": 1.4373750080913896,
+      "mag_mape_pct": 1.1601406048811111,
+      "mag_r2": 0.9853618920687779,
+      "angle_mae_deg": 0.17946211663585288,
+      "angle_rmse_deg": 0.226060442370417,
+      "bus_id": 4
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 205761.4456560182,
+      "mag_rmse": 3019.7897482133862,
+      "mag_mae": 2277.094855034013,
+      "mag_nrmse_pct": 1.4676168990675353,
+      "mag_mape_pct": 1.121986558382134,
+      "mag_r2": 0.3863159869500322,
+      "angle_mae_deg": 0.3571019315015998,
+      "angle_rmse_deg": 0.42528695244155357,
+      "bus_id": 34
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 191860.03408231516,
+      "mag_rmse": 3062.0881958466694,
+      "mag_mae": 2523.678813861954,
+      "mag_nrmse_pct": 1.5960010694738636,
+      "mag_mape_pct": 1.310914139179939,
+      "mag_r2": 0.9871574584422299,
+      "angle_mae_deg": 0.20511126634021534,
+      "angle_rmse_deg": 0.2479544186524645,
+      "bus_id": 11
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 198378.0833453238,
+      "mag_rmse": 3514.751406021707,
+      "mag_mae": 3152.2330729851506,
+      "mag_nrmse_pct": 1.7717438069524314,
+      "mag_mape_pct": 1.6133342983067154,
+      "mag_r2": 0.9330598418700404,
+      "angle_mae_deg": 0.19220549710136967,
+      "angle_rmse_deg": 0.24175525861515795,
+      "bus_id": 3
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 203876.6705667103,
+      "mag_rmse": 3717.7335650451346,
+      "mag_mae": 2724.841932575283,
+      "mag_nrmse_pct": 1.823520834782643,
+      "mag_mape_pct": 1.369742352868798,
+      "mag_r2": 0.5487604019328687,
+      "angle_mae_deg": 0.19910411002410672,
+      "angle_rmse_deg": 0.2616756050948493,
+      "bus_id": 1
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 205967.1436182852,
+      "mag_rmse": 3784.920454552558,
+      "mag_mae": 3147.7193430796774,
+      "mag_nrmse_pct": 1.8376331234495713,
+      "mag_mape_pct": 1.5373198496659957,
+      "mag_r2": -1.98750656840462,
+      "angle_mae_deg": 0.20785980084978375,
+      "angle_rmse_deg": 0.2554722346035075,
+      "bus_id": 36
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 201521.65303267245,
+      "mag_rmse": 3712.835814035222,
+      "mag_mae": 2968.9146625884127,
+      "mag_nrmse_pct": 1.8424004359637052,
+      "mag_mape_pct": 1.4694016975608535,
+      "mag_r2": 0.8395193843737149,
+      "angle_mae_deg": 0.3790741407569517,
+      "angle_rmse_deg": 0.42169998947465565,
+      "bus_id": 16
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 205430.0973246888,
+      "mag_rmse": 3889.5686132403894,
+      "mag_mae": 3082.981506895528,
+      "mag_nrmse_pct": 1.8933781679968746,
+      "mag_mape_pct": 1.4947629885127642,
+      "mag_r2": -3.2340622714656977,
+      "angle_mae_deg": 0.38777244825963686,
+      "angle_rmse_deg": 0.45139384194805826,
+      "bus_id": 38
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 200292.6595559103,
+      "mag_rmse": 3823.873420163103,
+      "mag_mae": 2876.8188708569787,
+      "mag_nrmse_pct": 1.909143065273291,
+      "mag_mape_pct": 1.4373685432760286,
+      "mag_r2": 0.8273269335411919,
+      "angle_mae_deg": 0.19378739673123144,
+      "angle_rmse_deg": 0.23566898675321907,
+      "bus_id": 17
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 198808.1544306914,
+      "mag_rmse": 3907.9935807418374,
+      "mag_mae": 3597.0961624538754,
+      "mag_nrmse_pct": 1.9657109095614307,
+      "mag_mape_pct": 1.7872882820507,
+      "mag_r2": 0.8458996490328976,
+      "angle_mae_deg": 0.21723117466599373,
+      "angle_rmse_deg": 0.27433503481093346,
+      "bus_id": 18
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 203568.43323684207,
+      "mag_rmse": 4055.8837109082447,
+      "mag_mae": 3651.45401429829,
+      "mag_nrmse_pct": 1.9923932440887921,
+      "mag_mape_pct": 1.7968510878894575,
+      "mag_r2": 0.6584091761193306,
+      "angle_mae_deg": 0.2564117140001226,
+      "angle_rmse_deg": 0.3107399367327647,
+      "bus_id": 30
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 200387.69386623992,
+      "mag_rmse": 4073.8845446052756,
+      "mag_mae": 3400.2858784557634,
+      "mag_nrmse_pct": 2.0330013615130578,
+      "mag_mape_pct": 1.6920657223857314,
+      "mag_r2": 0.5996881256977241,
+      "angle_mae_deg": 0.1737170575931804,
+      "angle_rmse_deg": 0.21504917222260697,
+      "bus_id": 27
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 197275.45702585773,
+      "mag_rmse": 4034.19596144884,
+      "mag_mae": 2465.0868123320856,
+      "mag_nrmse_pct": 2.0449558309324107,
+      "mag_mape_pct": 1.4237364409203417,
+      "mag_r2": 0.9445717220780198,
+      "angle_mae_deg": 0.16764335459525442,
+      "angle_rmse_deg": 0.20612629000263732,
+      "bus_id": 14
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 206444.137123938,
+      "mag_rmse": 4257.735915786574,
+      "mag_mae": 2861.665797462365,
+      "mag_nrmse_pct": 2.0624155159371065,
+      "mag_mape_pct": 1.4079828503706175,
+      "mag_r2": -0.36120977026858325,
+      "angle_mae_deg": 0.19786879101751398,
+      "angle_rmse_deg": 0.2461928040342715,
+      "bus_id": 26
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 201125.96558424542,
+      "mag_rmse": 4432.114687086521,
+      "mag_mae": 4116.114197204175,
+      "mag_nrmse_pct": 2.203651166676461,
+      "mag_mape_pct": 2.0402450442480435,
+      "mag_r2": -0.3318332088138882,
+      "angle_mae_deg": 0.43339221271094147,
+      "angle_rmse_deg": 0.4928342060329644,
+      "bus_id": 20
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 199382.4886577011,
+      "mag_rmse": 4801.335253684057,
+      "mag_mae": 4277.660945978049,
+      "mag_nrmse_pct": 2.4081027807446853,
+      "mag_mape_pct": 2.1325309500978276,
+      "mag_r2": 0.5794420811560481,
+      "angle_mae_deg": 0.28094456960919306,
+      "angle_rmse_deg": 0.325104398730364,
+      "bus_id": 24
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 203118.30272785644,
+      "mag_rmse": 4947.7229979320955,
+      "mag_mae": 4383.6669094031,
+      "mag_nrmse_pct": 2.4358824052213515,
+      "mag_mape_pct": 2.1727899582682246,
+      "mag_r2": 0.14596847213634567,
+      "angle_mae_deg": 0.267395868188785,
+      "angle_rmse_deg": 0.3087528196878378,
+      "bus_id": 37
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 202113.35145915303,
+      "mag_rmse": 4927.768787602702,
+      "mag_mae": 4199.726850978826,
+      "mag_nrmse_pct": 2.438121357162592,
+      "mag_mape_pct": 2.0735407142396505,
+      "mag_r2": -0.5319984583870021,
+      "angle_mae_deg": 0.12994435330784157,
+      "angle_rmse_deg": 0.1636254844161536,
+      "bus_id": 23
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 200294.50136525763,
+      "mag_rmse": 5775.99745775767,
+      "mag_mae": 5419.572524175186,
+      "mag_nrmse_pct": 2.8837523838083525,
+      "mag_mape_pct": 2.7092034248637917,
+      "mag_r2": 0.5397371254605936,
+      "angle_mae_deg": 0.16264652979957597,
+      "angle_rmse_deg": 0.21247296798049714,
+      "bus_id": 25
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 200958.4232578142,
+      "mag_rmse": 6678.097109158047,
+      "mag_mae": 5946.606173693705,
+      "mag_nrmse_pct": 3.3231237590825256,
+      "mag_mape_pct": 2.9640033667845755,
+      "mag_r2": -2.118585387223328,
+      "angle_mae_deg": 0.17440442533568587,
+      "angle_rmse_deg": 0.2107212658654207,
+      "bus_id": 35
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 190305.18228576906,
+      "mag_rmse": 7849.476361306067,
+      "mag_mae": 6540.456517304957,
+      "mag_nrmse_pct": 4.124678196896926,
+      "mag_mape_pct": 4.258977576941534,
+      "mag_r2": 0.9521029117525566,
+      "angle_mae_deg": 0.2602943270776724,
+      "angle_rmse_deg": 0.3149253937686553,
+      "bus_id": 8
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 195217.3255753468,
+      "mag_rmse": 9363.071092911097,
+      "mag_mae": 5663.91086181592,
+      "mag_nrmse_pct": 4.796229568925885,
+      "mag_mape_pct": 3.24176456092287,
+      "mag_r2": 0.5720010008194512,
+      "angle_mae_deg": 0.2526519493014703,
+      "angle_rmse_deg": 0.31423006735968184,
+      "bus_id": 32
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 189693.52563259326,
+      "mag_rmse": 10708.98254997116,
+      "mag_mae": 8713.641495836178,
+      "mag_nrmse_pct": 5.645412785838979,
+      "mag_mape_pct": 6.198667429411418,
+      "mag_r2": 0.9281234590908725,
+      "angle_mae_deg": 0.3300307825550805,
+      "angle_rmse_deg": 0.38829081268550014,
+      "bus_id": 7
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 202304.16462866607,
+      "mag_rmse": 17845.375405147115,
+      "mag_mae": 9533.532386943956,
+      "mag_nrmse_pct": 8.821061809529581,
+      "mag_mape_pct": 5.09290900716083,
+      "mag_r2": -2.5118527783316793,
+      "angle_mae_deg": 0.19270302759457789,
+      "angle_rmse_deg": 0.24843011094493694,
+      "bus_id": 12
+    },
+    {
+      "n_samples": 901,
+      "mag_mean_true": 199466.27042619794,
+      "mag_rmse": 18498.60676270963,
+      "mag_mae": 12525.952657504966,
+      "mag_nrmse_pct": 9.274052561961383,
+      "mag_mape_pct": 7.090378686442634,
+      "mag_r2": -0.04675821962955817,
+      "angle_mae_deg": 0.2741136041930424,
+      "angle_rmse_deg": 0.3332190790373755,
+      "bus_id": 31
+    }
+  ],
+  "artifacts": {
+    "results_csv": "artifacts\\estimator_analysis\\measurement_override_345\\SIM_0001\\global\\static_ybus\\results_long.csv",
+    "per_bus_csv": "artifacts\\estimator_analysis\\measurement_override_345\\SIM_0001\\global\\static_ybus\\per_bus_metrics.csv",
+    "report_json": "artifacts\\estimator_analysis\\measurement_override_345\\SIM_0001\\global\\static_ybus\\report.json",
+    "plots": [
+      "plots\\per_bus_mag_nrmse_pct.png",
+      "plots\\per_bus_angle_mae_deg.png",
+      "plots\\time_mag_abs_error.png",
+      "plots\\time_angle_abs_error_deg.png",
+      "plots\\boxplot_mag_abs_error_by_regime.png",
+      "plots\\boxplot_angle_abs_error_deg_by_regime.png",
+      "plots\\scatter_mag_true_vs_hat.png",
+      "plots\\scatter_angle_true_vs_hat.png",
+      "plots\\bus_13_timeseries.png",
+      "plots\\bus_9_timeseries.png",
+      "plots\\bus_31_timeseries.png",
+      "plots\\bus_12_timeseries.png"
+    ]
+  }
+}

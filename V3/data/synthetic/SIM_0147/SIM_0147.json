@@ -1,0 +1,440 @@
+{
+  "scenario_id": "SIM_0147",
+  "seed": 21424506,
+  "fps": 30,
+  "duration_sec": 30.0,
+  "nominal_frequency_hz": 59.9576,
+  "pmu_buses": [
+    2,
+    5,
+    6,
+    10,
+    19,
+    22,
+    29,
+    39
+  ],
+  "output_buses": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39
+  ],
+  "event_label_map": {
+    "0": "normal",
+    "1": "fault",
+    "2": "line_outage",
+    "3": "generation_change",
+    "4": "load_change",
+    "5": "pmu_missing_data",
+    "6": "pmu_missing_data_plus_physical_event",
+    "7": "bad_data",
+    "8": "unknown_or_other"
+  },
+  "no_raw_data_sampling": true,
+  "andes": {
+    "available": true,
+    "case_path": "C:\\Users\\walla\\anaconda3\\Lib\\site-packages\\andes\\cases\\ieee39\\ieee39_full.xlsx",
+    "engine_used": "ieee39_topology_surrogate_with_andes_case_reference",
+    "note": "The synthetic generator is ANDES-aware and records the IEEE 39 case when available, but uses a fast topology/swing-response surrogate by default.",
+    "version": "2.0.0"
+  },
+  "ieee39_branches": [
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      39
+    ],
+    [
+      10,
+      32
+    ],
+    [
+      11,
+      10
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      12,
+      13
+    ],
+    [
+      13,
+      10
+    ],
+    [
+      14,
+      13
+    ],
+    [
+      14,
+      4
+    ],
+    [
+      15,
+      14
+    ],
+    [
+      15,
+      16
+    ],
+    [
+      16,
+      17
+    ],
+    [
+      16,
+      19
+    ],
+    [
+      17,
+      18
+    ],
+    [
+      18,
+      3
+    ],
+    [
+      19,
+      20
+    ],
+    [
+      19,
+      33
+    ],
+    [
+      2,
+      25
+    ],
+    [
+      2,
+      30
+    ],
+    [
+      20,
+      34
+    ],
+    [
+      21,
+      16
+    ],
+    [
+      22,
+      21
+    ],
+    [
+      22,
+      23
+    ],
+    [
+      22,
+      35
+    ],
+    [
+      23,
+      24
+    ],
+    [
+      23,
+      36
+    ],
+    [
+      24,
+      16
+    ],
+    [
+      25,
+      26
+    ],
+    [
+      25,
+      37
+    ],
+    [
+      26,
+      28
+    ],
+    [
+      27,
+      17
+    ],
+    [
+      27,
+      26
+    ],
+    [
+      29,
+      26
+    ],
+    [
+      29,
+      28
+    ],
+    [
+      29,
+      38
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      4,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      8
+    ],
+    [
+      6,
+      31
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      8,
+      9
+    ],
+    [
+      9,
+      39
+    ]
+  ],
+  "branch_reactance_pu": {
+    "1-2": 0.040905025472,
+    "1-39": 0.024922086763,
+    "10-32": 0.02,
+    "11-10": 0.004299759595,
+    "11-12": 0.0435,
+    "11-6": 0.008198417106,
+    "12-13": 0.0435,
+    "13-10": 0.004299759595,
+    "14-13": 0.010097067221,
+    "14-4": 0.01289619015,
+    "15-14": 0.021671526289,
+    "15-16": 0.009397471948,
+    "16-17": 0.008898266179,
+    "16-19": 0.019480905922,
+    "17-18": 0.008198486364,
+    "18-3": 0.013293781683,
+    "19-20": 0.0138,
+    "19-33": 0.0142,
+    "2-25": 0.008599411992,
+    "2-30": 0.0181,
+    "20-34": 0.018,
+    "21-16": 0.013492250317,
+    "22-21": 0.013991661077,
+    "22-23": 0.009597189565,
+    "22-35": 0.0143,
+    "23-24": 0.034926646206,
+    "23-36": 0.0272,
+    "24-16": 0.005899588211,
+    "25-26": 0.032211714241,
+    "25-37": 0.0232,
+    "26-28": 0.047110805343,
+    "27-17": 0.017284024331,
+    "27-26": 0.014691450355,
+    "29-26": 0.061837704637,
+    "29-28": 0.015090610801,
+    "29-38": 0.0156,
+    "3-2": 0.015090336375,
+    "4-3": 0.021283362481,
+    "4-5": 0.012796399097,
+    "5-6": 0.002599917496,
+    "5-8": 0.011196906577,
+    "6-31": 0.025,
+    "6-7": 0.00919843881,
+    "7-8": 0.004599703271,
+    "8-9": 0.036216845317,
+    "9-39": 0.024875400367
+  },
+  "events": [
+    {
+      "event_id": "SIM_0147_E01",
+      "kind": "bad_data",
+      "label": 7,
+      "start_sec": 27.9372,
+      "end_sec": 28.599,
+      "nodes": [],
+      "line": null,
+      "pmu_bus": 19,
+      "severity": 0.2894316988249381,
+      "params": {
+        "mode": "angle_bias",
+        "channel": "BUS19_VA_ANG"
+      },
+      "affected_pmu_buses": [
+        19
+      ],
+      "affected_buses": [
+        19
+      ],
+      "weights_by_pmu_bus": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.0,
+        "4": 0.0,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 0.0,
+        "8": 0.0,
+        "9": 0.0,
+        "10": 0.0,
+        "11": 0.0,
+        "12": 0.0,
+        "13": 0.0,
+        "14": 0.0,
+        "15": 0.0,
+        "16": 0.0,
+        "17": 0.0,
+        "18": 0.0,
+        "19": 1.0,
+        "20": 0.0,
+        "21": 0.0,
+        "22": 0.0,
+        "23": 0.0,
+        "24": 0.0,
+        "25": 0.0,
+        "26": 0.0,
+        "27": 0.0,
+        "28": 0.0,
+        "29": 0.0,
+        "30": 0.0,
+        "31": 0.0,
+        "32": 0.0,
+        "33": 0.0,
+        "34": 0.0,
+        "35": 0.0,
+        "36": 0.0,
+        "37": 0.0,
+        "38": 0.0,
+        "39": 0.0
+      },
+      "engineering_note": "Telemetry at bus 19 is corrupted by synthetic angle_bias."
+    }
+  ],
+  "label_counts": {
+    "0": 35120,
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 19,
+    "8": 0
+  },
+  "units": {
+    "TIMESTAMP": "seconds from scenario start",
+    "V*_MAG": "line-neutral RMS volts",
+    "V*_ANG": "electrical degrees",
+    "I*_MAG": "amperes",
+    "I*_ANG": "electrical degrees",
+    "Freq": "Hz",
+    "ROCOF": "Hz/s",
+    "DATA_PRESENT": "1 if telemetry is present, 0 if missing",
+    "Event": "integer class label matching SGSMA event taxonomy"
+  },
+  "csv_files": {
+    "1": "csv/NON_PMU_Bus1_Competition_Data_nanmask.csv",
+    "2": "csv/PMU_Bus2_Competition_Data_nanmask.csv",
+    "3": "csv/NON_PMU_Bus3_Competition_Data_nanmask.csv",
+    "4": "csv/NON_PMU_Bus4_Competition_Data_nanmask.csv",
+    "5": "csv/PMU_Bus5_Competition_Data_nanmask.csv",
+    "6": "csv/PMU_Bus6_Competition_Data_nanmask.csv",
+    "7": "csv/NON_PMU_Bus7_Competition_Data_nanmask.csv",
+    "8": "csv/NON_PMU_Bus8_Competition_Data_nanmask.csv",
+    "9": "csv/NON_PMU_Bus9_Competition_Data_nanmask.csv",
+    "10": "csv/PMU_Bus10_Competition_Data_nanmask.csv",
+    "11": "csv/NON_PMU_Bus11_Competition_Data_nanmask.csv",
+    "12": "csv/NON_PMU_Bus12_Competition_Data_nanmask.csv",
+    "13": "csv/NON_PMU_Bus13_Competition_Data_nanmask.csv",
+    "14": "csv/NON_PMU_Bus14_Competition_Data_nanmask.csv",
+    "15": "csv/NON_PMU_Bus15_Competition_Data_nanmask.csv",
+    "16": "csv/NON_PMU_Bus16_Competition_Data_nanmask.csv",
+    "17": "csv/NON_PMU_Bus17_Competition_Data_nanmask.csv",
+    "18": "csv/NON_PMU_Bus18_Competition_Data_nanmask.csv",
+    "19": "csv/PMU_Bus19_Competition_Data_nanmask.csv",
+    "20": "csv/NON_PMU_Bus20_Competition_Data_nanmask.csv",
+    "21": "csv/NON_PMU_Bus21_Competition_Data_nanmask.csv",
+    "22": "csv/PMU_Bus22_Competition_Data_nanmask.csv",
+    "23": "csv/NON_PMU_Bus23_Competition_Data_nanmask.csv",
+    "24": "csv/NON_PMU_Bus24_Competition_Data_nanmask.csv",
+    "25": "csv/NON_PMU_Bus25_Competition_Data_nanmask.csv",
+    "26": "csv/NON_PMU_Bus26_Competition_Data_nanmask.csv",
+    "27": "csv/NON_PMU_Bus27_Competition_Data_nanmask.csv",
+    "28": "csv/NON_PMU_Bus28_Competition_Data_nanmask.csv",
+    "29": "csv/PMU_Bus29_Competition_Data_nanmask.csv",
+    "30": "csv/NON_PMU_Bus30_Competition_Data_nanmask.csv",
+    "31": "csv/NON_PMU_Bus31_Competition_Data_nanmask.csv",
+    "32": "csv/NON_PMU_Bus32_Competition_Data_nanmask.csv",
+    "33": "csv/NON_PMU_Bus33_Competition_Data_nanmask.csv",
+    "34": "csv/NON_PMU_Bus34_Competition_Data_nanmask.csv",
+    "35": "csv/NON_PMU_Bus35_Competition_Data_nanmask.csv",
+    "36": "csv/NON_PMU_Bus36_Competition_Data_nanmask.csv",
+    "37": "csv/NON_PMU_Bus37_Competition_Data_nanmask.csv",
+    "38": "csv/NON_PMU_Bus38_Competition_Data_nanmask.csv",
+    "39": "csv/PMU_Bus39_Competition_Data_nanmask.csv"
+  },
+  "review_artifacts": []
+}

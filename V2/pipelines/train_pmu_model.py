@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.ml.models import SUPPORTED_MODEL_NAMES  # noqa: E402
 from src.ml.pmu_grid_pipeline import PmuGridTrainingPipeline, TrainingConfig  # noqa: E402
 
 
@@ -25,7 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--synthetic-dir", type=Path, default=PROJECT_ROOT / "data" / "synthetic_v2")
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "models")
-    parser.add_argument("--model", choices=["lightgbm", "histgb", "extratrees"], default="lightgbm")
+    parser.add_argument("--model", choices=SUPPORTED_MODEL_NAMES, default="lightgbm")
     parser.add_argument("--window-sec", type=float, default=1.0)
     parser.add_argument("--samples-per-event", type=int, default=3)
     parser.add_argument("--normal-samples-per-scenario", type=int, default=8)

@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from src.ml.models import SUPPORTED_MODEL_NAMES
 from src.ml.pmu_grid_pipeline import PmuGridTrainingPipeline, TrainingConfig
 
 
-SUPPORTED_MODELS = ["lightgbm", "histgb", "extratrees"]
+SUPPORTED_MODELS = SUPPORTED_MODEL_NAMES
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,7 @@ class BenchmarkConfig:
     train_fraction: float = 0.70
     runs: int = 1
     seed: int = 20260412
+    skip_completed: bool = False
 
 
 class PmuGridBenchmarkPipeline:
@@ -50,8 +53,8 @@ class PmuGridBenchmarkPipeline:
         best = max(
             successful,
             key=lambda row: (
+                float(row["benchmark_score"]),
                 float(row["selection_score"]),
-                -float(row.get("serialized_size_bytes") or 0),
             ),
         )
         production_model = self.config.output_dir / "pmu_grid_model.pkl"
@@ -70,7 +73,11 @@ class PmuGridBenchmarkPipeline:
 
     def _train_model(self, model_name: str) -> dict[str, Any]:
         model_dir = self.config.output_dir / model_name
+        summary_path = model_dir / "pmu_grid_training_summary.json"
         try:
+            if self.config.skip_completed and summary_path.exists():
+                summary = json.loads(summary_path.read_text(encoding="utf-8"))
+                return self._row_from_summary(model_name, model_dir, summary, cached=True)
             summary = PmuGridTrainingPipeline(
                 TrainingConfig(
                     synthetic_dir=self.config.synthetic_dir,
@@ -85,30 +92,7 @@ class PmuGridBenchmarkPipeline:
                     seed=self.config.seed,
                 )
             ).run()
-            best = summary["best_metrics"]
-            return {
-                "status": "ok",
-                "requested_model": model_name,
-                "resolved_model": best.get("model_name"),
-                "best_run": summary.get("best_run"),
-                "selection_score": best.get("selection_score"),
-                "event_macro_f1": best.get("event_macro_f1"),
-                "event_weighted_f1": best.get("event_weighted_f1"),
-                "bus_state_macro_f1": best.get("bus_state_macro_f1"),
-                "bus_state_weighted_f1": best.get("bus_state_weighted_f1"),
-                "active_bus_jaccard_mean": best.get("active_bus_jaccard_mean"),
-                "full_state_exact_match": best.get("full_state_exact_match"),
-                "serialized_size_bytes": best.get("serialized_size_bytes"),
-                "n_samples": summary.get("n_samples"),
-                "n_features": summary.get("n_features"),
-                "n_scenarios": summary.get("n_scenarios"),
-                "train_fraction": summary.get("train_fraction"),
-                "test_fraction": summary.get("test_fraction"),
-                "elapsed_sec": summary.get("elapsed_sec"),
-                "best_model_path": summary.get("best_model_path"),
-                "history_path": summary.get("history_path"),
-                "summary_path": str((model_dir / "pmu_grid_training_summary.json").resolve()),
-            }
+            return self._row_from_summary(model_name, model_dir, summary, cached=False)
         except Exception as exc:
             return {
                 "status": "error",
@@ -117,6 +101,42 @@ class PmuGridBenchmarkPipeline:
                 "error": str(exc),
                 "summary_path": str((model_dir / "pmu_grid_training_summary.json").resolve()),
             }
+
+    def _row_from_summary(
+        self,
+        model_name: str,
+        model_dir: Path,
+        summary: dict[str, Any],
+        cached: bool,
+    ) -> dict[str, Any]:
+        best = summary["best_metrics"]
+        serialized_size = int(best.get("serialized_size_bytes") or 0)
+        selection_score = float(best.get("selection_score") or 0.0)
+        return {
+            "status": "ok",
+            "requested_model": model_name,
+            "resolved_model": best.get("model_name"),
+            "best_run": summary.get("best_run"),
+            "selection_score": selection_score,
+            "benchmark_score": self._benchmark_score(selection_score, serialized_size),
+            "event_macro_f1": best.get("event_macro_f1"),
+            "event_weighted_f1": best.get("event_weighted_f1"),
+            "bus_state_macro_f1": best.get("bus_state_macro_f1"),
+            "bus_state_weighted_f1": best.get("bus_state_weighted_f1"),
+            "active_bus_jaccard_mean": best.get("active_bus_jaccard_mean"),
+            "full_state_exact_match": best.get("full_state_exact_match"),
+            "serialized_size_bytes": serialized_size,
+            "n_samples": summary.get("n_samples"),
+            "n_features": summary.get("n_features"),
+            "n_scenarios": summary.get("n_scenarios"),
+            "train_fraction": summary.get("train_fraction"),
+            "test_fraction": summary.get("test_fraction"),
+            "elapsed_sec": summary.get("elapsed_sec"),
+            "best_model_path": summary.get("best_model_path"),
+            "history_path": summary.get("history_path"),
+            "summary_path": str((model_dir / "pmu_grid_training_summary.json").resolve()),
+            "cached": cached,
+        }
 
     def _write_outputs(
         self,
@@ -135,7 +155,7 @@ class PmuGridBenchmarkPipeline:
             "best_model": best,
             "benchmark_csv": str(csv_path.resolve()),
             "benchmark_json": str(json_path.resolve()),
-            "selection_rule": "max selection_score, tie-break smaller serialized_size_bytes",
+            "selection_rule": "max benchmark_score = selection_score - 0.01*log10(serialized_size_bytes + 1)",
             "input_contract": {
                 "feature_buses": [2, 5, 6, 10, 19, 22, 29, 39],
                 "uses_non_pmu_csv_as_features": False,
@@ -161,3 +181,6 @@ class PmuGridBenchmarkPipeline:
             writer = csv.DictWriter(handle, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(rows)
+
+    def _benchmark_score(self, selection_score: float, serialized_size_bytes: int) -> float:
+        return float(selection_score - 0.01 * math.log10(float(serialized_size_bytes) + 1.0))

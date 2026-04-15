@@ -12,13 +12,11 @@ from typing import Any, Iterable
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifier
-from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
+from src.ml.models import build_bus_state_estimator, build_event_estimator, resolve_model_name
 from src.ml.pmu_features import (
     PMU_BUSES,
     collect_scenario_jsons,
@@ -34,14 +32,8 @@ from src.ml.pmu_features import (
 from src.ml.pmu_plotting import PredictionPlotter, TrainingPlotter
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
-
-try:  # pragma: no cover - optional local dependency.
-    from lightgbm import LGBMClassifier
-
-    HAS_LIGHTGBM = True
-except Exception:  # pragma: no cover - fallback path.
-    LGBMClassifier = None
-    HAS_LIGHTGBM = False
+warnings.filterwarnings("ignore", message="invalid value encountered in divide", category=RuntimeWarning)
+warnings.filterwarnings("ignore", message="Got `batch_size` less than 1 or larger than sample size", category=UserWarning)
 
 
 ALL_BUSES = list(range(1, 40))
@@ -102,73 +94,13 @@ class ModelFactory:
 
     @property
     def resolved_name(self) -> str:
-        if self.model_name == "lightgbm" and not HAS_LIGHTGBM:
-            return "histgb"
-        return self.model_name
-
-    def make_imputer(self) -> SimpleImputer:
-        try:
-            return SimpleImputer(strategy="median", keep_empty_features=True)
-        except TypeError:
-            return SimpleImputer(strategy="median")
-
-    def make_classifier(self, n_classes: int, seed_offset: int = 0) -> Any:
-        if n_classes < 2:
-            return DummyClassifier(strategy="most_frequent")
-        seed = self.seed + seed_offset
-        if self.resolved_name == "lightgbm" and HAS_LIGHTGBM:
-            objective = "binary" if n_classes == 2 else "multiclass"
-            return LGBMClassifier(
-                objective=objective,
-                n_estimators=150,
-                learning_rate=0.055,
-                num_leaves=15,
-                max_depth=5,
-                min_child_samples=2,
-                subsample=0.9,
-                colsample_bytree=0.85,
-                reg_lambda=1.0,
-                random_state=seed,
-                n_jobs=-1,
-                verbose=-1,
-            )
-        if self.resolved_name == "histgb":
-            return HistGradientBoostingClassifier(
-                max_iter=160,
-                learning_rate=0.06,
-                max_leaf_nodes=15,
-                l2_regularization=0.1,
-                random_state=seed,
-            )
-        return ExtraTreesClassifier(
-            n_estimators=180,
-            max_depth=12,
-            min_samples_leaf=2,
-            max_features="sqrt",
-            random_state=seed,
-            n_jobs=-1,
-        )
+        return resolve_model_name(self.model_name)
 
     def make_pipeline(self, n_classes: int, seed_offset: int = 0) -> Pipeline:
-        return Pipeline([("imputer", self.make_imputer()), ("classifier", self.make_classifier(n_classes, seed_offset))])
+        return build_event_estimator(self.model_name, n_classes, self.seed + seed_offset)
 
     def make_bus_state_pipeline(self) -> Pipeline:
-        return Pipeline(
-            [
-                ("imputer", self.make_imputer()),
-                (
-                    "classifier",
-                    ExtraTreesClassifier(
-                        n_estimators=140,
-                        max_depth=14,
-                        min_samples_leaf=1,
-                        max_features="sqrt",
-                        random_state=self.seed + 101,
-                        n_jobs=-1,
-                    ),
-                ),
-            ]
-        )
+        return build_bus_state_estimator(self.model_name, self.seed)
 
 
 class ScenarioSplitter:
@@ -434,7 +366,7 @@ class PmuGridModel:
         proba = model.predict_proba(features)
         if isinstance(proba, list):
             proba = proba[0]
-        return np.max(np.asarray(proba, dtype=float), axis=1)
+        return np.max(np.nan_to_num(np.asarray(proba, dtype=float), nan=0.0), axis=1)
 
 
 class Metrics:

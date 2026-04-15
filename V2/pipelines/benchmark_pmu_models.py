@@ -34,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-fraction", type=float, default=0.70)
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--seed", type=int, default=20260412)
+    parser.add_argument("--skip-completed", action="store_true", help="Reuse completed per-model summaries in the output directory.")
     return parser.parse_args()
 
 
@@ -51,6 +52,7 @@ def main() -> None:
             train_fraction=args.train_fraction,
             runs=args.runs,
             seed=args.seed,
+            skip_completed=args.skip_completed,
         )
     ).run()
 

@@ -1,0 +1,178 @@
+# SIM_0001 Synthetic PMU Scenario Review
+
+## Purpose
+This artifact documents a synthetic IEEE 39 bus PMU scenario generated for fault-detection, classification, and localization model training. The scenario uses IEEE 39 topology and metadata only; it does not sample hackathon raw measurements.
+
+## Electrical Assumptions
+- Nominal frequency: 59.9576 Hz.
+- Voltage magnitudes are line-neutral RMS volts.
+- Phase angles are electrical degrees with balanced ABC separation plus event perturbations.
+- Current magnitudes are amperes from a topology/reactance-aware surrogate load-flow response.
+- Event propagation uses the IEEE 39 branch model and per-unit branch reactance from metadata when available.
+- DATA_PRESENT is set to 0 only for synthetic telemetry dropouts/missing-data intervals.
+
+## Events
+- Label 1 `fault` at nodes [7], 17.153-21.917 s.
+  Severity/amplitude: 0.6765838715106709; affected buses: [7, 8, 6, 5, 11, 10, 4, 13, 31, 14, 9, 32, 3, 15, 18, 12, 2, 39, 16, 17, 25, 24, 30, 21, 27, 19, 1, 37, 22, 26, 20, 33, 23, 35, 34, 36].
+  Engineering note: line_line_CA short-circuit at bus 13; voltage sag and current surge decay with electrical distance from the faulted bus.
+
+## CSV Outputs
+- Bus 1: `csv/NON_PMU_Bus1_Competition_Data_nanmask.csv`
+- Bus 2: `csv/PMU_Bus2_Competition_Data_nanmask.csv`
+- Bus 3: `csv/NON_PMU_Bus3_Competition_Data_nanmask.csv`
+- Bus 4: `csv/NON_PMU_Bus4_Competition_Data_nanmask.csv`
+- Bus 5: `csv/PMU_Bus5_Competition_Data_nanmask.csv`
+- Bus 6: `csv/PMU_Bus6_Competition_Data_nanmask.csv`
+- Bus 7: `csv/NON_PMU_Bus7_Competition_Data_nanmask.csv`
+- Bus 8: `csv/NON_PMU_Bus8_Competition_Data_nanmask.csv`
+- Bus 9: `csv/NON_PMU_Bus9_Competition_Data_nanmask.csv`
+- Bus 10: `csv/PMU_Bus10_Competition_Data_nanmask.csv`
+- Bus 11: `csv/NON_PMU_Bus11_Competition_Data_nanmask.csv`
+- Bus 12: `csv/NON_PMU_Bus12_Competition_Data_nanmask.csv`
+- Bus 13: `csv/NON_PMU_Bus13_Competition_Data_nanmask.csv`
+- Bus 14: `csv/NON_PMU_Bus14_Competition_Data_nanmask.csv`
+- Bus 15: `csv/NON_PMU_Bus15_Competition_Data_nanmask.csv`
+- Bus 16: `csv/NON_PMU_Bus16_Competition_Data_nanmask.csv`
+- Bus 17: `csv/NON_PMU_Bus17_Competition_Data_nanmask.csv`
+- Bus 18: `csv/NON_PMU_Bus18_Competition_Data_nanmask.csv`
+- Bus 19: `csv/PMU_Bus19_Competition_Data_nanmask.csv`
+- Bus 20: `csv/NON_PMU_Bus20_Competition_Data_nanmask.csv`
+- Bus 21: `csv/NON_PMU_Bus21_Competition_Data_nanmask.csv`
+- Bus 22: `csv/PMU_Bus22_Competition_Data_nanmask.csv`
+- Bus 23: `csv/NON_PMU_Bus23_Competition_Data_nanmask.csv`
+- Bus 24: `csv/NON_PMU_Bus24_Competition_Data_nanmask.csv`
+- Bus 25: `csv/NON_PMU_Bus25_Competition_Data_nanmask.csv`
+- Bus 26: `csv/NON_PMU_Bus26_Competition_Data_nanmask.csv`
+- Bus 27: `csv/NON_PMU_Bus27_Competition_Data_nanmask.csv`
+- Bus 28: `csv/NON_PMU_Bus28_Competition_Data_nanmask.csv`
+- Bus 29: `csv/PMU_Bus29_Competition_Data_nanmask.csv`
+- Bus 30: `csv/NON_PMU_Bus30_Competition_Data_nanmask.csv`
+- Bus 31: `csv/NON_PMU_Bus31_Competition_Data_nanmask.csv`
+- Bus 32: `csv/NON_PMU_Bus32_Competition_Data_nanmask.csv`
+- Bus 33: `csv/NON_PMU_Bus33_Competition_Data_nanmask.csv`
+- Bus 34: `csv/NON_PMU_Bus34_Competition_Data_nanmask.csv`
+- Bus 35: `csv/NON_PMU_Bus35_Competition_Data_nanmask.csv`
+- Bus 36: `csv/NON_PMU_Bus36_Competition_Data_nanmask.csv`
+- Bus 37: `csv/NON_PMU_Bus37_Competition_Data_nanmask.csv`
+- Bus 38: `csv/NON_PMU_Bus38_Competition_Data_nanmask.csv`
+- Bus 39: `csv/PMU_Bus39_Competition_Data_nanmask.csv`
+
+## Figures
+- `plots/node_1_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_1_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_1_freq_rocof_vs_time.png`
+- `plots/node_2_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_2_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_2_freq_rocof_vs_time.png`
+- `plots/node_3_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_3_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_3_freq_rocof_vs_time.png`
+- `plots/node_4_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_4_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_4_freq_rocof_vs_time.png`
+- `plots/node_5_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_5_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_5_freq_rocof_vs_time.png`
+- `plots/node_6_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_6_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_6_freq_rocof_vs_time.png`
+- `plots/node_7_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_7_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_7_freq_rocof_vs_time.png`
+- `plots/node_8_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_8_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_8_freq_rocof_vs_time.png`
+- `plots/node_9_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_9_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_9_freq_rocof_vs_time.png`
+- `plots/node_10_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_10_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_10_freq_rocof_vs_time.png`
+- `plots/node_11_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_11_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_11_freq_rocof_vs_time.png`
+- `plots/node_12_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_12_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_12_freq_rocof_vs_time.png`
+- `plots/node_13_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_13_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_13_freq_rocof_vs_time.png`
+- `plots/node_14_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_14_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_14_freq_rocof_vs_time.png`
+- `plots/node_15_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_15_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_15_freq_rocof_vs_time.png`
+- `plots/node_16_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_16_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_16_freq_rocof_vs_time.png`
+- `plots/node_17_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_17_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_17_freq_rocof_vs_time.png`
+- `plots/node_18_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_18_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_18_freq_rocof_vs_time.png`
+- `plots/node_19_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_19_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_19_freq_rocof_vs_time.png`
+- `plots/node_20_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_20_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_20_freq_rocof_vs_time.png`
+- `plots/node_21_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_21_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_21_freq_rocof_vs_time.png`
+- `plots/node_22_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_22_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_22_freq_rocof_vs_time.png`
+- `plots/node_23_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_23_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_23_freq_rocof_vs_time.png`
+- `plots/node_24_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_24_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_24_freq_rocof_vs_time.png`
+- `plots/node_25_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_25_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_25_freq_rocof_vs_time.png`
+- `plots/node_26_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_26_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_26_freq_rocof_vs_time.png`
+- `plots/node_27_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_27_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_27_freq_rocof_vs_time.png`
+- `plots/node_28_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_28_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_28_freq_rocof_vs_time.png`
+- `plots/node_29_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_29_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_29_freq_rocof_vs_time.png`
+- `plots/node_30_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_30_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_30_freq_rocof_vs_time.png`
+- `plots/node_31_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_31_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_31_freq_rocof_vs_time.png`
+- `plots/node_32_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_32_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_32_freq_rocof_vs_time.png`
+- `plots/node_33_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_33_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_33_freq_rocof_vs_time.png`
+- `plots/node_34_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_34_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_34_freq_rocof_vs_time.png`
+- `plots/node_35_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_35_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_35_freq_rocof_vs_time.png`
+- `plots/node_36_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_36_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_36_freq_rocof_vs_time.png`
+- `plots/node_37_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_37_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_37_freq_rocof_vs_time.png`
+- `plots/node_38_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_38_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_38_freq_rocof_vs_time.png`
+- `plots/node_39_v_(a,b,c)_mag_vs_time.png`
+- `plots/node_39_i_(a,b,c)_mag_vs_time.png`
+- `plots/node_39_freq_rocof_vs_time.png`
+- `plots/ieee39_event_diagram.png`

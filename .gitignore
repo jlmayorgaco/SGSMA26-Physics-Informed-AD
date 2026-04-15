@@ -18,6 +18,7 @@ V1/data/processed/
 V1/data/splits/
 V1/poc/data_synth/
 V2/data/synthetic_v2/
+V2/data/synthetic_v2*/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -51,8 +52,11 @@ V1/submission_sgsma2026.zip
 
 # Generated models and experiment outputs
 models/
+!V2/src/ml/models/
+!V2/src/ml/models/*.py
 V1/models/
 V1/experiments/event_simulations/
+V2/models*/
 
 # OS
 .DS_Store

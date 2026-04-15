@@ -25,6 +25,13 @@ from src.ml.pmu_grid_pipeline import (  # noqa: E402
     PmuGridTrainingPipeline,
     TrainingConfig,
 )
+from src.ml.staged import (  # noqa: E402
+    StagedInferenceConfig,
+    StagedPmuInferencePipeline,
+    StagedPmuTrainingPipeline,
+    StagedTrainingConfig,
+)
+from src.ml.staged.model import StagedModelConfig  # noqa: E402
 
 
 def project_path(path: Path) -> Path:
@@ -41,11 +48,17 @@ def parse_args() -> argparse.Namespace:
     train = sub.add_parser("train", help="Train/test the 8-PMU to 39-bus model.")
     add_training_args(train, include_synthetic_dir=True)
 
+    train_staged = sub.add_parser("train-staged", help="Train the staged physics-aware 8-PMU model.")
+    add_staged_training_args(train_staged)
+
     benchmark_parser = sub.add_parser("benchmark", help="Train several compact models and select the best.")
     add_benchmark_args(benchmark_parser)
 
     infer = sub.add_parser("infer", help="Infer events from raw or synthetic PMU CSVs.")
     add_inference_args(infer)
+
+    infer_staged = sub.add_parser("infer-staged", help="Infer with a staged physics-aware model.")
+    add_staged_inference_args(infer_staged)
 
     run_all = sub.add_parser("run-all", help="Generate synthetic data, then train/test.")
     add_generation_args(run_all)
@@ -69,7 +82,25 @@ def add_training_args(parser: argparse.ArgumentParser, include_synthetic_dir: bo
     if include_synthetic_dir:
         parser.add_argument("--synthetic-dir", type=Path, default=PROJECT_ROOT / "data" / "synthetic_v2")
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "models")
-    parser.add_argument("--model", choices=["lightgbm", "histgb", "extratrees"], default="lightgbm")
+    parser.add_argument("--model", choices=SUPPORTED_MODELS, default="lightgbm")
+    parser.add_argument("--window-sec", type=float, default=1.0)
+    parser.add_argument("--samples-per-event", type=int, default=3)
+    parser.add_argument("--normal-samples-per-scenario", type=int, default=8)
+    parser.add_argument("--max-scenarios", type=int, default=None)
+    parser.add_argument("--train-fraction", type=float, default=0.70)
+    parser.add_argument("--runs", type=int, default=1)
+    parser.add_argument("--train-seed", type=int, default=20260412)
+
+
+def add_staged_training_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--synthetic-dir", type=Path, default=PROJECT_ROOT / "data" / "synthetic_v2")
+    parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "models_staged")
+    parser.add_argument("--detector-model", choices=SUPPORTED_MODELS, default="lightgbm")
+    parser.add_argument("--event-model", choices=SUPPORTED_MODELS, default="lightgbm")
+    parser.add_argument("--location-model", choices=SUPPORTED_MODELS, default="lightgbm")
+    parser.add_argument("--state-model", choices=SUPPORTED_MODELS, default="extratrees")
+    parser.add_argument("--no-physics-features", action="store_true")
+    parser.add_argument("--detector-threshold", type=float, default=0.45)
     parser.add_argument("--window-sec", type=float, default=1.0)
     parser.add_argument("--samples-per-event", type=int, default=3)
     parser.add_argument("--normal-samples-per-scenario", type=int, default=8)
@@ -90,6 +121,7 @@ def add_benchmark_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--train-fraction", type=float, default=0.70)
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--train-seed", type=int, default=20260412)
+    parser.add_argument("--skip-completed", action="store_true", help="Reuse completed per-model summaries in the output directory.")
 
 
 def add_inference_args(parser: argparse.ArgumentParser) -> None:
@@ -99,6 +131,16 @@ def add_inference_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--window-sec", type=float, default=None)
     parser.add_argument("--stride-sec", type=float, default=0.25)
     parser.add_argument("--threshold", type=float, default=0.35)
+    parser.add_argument("--max-windows", type=int, default=None)
+
+
+def add_staged_inference_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--model-path", type=Path, default=PROJECT_ROOT / "models_staged" / "pmu_grid_model.pkl")
+    parser.add_argument("--input-dir", type=Path, required=True)
+    parser.add_argument("--out", type=Path, default=PROJECT_ROOT / "models_staged" / "pmu_grid_predictions.json")
+    parser.add_argument("--window-sec", type=float, default=None)
+    parser.add_argument("--stride-sec", type=float, default=0.25)
+    parser.add_argument("--threshold", type=float, default=0.45)
     parser.add_argument("--max-windows", type=int, default=None)
 
 
@@ -142,6 +184,29 @@ def train(args: argparse.Namespace) -> dict:
     return PmuGridTrainingPipeline(config).run()
 
 
+def train_staged(args: argparse.Namespace) -> dict:
+    config = StagedTrainingConfig(
+        synthetic_dir=project_path(args.synthetic_dir),
+        output_dir=project_path(args.output_dir),
+        model=StagedModelConfig(
+            detector_model=args.detector_model,
+            event_model=args.event_model,
+            location_model=args.location_model,
+            state_model=args.state_model,
+            use_physics_features=not args.no_physics_features,
+            detector_threshold=args.detector_threshold,
+        ),
+        window_sec=args.window_sec,
+        samples_per_event=args.samples_per_event,
+        normal_samples_per_scenario=args.normal_samples_per_scenario,
+        max_scenarios=args.max_scenarios,
+        train_fraction=args.train_fraction,
+        runs=args.runs,
+        seed=args.train_seed,
+    )
+    return StagedPmuTrainingPipeline(config).run()
+
+
 def benchmark(args: argparse.Namespace) -> dict:
     config = BenchmarkConfig(
         synthetic_dir=project_path(args.synthetic_dir),
@@ -154,6 +219,7 @@ def benchmark(args: argparse.Namespace) -> dict:
         train_fraction=args.train_fraction,
         runs=args.runs,
         seed=args.train_seed,
+        skip_completed=args.skip_completed,
     )
     return PmuGridBenchmarkPipeline(config).run()
 
@@ -171,16 +237,33 @@ def infer(args: argparse.Namespace) -> dict:
     return PmuGridInferencePipeline(config).run()
 
 
+def infer_staged(args: argparse.Namespace) -> dict:
+    config = StagedInferenceConfig(
+        model_path=project_path(args.model_path),
+        input_dir=project_path(args.input_dir),
+        output_path=project_path(args.out),
+        window_sec=args.window_sec,
+        stride_sec=args.stride_sec,
+        threshold=args.threshold,
+        max_windows=args.max_windows,
+    )
+    return StagedPmuInferencePipeline(config).run()
+
+
 def main() -> None:
     args = parse_args()
     if args.command == "generate":
         generate(args)
     elif args.command == "train":
         train(args)
+    elif args.command == "train-staged":
+        train_staged(args)
     elif args.command == "benchmark":
         benchmark(args)
     elif args.command == "infer":
         infer(args)
+    elif args.command == "infer-staged":
+        infer_staged(args)
     elif args.command == "run-all":
         generate(args)
         train(args)
