@@ -1,0 +1,94 @@
+{
+  "input_dir": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V4\\data\\RAW0001",
+  "file_count": 8,
+  "bus_ids": [
+    "Bus2",
+    "Bus5",
+    "Bus6",
+    "Bus10",
+    "Bus19",
+    "Bus22",
+    "Bus29",
+    "Bus39"
+  ],
+  "alignment": {
+    "reference_bus": "Bus2",
+    "reference_rows": 161379,
+    "per_bus_alignment": {
+      "Bus2": {
+        "row_count": 161379,
+        "common_timestamp_count": 161379,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus5": {
+        "row_count": 161379,
+        "common_timestamp_count": 150641,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus6": {
+        "row_count": 161379,
+        "common_timestamp_count": 150641,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus10": {
+        "row_count": 161379,
+        "common_timestamp_count": 150641,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus19": {
+        "row_count": 161379,
+        "common_timestamp_count": 150641,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus22": {
+        "row_count": 161379,
+        "common_timestamp_count": 150641,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus29": {
+        "row_count": 161379,
+        "common_timestamp_count": 150641,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      },
+      "Bus39": {
+        "row_count": 161379,
+        "common_timestamp_count": 161379,
+        "exact_prefix_match_count": 161379,
+        "prefix_match_ratio": 1.0,
+        "full_length_equal": true
+      }
+    }
+  },
+  "expected_columns": [
+    "VA_mag",
+    "VA_ang",
+    "VB_mag",
+    "VB_ang",
+    "VC_mag",
+    "VC_ang",
+    "IA_mag",
+    "IA_ang",
+    "IB_mag",
+    "IB_ang",
+    "IC_mag",
+    "IC_ang",
+    "Frequency",
+    "ROCOF",
+    "DATA_PRESENT",
+    "Event"
+  ]
+}

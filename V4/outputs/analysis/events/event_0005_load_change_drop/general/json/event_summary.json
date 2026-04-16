@@ -1,0 +1,119 @@
+{
+  "event_index": 5,
+  "event_id": 4,
+  "label": "Load change/drop",
+  "start_time": 3877.732999999993,
+  "end_time": 4182.099999999991,
+  "duration_s": 304.36699999999837,
+  "context_start": 3876.732999999993,
+  "context_end": 4183.099999999991,
+  "bus_count": 8,
+  "buses_processed": [
+    "Bus2",
+    "Bus5",
+    "Bus6",
+    "Bus10",
+    "Bus19",
+    "Bus22",
+    "Bus29",
+    "Bus39"
+  ],
+  "per_bus_rows": [
+    {
+      "bus_id": "Bus2",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus5",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus6",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus10",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus19",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus22",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus29",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    },
+    {
+      "bus_id": "Bus39",
+      "row_count_event": 9132,
+      "row_count_context": 9192,
+      "event_id": 4,
+      "label": "Load change/drop",
+      "start_time": 3877.732999999993,
+      "end_time": 4182.099999999991,
+      "duration_s": 304.36699999999837,
+      "context_start": 3876.732999999993,
+      "context_end": 4183.099999999991
+    }
+  ]
+}

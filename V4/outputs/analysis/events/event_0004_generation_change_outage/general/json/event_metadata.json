@@ -1,0 +1,12 @@
+{
+  "event_id": 3,
+  "label": "Generation change/outage",
+  "start_idx": 89291,
+  "end_idx": 98818,
+  "start_time": 2976.3659999999945,
+  "end_time": 3293.933,
+  "duration_s": 317.56700000000546,
+  "event_index": 4,
+  "context_start": 2975.3659999999945,
+  "context_end": 3294.933
+}

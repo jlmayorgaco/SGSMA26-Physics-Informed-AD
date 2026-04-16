@@ -1,0 +1,12 @@
+{
+  "event_id": 1,
+  "label": "Fault",
+  "start_idx": 35195,
+  "end_idx": 35343,
+  "start_time": 1173.1659999999974,
+  "end_time": 1178.0999999999913,
+  "duration_s": 4.93399999999383,
+  "event_index": 2,
+  "context_start": 1172.1659999999974,
+  "context_end": 1179.0999999999913
+}

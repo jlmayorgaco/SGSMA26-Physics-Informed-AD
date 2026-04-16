@@ -1,0 +1,12 @@
+{
+  "event_id": 4,
+  "label": "Load change/drop",
+  "start_idx": 116332,
+  "end_idx": 125463,
+  "start_time": 3877.732999999993,
+  "end_time": 4182.099999999991,
+  "duration_s": 304.36699999999837,
+  "event_index": 5,
+  "context_start": 3876.732999999993,
+  "context_end": 4183.099999999991
+}
