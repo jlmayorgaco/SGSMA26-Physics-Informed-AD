@@ -8,6 +8,7 @@ venv/
 *.egg
 
 *.csv
+*.pnz
 
 # Data (large files, gitignored per CLAUDE.md)
 data/synthetic/
