@@ -3,7 +3,7 @@ Copyright (C) 2015-2026 Hantao Cui
 
 ANDES comes with ABSOLUTELY NO WARRANTY
 Case file: C:\Users\walla\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\andes\cases\ieee39\ieee39_full.xlsx
-Report time: 04/15/2026 12:19:41 AM
+Report time: 04/15/2026 02:17:50 PM
 
 Power flow converged in 5 iterations.
 Flat-start: No

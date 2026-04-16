@@ -1,0 +1,67 @@
+{
+  "7": {
+    "label": "Bad data",
+    "bus_count_with_event": 2,
+    "bus_ids": [
+      "Bus2",
+      "Bus39"
+    ],
+    "count": 3,
+    "duration_mean_s": 0.7886666666666629,
+    "duration_median_s": 0.6999999999999886,
+    "duration_std_s": 0.18380787070562116,
+    "duration_p95_s": 0.9699999999999989,
+    "durations_s": [
+      0.6659999999999999,
+      0.6999999999999886,
+      1.0
+    ]
+  },
+  "1": {
+    "label": "Fault",
+    "bus_count_with_event": 8,
+    "bus_ids": [
+      "Bus10",
+      "Bus19",
+      "Bus2",
+      "Bus22",
+      "Bus29",
+      "Bus39",
+      "Bus5",
+      "Bus6"
+    ],
+    "count": 8,
+    "duration_mean_s": 4.932999999999993,
+    "duration_median_s": 4.932999999999993,
+    "duration_std_s": 0.0,
+    "duration_p95_s": 4.932999999999993,
+    "durations_s": [
+      4.932999999999993,
+      4.932999999999993,
+      4.932999999999993,
+      4.932999999999993,
+      4.932999999999993,
+      4.932999999999993,
+      4.932999999999993,
+      4.932999999999993
+    ]
+  },
+  "5": {
+    "label": "Missing data",
+    "bus_count_with_event": 1,
+    "bus_ids": [
+      "Bus29"
+    ],
+    "count": 4,
+    "duration_mean_s": 71.98325000000008,
+    "duration_median_s": 34.783500000000174,
+    "duration_std_s": 79.81121491526108,
+    "duration_p95_s": 168.74104999999997,
+    "durations_s": [
+      27.0,
+      29.033999999999992,
+      191.36599999999999,
+      40.53300000000036
+    ]
+  }
+}

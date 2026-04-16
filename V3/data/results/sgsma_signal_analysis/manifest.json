@@ -1,0 +1,28 @@
+{
+  "raw_dir": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V3\\data\\raw",
+  "out_dir": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\V3\\data\\results\\sgsma_signal_analysis",
+  "timeline_xlsx": null,
+  "pmu_meta_txt": null,
+  "analyzed_buses": [
+    "Bus10",
+    "Bus19",
+    "Bus2",
+    "Bus22",
+    "Bus29",
+    "Bus39",
+    "Bus5",
+    "Bus6"
+  ],
+  "timeline_records": [],
+  "legend": {
+    "0": "Normal",
+    "1": "Fault",
+    "2": "Line outage",
+    "3": "Generation change/outage",
+    "4": "Load change/drop",
+    "5": "Missing data",
+    "6": "Missing data + physical event",
+    "7": "Bad data",
+    "8": "Unknown event"
+  }
+}

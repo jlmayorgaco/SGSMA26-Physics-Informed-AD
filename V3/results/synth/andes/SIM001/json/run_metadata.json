@@ -1,0 +1,30 @@
+{
+  "case": "C:\\Users\\walla\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\andes\\cases\\ieee39\\ieee39_full.xlsx",
+  "raw_path": "data\\metadata\\IEEE_39_Bus_Power_System.raw",
+  "bus": 39,
+  "bus_base_kv_ll": 345.0,
+  "system_base_mva": 100.0,
+  "nominal_frequency_hz": 60.0,
+  "sim_end_requested_sec": 6000.0,
+  "actual_simulated_end_sec": 6000.0,
+  "fault_start_sec": 1200.0,
+  "fault_clear_sec": 1200.02,
+  "fault_duration_sec": 0.02,
+  "internal_dt_sec": 0.008333333333333333,
+  "export_dt_sec": 0.03333333333333333,
+  "zoom_pre_sec": 1.0,
+  "zoom_post_sec": 1.0,
+  "current_proxy_available": true,
+  "current_proxy_source": "raw_aligned_to_andes_order",
+  "raw_sampling_frequency_hz": 120.00000000174623,
+  "pmu_sampling_frequency_hz": 30.30303030270292,
+  "outputs": {
+    "pmu_csv": "results\\synth\\andes\\SIM001\\csv\\Bus39_Competition_Data_andes_like.csv",
+    "raw_zoom_csv": "results\\synth\\andes\\SIM001\\csv\\Bus39_fault_window_raw_highres.csv",
+    "pmu_zoom_csv": "results\\synth\\andes\\SIM001\\csv\\Bus39_fault_window_pmu_30fps.csv",
+    "bus_mapping_csv": "results\\synth\\andes\\SIM001\\csv\\bus_mapping_semantic_to_raw.csv",
+    "eda_flat_csv": "results\\synth\\andes\\SIM001\\csv\\eda_summary_flat.csv",
+    "plots_dir": "results\\synth\\andes\\SIM001\\plots",
+    "json_dir": "results\\synth\\andes\\SIM001\\json"
+  }
+}

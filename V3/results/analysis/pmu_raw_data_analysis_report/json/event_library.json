@@ -1,0 +1,169 @@
+{
+  "7": {
+    "label": "Bad data",
+    "bus_count_with_event": 2,
+    "bus_ids": [
+      "Bus2",
+      "Bus39"
+    ],
+    "count": 3,
+    "duration_mean_s": 0.8223333333298793,
+    "duration_median_s": 0.7339999999967404,
+    "duration_std_s": 0.18323300284908972,
+    "duration_p95_s": 1.003099999995902,
+    "durations_s": [
+      0.6999999999970887,
+      0.7339999999967404,
+      1.032999999995809
+    ]
+  },
+  "1": {
+    "label": "Fault",
+    "bus_count_with_event": 8,
+    "bus_ids": [
+      "Bus10",
+      "Bus19",
+      "Bus2",
+      "Bus22",
+      "Bus29",
+      "Bus39",
+      "Bus5",
+      "Bus6"
+    ],
+    "count": 8,
+    "duration_mean_s": 4.93399999999383,
+    "duration_median_s": 4.93399999999383,
+    "duration_std_s": 0.0,
+    "duration_p95_s": 4.93399999999383,
+    "durations_s": [
+      4.93399999999383,
+      4.93399999999383,
+      4.93399999999383,
+      4.93399999999383,
+      4.93399999999383,
+      4.93399999999383,
+      4.93399999999383,
+      4.93399999999383
+    ]
+  },
+  "2": {
+    "label": "Line outage",
+    "bus_count_with_event": 8,
+    "bus_ids": [
+      "Bus10",
+      "Bus19",
+      "Bus2",
+      "Bus22",
+      "Bus29",
+      "Bus39",
+      "Bus5",
+      "Bus6"
+    ],
+    "count": 8,
+    "duration_mean_s": 4.167000000001281,
+    "duration_median_s": 4.167000000001281,
+    "duration_std_s": 0.0,
+    "duration_p95_s": 4.167000000001281,
+    "durations_s": [
+      4.167000000001281,
+      4.167000000001281,
+      4.167000000001281,
+      4.167000000001281,
+      4.167000000001281,
+      4.167000000001281,
+      4.167000000001281,
+      4.167000000001281
+    ]
+  },
+  "3": {
+    "label": "Generation change/outage",
+    "bus_count_with_event": 8,
+    "bus_ids": [
+      "Bus10",
+      "Bus19",
+      "Bus2",
+      "Bus22",
+      "Bus29",
+      "Bus39",
+      "Bus5",
+      "Bus6"
+    ],
+    "count": 8,
+    "duration_mean_s": 315.25862499999744,
+    "duration_median_s": 317.56699999999546,
+    "duration_std_s": 6.529070464088479,
+    "duration_p95_s": 317.56700000000546,
+    "durations_s": [
+      317.56700000000546,
+      317.56699999999546,
+      317.56699999999546,
+      317.56699999999546,
+      317.56699999999546,
+      317.56699999999546,
+      299.09999999999127,
+      317.56700000000546
+    ]
+  },
+  "4": {
+    "label": "Load change/drop",
+    "bus_count_with_event": 8,
+    "bus_ids": [
+      "Bus10",
+      "Bus19",
+      "Bus2",
+      "Bus22",
+      "Bus29",
+      "Bus39",
+      "Bus5",
+      "Bus6"
+    ],
+    "count": 8,
+    "duration_mean_s": 304.36699999999837,
+    "duration_median_s": 304.36699999999837,
+    "duration_std_s": 0.0,
+    "duration_p95_s": 304.36699999999837,
+    "durations_s": [
+      304.36699999999837,
+      304.36699999999837,
+      304.36699999999837,
+      304.36699999999837,
+      304.36699999999837,
+      304.36699999999837,
+      304.36699999999837,
+      304.36699999999837
+    ]
+  },
+  "5": {
+    "label": "Missing data",
+    "bus_count_with_event": 1,
+    "bus_ids": [
+      "Bus29"
+    ],
+    "count": 4,
+    "duration_mean_s": 72.01699999999619,
+    "duration_median_s": 34.816999999995005,
+    "duration_std_s": 79.81139429513306,
+    "duration_p95_s": 168.77504999999496,
+    "durations_s": [
+      27.03399999999965,
+      29.06699999999546,
+      191.3999999999951,
+      40.56699999999455
+    ]
+  },
+  "6": {
+    "label": "Missing data + physical event",
+    "bus_count_with_event": 1,
+    "bus_ids": [
+      "Bus29"
+    ],
+    "count": 1,
+    "duration_mean_s": 18.434000000008382,
+    "duration_median_s": 18.434000000008382,
+    "duration_std_s": 0.0,
+    "duration_p95_s": 18.434000000008382,
+    "durations_s": [
+      18.434000000008382
+    ]
+  }
+}

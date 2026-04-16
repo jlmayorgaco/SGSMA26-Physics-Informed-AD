@@ -1,0 +1,146 @@
+{
+  "Bus2": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 2,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    },
+    {
+      "event_id": 7,
+      "event_name": "Bad data",
+      "bus": 2,
+      "start": 3.266,
+      "duration_s": 0.7,
+      "source": "reference_bad_data_overlay"
+    }
+  ],
+  "Bus5": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 5,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    }
+  ],
+  "Bus6": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 6,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    }
+  ],
+  "Bus10": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 10,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    }
+  ],
+  "Bus19": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 19,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    }
+  ],
+  "Bus22": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 22,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    }
+  ],
+  "Bus29": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 29,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    },
+    {
+      "event_id": 5,
+      "event_name": "Missing data",
+      "bus": 29,
+      "start": 536.566,
+      "duration_s": 27.034,
+      "source": "reference_missing_data_overlay"
+    },
+    {
+      "event_id": 5,
+      "event_name": "Missing data",
+      "bus": 29,
+      "start": 614.333,
+      "duration_s": 29.067,
+      "source": "reference_missing_data_overlay"
+    },
+    {
+      "event_id": 5,
+      "event_name": "Missing data",
+      "bus": 29,
+      "start": 2584.666,
+      "duration_s": 191.4,
+      "source": "reference_missing_data_overlay"
+    },
+    {
+      "event_id": 5,
+      "event_name": "Missing data",
+      "bus": 29,
+      "start": 2935.766,
+      "duration_s": 40.567,
+      "source": "reference_missing_data_overlay"
+    }
+  ],
+  "Bus39": [
+    {
+      "event_id": 1,
+      "event_name": "Fault",
+      "bus": 39,
+      "start": 1200.0,
+      "physical_duration_s": 0.02,
+      "visible_duration_s": 4.93399999999383,
+      "source": "ANDES_fault + PMU_visible_duration"
+    },
+    {
+      "event_id": 7,
+      "event_name": "Bad data",
+      "bus": 39,
+      "start": 334.366,
+      "duration_s": 0.734,
+      "source": "reference_bad_data_overlay"
+    },
+    {
+      "event_id": 7,
+      "event_name": "Bad data",
+      "bus": 39,
+      "start": 336.533,
+      "duration_s": 1.033,
+      "source": "reference_bad_data_overlay"
+    }
+  ]
+}

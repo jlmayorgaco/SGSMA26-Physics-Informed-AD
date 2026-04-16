@@ -1,0 +1,17 @@
+ANDES IEEE39 Bus 39 synthesis summary
+==================================================
+Output root: results\synth\andes\SIM001
+Requested tf: 6000.000000 s
+Actual simulated end: 6000.000000 s
+Fault window: [1200.000000, 1200.020000] s
+Zoom window: [1199.000000, 1201.020000] s
+Current proxy available: True
+Current proxy source: raw_aligned_to_andes_order
+ANDES Ybus accessible: False
+Ybus same matrix: False
+Ybus max abs diff: None
+Ybus relative Fro error: None
+PMU CSV: results\synth\andes\SIM001\csv\Bus39_Competition_Data_andes_like.csv
+Raw zoom CSV: results\synth\andes\SIM001\csv\Bus39_fault_window_raw_highres.csv
+Plots: results\synth\andes\SIM001\plots
+JSON reports: results\synth\andes\SIM001\json

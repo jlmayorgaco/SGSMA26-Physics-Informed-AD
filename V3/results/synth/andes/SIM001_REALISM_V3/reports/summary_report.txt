@@ -1,0 +1,11 @@
+Run name: SIM001_REALISM_V3
+Output root: results\synth\andes\SIM001_REALISM_V3
+PMU buses exported clean: 39, 29, 10, 22, 19, 2, 5, 6
+PMU buses exported realism: 39, 29, 10, 22, 19, 2, 5, 6
+All 39 buses exported clean in wide + per-bus form.
+Fault simulated in ANDES at Bus 39 from 1200.000s to 1200.020s.
+Visible fault duration used in PMU labels: 4.934 s
+Selected Ybus source: raw_aligned_to_andes_order
+Ybus same_matrix: False
+Fixed merged-PMU collision by prefixing BUSxx_DATA_PRESENT and BUSxx_Event in merged CSVs.
+Added high-resolution zoom plots (+/- 5.0s around the fault) for each PMU bus and each metric.
