@@ -23,6 +23,7 @@ from src.utils.serialization import save_json
 # Main
 # -----------------------------------------------------------------------------
 
+
 def main() -> None:
 
     config = parse_args()

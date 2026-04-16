@@ -7,7 +7,7 @@ import pandas as pd
 
 from src.analysis.cross_bus import cross_bus_correlations, cross_bus_rankings
 from src.analysis.dataset_integrity import build_dataset_integrity
-from src.analysis.events import event_spans, summarize_event_spans
+from src.analysis.events import event_spans, summarize_event_spans, build_global_event_spans
 from src.config.config import DEFAULT_EVENT_DESCRIPTIONS, DEFAULT_EVENT_LABELS, AnalysisConfig
 from src.config.constants import MEASUREMENT_COLUMNS
 from src.config.models import BusData
@@ -23,8 +23,7 @@ def export_dataset_level(
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     label_map = {int(k): v for k, v in DEFAULT_EVENT_LABELS.items()}
 
-    first_bus = buses[0]
-    dataset_spans = event_spans(first_bus.df, label_map)
+    dataset_spans = build_global_event_spans(buses, label_map)
     rankings = cross_bus_rankings(buses, dataset_spans)
     correlations = cross_bus_correlations(buses)
     dataset_integrity = build_dataset_integrity(buses, config)

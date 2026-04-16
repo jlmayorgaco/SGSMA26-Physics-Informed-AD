@@ -41,43 +41,63 @@ def export_events(
                 reports/
                 json/
 
-    Per event:
-    - Save general metadata and overlay plots
-    - Save per-bus event window/context CSVs
-    - Save per-bus event analysis JSON
-    - Save per-bus plots and markdown report
-    - Save consolidated all-buses CSVs for the event
-    - Save event summary JSON/MD and event bus index CSV
+    For each event this function:
+    - saves general metadata and overlay plots
+    - saves per-bus event window/context CSVs
+    - saves per-bus event analysis JSON
+    - saves per-bus plots and markdown report
+    - saves consolidated all-buses CSVs for the event
+    - saves event summary JSON/MD and event bus index CSV
     """
+    if not buses:
+        return
+
+    if not dataset_spans:
+        return
+
     for idx, sp in enumerate(dataset_spans, start=1):
+        label = str(sp.get("label", f"event_{idx}"))
+        event_id = int(sp.get("event_id", -1))
+        start_time = float(sp.get("start_time", 0.0))
+        end_time = float(sp.get("end_time", start_time))
+        duration_s = float(sp.get("duration_s", max(0.0, end_time - start_time)))
+
+        context_start = start_time - float(config.event_context_seconds)
+        context_end = end_time + float(config.event_context_seconds)
+
         general_dirs = build_event_dirs(
             config=config,
             event_index=idx,
-            label=sp["label"],
+            label=label,
             bus_id=None,
         )
 
-        start_time = float(sp["start_time"])
-        end_time = float(sp["end_time"])
-        duration_s = float(sp.get("duration_s", end_time - start_time))
-        context_start = start_time - config.event_context_seconds
-        context_end = end_time + config.event_context_seconds
-
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # General event-level outputs
-        # ---------------------------------------------------------------------
-        save_json(general_dirs["json"] / "event_metadata.json", sp)
+        # ------------------------------------------------------------------
+        event_metadata = {
+            **sp,
+            "event_index": idx,
+            "event_id": event_id,
+            "label": label,
+            "start_time": start_time,
+            "end_time": end_time,
+            "duration_s": duration_s,
+            "context_start": context_start,
+            "context_end": context_end,
+        }
+        save_json(general_dirs["json"] / "event_metadata.json", event_metadata)
 
         plot_event_overlay_frequency(
             buses=buses,
-            event_span=sp,
+            event_span=event_metadata,
             out_path=general_dirs["plots"] / "overlay_frequency.png",
             context_seconds=config.event_context_seconds,
             dpi=config.plots_zoom_dpi,
         )
         plot_event_overlay_voltage(
             buses=buses,
-            event_span=sp,
+            event_span=event_metadata,
             out_path=general_dirs["plots"] / "overlay_va_mag.png",
             context_seconds=config.event_context_seconds,
             dpi=config.plots_zoom_dpi,
@@ -88,14 +108,14 @@ def export_events(
         all_context_bus_frames: list[pd.DataFrame] = []
         all_power_bus_frames: list[pd.DataFrame] = []
 
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # Per-bus outputs inside this event
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         for bus in buses:
             bus_dirs = build_event_dirs(
                 config=config,
                 event_index=idx,
-                label=sp["label"],
+                label=label,
                 bus_id=bus.bus_id,
             )
 
@@ -119,9 +139,9 @@ def export_events(
                 config=config,
             )
 
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
             # CSV exports
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
             if config.save_event_bus_csvs:
                 save_dataframe_csv(
                     bus_dirs["csv"] / f"{bus.bus_id}_event_window.csv",
@@ -140,18 +160,18 @@ def export_events(
                     )
                     all_power_bus_frames.append(power_df.assign(bus_id=bus.bus_id))
 
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
             # JSON exports
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
             if config.save_per_bus_json:
                 save_json(
                     bus_dirs["json"] / f"{bus.bus_id}_event_analysis.json",
                     event_result,
                 )
 
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
             # Plots
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
             if not context_df.empty:
                 plot_event_bus_window(
                     bus=BusData(
@@ -160,19 +180,19 @@ def export_events(
                         df=context_df,
                         sampling_rate_hz=bus.sampling_rate_hz,
                     ),
-                    event_span=sp,
+                    event_span=event_metadata,
                     out_dir=bus_dirs["plots"],
                     context_seconds=0.0,
                     dpi=config.plots_zoom_dpi,
                 )
 
-            # -------------------------------------------------------------
-            # Report per bus
-            # -------------------------------------------------------------
+            # --------------------------------------------------------------
+            # Per-bus report
+            # --------------------------------------------------------------
             md = [
-                f"# {bus.bus_id} | {sp['label']} | event {idx}",
+                f"# {bus.bus_id} | {label} | event {idx}",
                 "",
-                f"Event id: `{sp['event_id']}`",
+                f"Event id: `{event_id}`",
                 "",
                 f"Exact event window: `{start_time:.3f}` → `{end_time:.3f}` s",
                 f"Context window: `{context_start:.3f}` → `{context_end:.3f}` s",
@@ -192,18 +212,19 @@ def export_events(
                     "bus_id": bus.bus_id,
                     "row_count_event": int(len(event_df)),
                     "row_count_context": int(len(context_df)),
-                    "event_id": int(sp["event_id"]),
-                    "label": sp["label"],
+                    "event_id": event_id,
+                    "label": label,
                     "start_time": start_time,
                     "end_time": end_time,
-                    "context_start": float(context_start),
-                    "context_end": float(context_end),
+                    "duration_s": duration_s,
+                    "context_start": context_start,
+                    "context_end": context_end,
                 }
             )
 
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # Consolidated general CSVs for this event
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         save_dataframe_csv(
             general_dirs["csv"] / "event_bus_index.csv",
             pd.DataFrame(event_rows),
@@ -227,18 +248,18 @@ def export_events(
                 pd.concat(all_power_bus_frames, ignore_index=True),
             )
 
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # General event summary
-        # ---------------------------------------------------------------------
+        # ------------------------------------------------------------------
         event_summary_payload = {
             "event_index": idx,
-            "event_id": int(sp["event_id"]),
-            "label": sp["label"],
+            "event_id": event_id,
+            "label": label,
             "start_time": start_time,
             "end_time": end_time,
             "duration_s": duration_s,
-            "context_start": float(context_start),
-            "context_end": float(context_end),
+            "context_start": context_start,
+            "context_end": context_end,
             "bus_count": len(buses),
             "buses_processed": [bus.bus_id for bus in buses],
             "per_bus_rows": event_rows,
@@ -249,9 +270,9 @@ def export_events(
         )
 
         summary_md = [
-            f"# {sp['label']} | event {idx}",
+            f"# {label} | event {idx}",
             "",
-            f"Event id: `{sp['event_id']}`",
+            f"Event id: `{event_id}`",
             "",
             f"Window: `{start_time:.3f}` → `{end_time:.3f}` s",
             f"Duration: `{duration_s:.3f}` s",

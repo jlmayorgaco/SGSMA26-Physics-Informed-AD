@@ -39,17 +39,42 @@ def cross_bus_correlations(buses: list[BusData]) -> dict:
     return out
 
 
+def _time_to_index(bus: BusData, time: float) -> int:
+    """
+    Find the row index in bus.df with TIMESTAMP closest to `time`.
+    Assumes timestamps are monotonic.
+    """
+    t = bus.df[TIMESTAMP_COLUMN].to_numpy(dtype=float)
+    idx = np.searchsorted(t, time)
+    if idx >= len(t):
+        return len(t) - 1
+    if idx == 0:
+        return 0
+    # Choose closest between idx-1 and idx
+    if abs(t[idx] - time) < abs(t[idx - 1] - time):
+        return idx
+    return idx - 1
+
+
 def cross_bus_rankings(buses: list[BusData], spans: list[dict]) -> dict:
     outputs = {c: [] for c in CORE_CROSS_BUS_COLUMNS}
 
     for sp in spans:
-        s, e = int(sp["start_idx"]), int(sp["end_idx"]) + 1
+        start_time = float(sp["start_time"])
+        end_time = float(sp["end_time"])
 
         for col in CORE_CROSS_BUS_COLUMNS:
             ranked = []
 
             for bus in buses:
                 if col not in bus.df.columns:
+                    continue
+
+                # Find indices in this bus's dataframe for the event window
+                s = _time_to_index(bus, start_time)
+                e = _time_to_index(bus, end_time) + 1  # exclusive end index
+                if s >= e:
+                    # Event window empty or reversed for this bus
                     continue
 
                 series = unwrap_if_angle(bus.df[col].to_numpy(dtype=float), col)
@@ -74,8 +99,8 @@ def cross_bus_rankings(buses: list[BusData], spans: list[dict]) -> dict:
             outputs[col].append({
                 "event_id": int(sp["event_id"]),
                 "label": sp["label"],
-                "start_time": float(sp["start_time"]),
-                "end_time": float(sp["end_time"]),
+                "start_time": start_time,
+                "end_time": end_time,
                 "value_suffix": col,
                 "ranked_buses_by_peak_abs_zscore": ranked,
             })
