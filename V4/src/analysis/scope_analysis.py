@@ -1,13 +1,15 @@
 
 from typing import Any
 
-from analysis.channel_analysis import compute_channel_analysis
-from analysis.events import event_spans, summarize_event_spans
-from analysis.integrity import timestamp_integrity
-from analysis.missing import missing_profile
-from analysis.power import compute_three_phase_power
-from analysis.stats import basic_stats, phase_balance_metrics
-from config.config import DEFAULT_EVENT_LABELS, AnalysisConfig
+import pandas as pd
+
+from src.analysis.channel_analysis import compute_channel_analysis, compute_dt
+from src.analysis.events import event_spans, summarize_event_spans
+from src.analysis.integrity import timestamp_integrity
+from src.analysis.missing import missing_profile
+from src.analysis.power import compute_three_phase_power
+from src.analysis.stats import basic_stats, phase_balance_metrics
+from src.config.config import DEFAULT_EVENT_LABELS, AnalysisConfig
 
 
 def analyze_scope(df: pd.DataFrame, scope_name: str, config: AnalysisConfig) -> dict[str, Any]:

@@ -8,12 +8,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from analysis.events import event_channel_profile, event_spans
-from analysis.hilbert_analysis import hilbert_features
-from analysis.noise import noise_model
-from analysis.spectral import spectral_summary
-from analysis.stats import basic_stats
-from config.constants import MEASUREMENT_COLUMNS
+from src.analysis.events import event_channel_profile, event_spans
+from src.analysis.hilbert_analysis import hilbert_features
+from src.analysis.noise import noise_model
+from src.analysis.spectral import spectral_summary
+from src.analysis.stats import basic_stats
+from src.config.constants import MEASUREMENT_COLUMNS
 
 
 def compute_dt(df: pd.DataFrame) -> float:
