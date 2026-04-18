@@ -1,0 +1,5 @@
+﻿# Detection task placeholder config.
+task: detection
+model: baseline
+window_seconds: 1
+scaler: robust

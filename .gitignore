@@ -1,71 +1,16 @@
-__pycache__/
+﻿__pycache__/
 *.py[cod]
-*.egg-info/
-dist/
-build/
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
 .venv/
 venv/
-*.egg
+.env
 
-*.csv
-*.pnz
+output/
+*.log
+*.tmp
 
-# Data (large files, gitignored per CLAUDE.md)
-data/synthetic/
-data/processed/
-data/splits/
-poc/data_synth/
-V1/data/synthetic/
-V1/data/synthetic_smoke/
-V1/data/processed/
-V1/data/splits/
-V1/poc/data_synth/
-V2/data/synthetic_v2/
-V2/data/synthetic_v2*/
-
-# Jupyter
-.ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
-
-# Report build artifacts
-report/*.aux
-report/*.bbl
-report/*.blg
-report/*.fdb_latexmk
-report/*.fls
-report/*.log
-report/*.out
-report/*.synctex.gz
-report/*.toc
-report/*.pdf
-V1/report/*.aux
-V1/report/*.bbl
-V1/report/*.blg
-V1/report/*.fdb_latexmk
-V1/report/*.fls
-V1/report/*.log
-V1/report/*.out
-V1/report/*.synctex.gz
-V1/report/*.toc
-V1/report/*.pdf
-
-# Submission archive
-submission_sgsma2026.zip
-V1/submission_sgsma2026.zip
-
-# Generated models and experiment outputs
-models/
-!V2/src/ml/models/
-!V2/src/ml/models/*.py
-V1/models/
-V1/experiments/event_simulations/
-V2/models*/
-
-# OS
 .DS_Store
 Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp

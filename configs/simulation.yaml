@@ -1,0 +1,5 @@
+﻿# Phase-1 placeholder simulation config.
+scenario_name: SIM0001
+fault_type: type1
+supports_andes: true
+window_seconds: [1, 3, 5]

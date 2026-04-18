@@ -1,38 +1,33 @@
+﻿[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "sgsma2026-pmu-ad"
+name = "proyecto-pmu"
 version = "0.1.0"
-requires-python = ">=3.11"
+description = "Phase-1 scaffold and legacy adapters for SGSMA 2026 PMU anomaly detection"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "SGSMA Team" }]
 dependencies = [
-    "numpy>=1.26",
-    "scipy>=1.11",
-    "pandas>=2.1",
-    "pandapower>=2.14",
-    "andes>=1.9",
-    "lightgbm>=4.3",
-    "scikit-learn>=1.4",
-    "matplotlib>=3.8",
-    "seaborn>=0.13",
-    "openpyxl>=3.1",
-    "tqdm>=4.66",
-    "pyyaml>=6.0",
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scipy>=1.10",
+  "pydantic>=2.0",
+  "matplotlib>=3.7"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0,<9.0",
-    "pytest-cov>=5.0,<6.0",
-    "ruff>=0.4,<0.6",
-    "ipykernel>=6.29,<7.0",
-    "jupyter>=1.0,<2.0",
+  "pytest>=8.0",
+  "pytest-cov>=5.0"
 ]
 
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
+[tool.setuptools]
+include-package-data = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+pythonpath = [
+  ".",
+  "src"
+]

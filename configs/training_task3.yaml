@@ -1,0 +1,5 @@
+﻿# Localization task placeholder config.
+task: localization
+model: baseline
+window_seconds: 5
+scaler: robust

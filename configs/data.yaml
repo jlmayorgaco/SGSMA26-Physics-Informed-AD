@@ -1,0 +1,10 @@
+﻿# Phase-1 placeholder config for dataset wiring.
+raw_data_dir: data/RAW0001
+chunk_output_dir: output/SCENARIO_RAW0001/chunks
+normalized_output_dir: output/SCENARIO_RAW0001_NORMALIZED/chunks
+split_policy:
+  strategy: contiguous
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  shuffle: false
