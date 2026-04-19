@@ -65,3 +65,15 @@ def run_normalization_pipeline(
 def normalize_bus_data(bus_data: dict, event_df):
     """Proxy for legacy normalization internals."""
     return _legacy_m1().normalize_bus_data(bus_data, event_df)
+
+
+def load_and_synchronize_data(input_dir: str):
+    """Proxy for legacy raw loading + synchronization."""
+    return _legacy_m1().load_and_synchronize_data(input_dir)
+
+
+__all__ = [
+    "run_normalization_pipeline",
+    "load_and_synchronize_data",
+    "normalize_bus_data",
+]
