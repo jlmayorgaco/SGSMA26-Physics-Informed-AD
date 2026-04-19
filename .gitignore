@@ -14,3 +14,7 @@ output/
 
 .DS_Store
 Thumbs.db
+
+
+output/*
+data/*
