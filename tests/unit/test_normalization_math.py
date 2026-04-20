@@ -3,7 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from src.data_engineering.normalization import calculate_angular_speed, detect_signal_family
+from src.data_engineering.angle_features import calculate_angular_speed
+from src.data_engineering.normalization import detect_signal_family
 from src.data_engineering.normalization_baselines import robust_center, robust_trimmed_mean
 
 

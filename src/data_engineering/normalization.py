@@ -1,50 +1,18 @@
-"""Core m1 normalization math and per-bus transformations."""
+"""Core m1 normalization orchestration by signal family."""
 
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
-from src.data_engineering.normalization_baselines import robust_center, robust_trimmed_mean
-
-
-def calculate_angular_speed(angle_deg_series: pd.Series, time_index: pd.Index) -> np.ndarray:
-    """Convert angle in degrees to angular speed in rad/s."""
-    rad_angles = np.deg2rad(pd.to_numeric(angle_deg_series, errors="coerce").to_numpy(dtype=float))
-    time_vals = np.asarray(time_index, dtype=float)
-
-    if len(rad_angles) == 0:
-        return np.array([], dtype=float)
-
-    # Fill occasional NaN gaps before unwrap/gradient.
-    if np.isnan(rad_angles).any():
-        valid = np.where(np.isfinite(rad_angles))[0]
-        if len(valid) == 0:
-            return np.zeros_like(rad_angles)
-        rad_angles = np.interp(np.arange(len(rad_angles)), valid, rad_angles[valid])
-
-    unwrapped_rad = np.unwrap(rad_angles)
-    if len(unwrapped_rad) < 2:
-        return np.zeros_like(unwrapped_rad)
-    return np.gradient(unwrapped_rad, time_vals)
-
-
-def wrap_degrees(values: np.ndarray) -> np.ndarray:
-    """Wrap degrees to [-180, 180)."""
-    return ((values + 180.0) % 360.0) - 180.0
-
-
-def circular_mean_degrees(values: pd.Series) -> float:
-    """Compute circular mean in degrees."""
-    clean = pd.to_numeric(values, errors="coerce").dropna().to_numpy(dtype=float)
-    if len(clean) == 0:
-        return 0.0
-    rad = np.deg2rad(clean)
-    return float(np.rad2deg(np.arctan2(np.mean(np.sin(rad)), np.mean(np.cos(rad)))))
+from src.data_engineering.angle_features import build_angle_feature_block
+from src.data_engineering.frequency_features import build_frequency_feature_block
+from src.data_engineering.magnitude_features import build_magnitude_feature_block
+from src.data_engineering.normalization_baselines import robust_center
 
 
 def detect_signal_family(column_name: str) -> str:
-    """Classify raw signal into legacy m1 normalization family."""
+    """Classify one raw PMU signal by family."""
     col = column_name.upper()
     if col.endswith("_ANG"):
         if any(tag in col for tag in ["_IA_ANG", "_IB_ANG", "_IC_ANG"]):
@@ -61,11 +29,47 @@ def detect_signal_family(column_name: str) -> str:
     return "other"
 
 
+def _append_rows(
+    baseline_rows: list[dict],
+    rows: list[dict],
+    *,
+    bus_id: str,
+    raw_signal: str,
+    signal_family: str,
+    n_normal_samples: int,
+    baseline_source: str,
+) -> None:
+    for row in rows:
+        baseline_rows.append(
+            {
+                "bus_id": bus_id,
+                "raw_signal": raw_signal,
+                "output_signal": row["output_signal"],
+                "signal_family": signal_family,
+                "transform": row["transform"],
+                "baseline_method": row["baseline_method"],
+                "baseline_value": row["baseline_value"],
+                "n_normal_samples": n_normal_samples,
+                "baseline_source": baseline_source,
+                "notes": row["notes"],
+            }
+        )
+
+
 def normalize_bus_data(
     bus_data: dict[str, pd.DataFrame],
     event_df: pd.DataFrame,
+    feature_mode: str = "legacy_replace_angles",
 ) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
-    """Normalize all buses using legacy-compatible m1 behavior."""
+    """Normalize bus data with explicit feature-mode control.
+
+    Modes:
+    - `legacy_replace_angles`: parity mode matching legacy m1 behavior.
+    - `augment_angles`: keep original angles and add derived features.
+    """
+    if feature_mode not in {"legacy_replace_angles", "augment_angles"}:
+        raise ValueError(f"Unsupported feature_mode: {feature_mode}")
+
     normalized_data: dict[str, pd.DataFrame] = {}
     baseline_rows: list[dict] = []
 
@@ -83,6 +87,10 @@ def normalize_bus_data(
         norm_df = pd.DataFrame(index=df.index)
         norm_df["DATA_PRESENT"] = pd.to_numeric(df["DATA_PRESENT"], errors="coerce")
         norm_df["Event"] = pd.to_numeric(df["Event"], errors="coerce").fillna(0).astype(int)
+        raw_signal_cols = [col for col in df.columns if col not in ["DATA_PRESENT", "Event"]]
+        if feature_mode == "augment_angles":
+            for col in raw_signal_cols:
+                norm_df[col] = pd.to_numeric(df[col], errors="coerce")
 
         for col in df.columns:
             if col in ["DATA_PRESENT", "Event"]:
@@ -91,77 +99,96 @@ def normalize_bus_data(
             family = detect_signal_family(col)
             series = pd.to_numeric(df[col], errors="coerce")
             normal_series = pd.to_numeric(normal_df[col], errors="coerce") if col in normal_df.columns else series
+            n_normal = int(normal_series.dropna().shape[0])
 
-            if family in ["voltage_angle", "current_angle"]:
-                out_col = col.replace("ANG", "ANG_SPEED_RAD_S")
-                norm_df[out_col] = calculate_angular_speed(series, df.index)
-                baseline_rows.append(
-                    {
-                        "bus_id": bus,
-                        "raw_signal": col,
-                        "output_signal": out_col,
-                        "signal_family": family,
-                        "transform": "angle_to_angular_speed_rad_s",
-                        "baseline_method": "none",
-                        "baseline_value": np.nan,
-                        "n_normal_samples": int(normal_series.dropna().shape[0]),
-                        "baseline_source": normal_source,
-                        "notes": "ANG signals are represented as angular speed in rad/s.",
-                    }
+            if family in {"voltage_angle", "current_angle"}:
+                block, rows = build_angle_feature_block(
+                    series=series,
+                    normal_series=normal_series,
+                    output_prefix=col,
+                    time_index=df.index,
+                    feature_mode=feature_mode,
                 )
-            elif family in ["voltage_mag", "current_mag", "frequency"]:
-                baseline_value, baseline_method = robust_trimmed_mean(normal_series)
-                if abs(baseline_value) < 1e-9:
-                    baseline_value = 1.0
-                    baseline_method = "fallback_constant"
-                norm_df[col] = series / baseline_value
-                baseline_rows.append(
-                    {
-                        "bus_id": bus,
-                        "raw_signal": col,
-                        "output_signal": col,
-                        "signal_family": family,
-                        "transform": "divide_by_baseline",
-                        "baseline_method": baseline_method,
-                        "baseline_value": float(baseline_value),
-                        "n_normal_samples": int(normal_series.dropna().shape[0]),
-                        "baseline_source": normal_source,
-                        "notes": "PU normalization with robust normal-state baseline.",
-                    }
+            elif family in {"voltage_mag", "current_mag"}:
+                block, rows = build_magnitude_feature_block(
+                    series=series,
+                    normal_series=normal_series,
+                    output_name=col,
+                    signal_family=family,
+                    feature_mode=feature_mode,
+                )
+            elif family == "frequency":
+                block, rows = build_frequency_feature_block(
+                    series=series,
+                    normal_series=normal_series,
+                    output_name=col,
+                    feature_mode=feature_mode,
                 )
             elif family == "rocof":
                 baseline_value, baseline_method = robust_center(normal_series)
-                norm_df[col] = series - baseline_value
-                baseline_rows.append(
-                    {
-                        "bus_id": bus,
-                        "raw_signal": col,
-                        "output_signal": col,
-                        "signal_family": family,
-                        "transform": "subtract_center",
-                        "baseline_method": baseline_method,
-                        "baseline_value": float(baseline_value),
-                        "n_normal_samples": int(normal_series.dropna().shape[0]),
-                        "baseline_source": normal_source,
-                        "notes": "ROCOF centered around robust normal-state center.",
-                    }
-                )
+                block = pd.DataFrame(index=df.index)
+                if feature_mode == "legacy_replace_angles":
+                    block[col] = series - baseline_value
+                    rows = [
+                        {
+                            "output_signal": col,
+                            "transform": "subtract_center",
+                            "baseline_method": baseline_method,
+                            "baseline_value": float(baseline_value),
+                            "notes": "ROCOF centered around robust normal-state center.",
+                        }
+                    ]
+                else:
+                    centered_col = f"{col}_CENTERED"
+                    block[col] = series
+                    block[centered_col] = series - baseline_value
+                    rows = [
+                        {
+                            "output_signal": col,
+                            "transform": "preserve_raw",
+                            "baseline_method": "none",
+                            "baseline_value": np.nan,
+                            "notes": "Original ROCOF signal preserved in augment mode.",
+                        },
+                        {
+                            "output_signal": centered_col,
+                            "transform": "subtract_center",
+                            "baseline_method": baseline_method,
+                            "baseline_value": float(baseline_value),
+                            "notes": "ROCOF centered around robust normal-state center.",
+                        },
+                    ]
             else:
-                norm_df[col] = series
-                baseline_rows.append(
+                block = pd.DataFrame(index=df.index)
+                block[col] = series
+                rows = [
                     {
-                        "bus_id": bus,
-                        "raw_signal": col,
                         "output_signal": col,
-                        "signal_family": family,
                         "transform": "pass_through",
                         "baseline_method": "none",
                         "baseline_value": np.nan,
-                        "n_normal_samples": int(normal_series.dropna().shape[0]),
-                        "baseline_source": normal_source,
                         "notes": "Unrecognized signal family, left unchanged.",
                     }
-                )
+                ]
+
+            if feature_mode == "augment_angles":
+                for new_col in block.columns:
+                    if new_col in raw_signal_cols:
+                        continue
+                    norm_df[new_col] = block[new_col]
+            else:
+                for new_col in block.columns:
+                    norm_df[new_col] = block[new_col]
+
+            _append_rows(
+                baseline_rows=baseline_rows,
+                rows=rows,
+                bus_id=bus,
+                raw_signal=col,
+                signal_family=family,
+                n_normal_samples=n_normal,
+                baseline_source=normal_source,
+            )
 
         normalized_data[bus] = norm_df
 

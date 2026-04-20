@@ -51,6 +51,13 @@ def parse_args() -> argparse.Namespace:
         help="Skip chunk signal plots and timeline plots.",
     )
     parser.add_argument(
+        "--feature-mode",
+        type=str,
+        choices=["legacy_replace_angles", "augment_angles"],
+        default="augment_angles",
+        help="Feature construction mode for normalized output.",
+    )
+    parser.add_argument(
         "--compare-legacy",
         action="store_true",
         help="Run legacy m1 pipeline and compare key artifacts.",
@@ -182,6 +189,7 @@ def main() -> int:
         input_dir=input_dir,
         output_dir=output_dir,
         generate_plots=not args.skip_plots,
+        feature_mode=args.feature_mode,
     )
     validate_m1_output_contract(output_dir)
     LOGGER.info("Migrated m1 normalization completed.")
@@ -191,6 +199,10 @@ def main() -> int:
 
     legacy_output_dir: Path | None = None
     if args.compare_legacy:
+        if args.feature_mode != "legacy_replace_angles":
+            raise ValueError(
+                "--compare-legacy requires --feature-mode legacy_replace_angles for parity-safe comparison."
+            )
         legacy_output_dir = args.legacy_output_dir.resolve()
         run_normalization_pipeline(
             input_dir=str(input_dir),

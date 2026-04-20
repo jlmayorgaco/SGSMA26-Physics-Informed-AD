@@ -22,6 +22,7 @@ def test_m1_normalize_use_case_creates_expected_artifacts(raw_small_dir: Path) -
         input_dir=raw_small_dir,
         output_dir=out_dir,
         generate_plots=False,
+        feature_mode="legacy_replace_angles",
     )
 
     assert out_dir.exists()

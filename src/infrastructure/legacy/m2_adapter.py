@@ -24,3 +24,21 @@ def run_noise_profile_pipeline(chunks_dir: str | None = None, out_path: str | No
         chunks_dir=chunks_dir if chunks_dir is not None else m2.CHUNKS_DIR,
         out_path=out_path if out_path is not None else m2.PROFILE_OUT,
     )
+
+
+def generate_raw_profiles(chunks_dir: str | None = None, out_path: str | None = None) -> dict:
+    """Proxy to legacy generate_raw_profiles for parity and tests."""
+    return run_noise_profile_pipeline(chunks_dir=chunks_dir, out_path=out_path)
+
+
+def load_noise_layer(profile_path: str | None = None):
+    """Build legacy RawPMUNoiseLayer instance."""
+    m2 = _legacy_m2()
+    return m2.RawPMUNoiseLayer(profile_path if profile_path is not None else m2.PROFILE_OUT)
+
+
+__all__ = [
+    "run_noise_profile_pipeline",
+    "generate_raw_profiles",
+    "load_noise_layer",
+]

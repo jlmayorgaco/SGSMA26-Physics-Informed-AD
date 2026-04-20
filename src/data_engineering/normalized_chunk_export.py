@@ -13,6 +13,13 @@ from src.data_engineering.chunking import CATEGORY_BACKGROUNDS, EVENT_MAP, chunk
 from src.data_engineering.normalized_index import build_normalized_chunk_index
 
 
+def _ordered_export_columns(df: pd.DataFrame) -> list[str]:
+    """Keep export columns predictable: DATA_PRESENT/Event first, then remaining in dataframe order."""
+    lead = [col for col in ["DATA_PRESENT", "Event"] if col in df.columns]
+    tail = [col for col in df.columns if col not in set(lead)]
+    return lead + tail
+
+
 def export_baselines_csv(baseline_df: pd.DataFrame, output_dir: str | Path) -> Path:
     """Export normalization baseline report."""
     output_dir = Path(output_dir)
@@ -141,6 +148,7 @@ def export_normalized_chunks(
         for bus, df in normalized_data.items():
             bus_mask = chunk_mask(df.index, start_t, end_t, include_end)
             bus_slice = df.loc[bus_mask].copy()
+            bus_slice = bus_slice.loc[:, _ordered_export_columns(bus_slice)]
             csv_out = chunk_path / f"{bus}_normalized.csv"
             bus_slice.to_csv(csv_out)
             if len(bus_slice) > 0:

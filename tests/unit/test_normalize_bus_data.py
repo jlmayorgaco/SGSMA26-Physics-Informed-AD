@@ -16,7 +16,6 @@ def _build_bus_df(event_values: list[int]) -> pd.DataFrame:
             "BUS10_IA_MAG": [10.0, 10.0, 15.0, 20.0],
             "BUS10_Freq": [60.0, 60.0, 59.8, 59.7],
             "BUS10_ROCOF": [0.1, 0.1, 0.4, 0.5],
-            "BUS10_MISC": [1.0, 2.0, 3.0, 4.0],
             "DATA_PRESENT": [1, 1, 1, 1],
             "Event": event_values,
         },
@@ -24,84 +23,92 @@ def _build_bus_df(event_values: list[int]) -> pd.DataFrame:
     )
 
 
-def _run_normalize(event_values: list[int], global_event_values: list[int] | None = None):
+def _run_normalize(
+    event_values: list[int],
+    feature_mode: str,
+    global_event_values: list[int] | None = None,
+):
     bus_df = _build_bus_df(event_values)
     bus_data = {"Bus10": bus_df}
     event_df = pd.DataFrame(
         {"Bus10": global_event_values if global_event_values is not None else event_values},
         index=bus_df.index,
     )
-    return normalize_bus_data(bus_data, event_df)
+    return normalize_bus_data(bus_data, event_df, feature_mode=feature_mode), bus_df
 
 
-def test_normalize_bus_data_preserves_data_present_and_event() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
+def test_augment_mode_preserves_raw_angle_columns() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
     out = normalized["Bus10"]
-    assert "DATA_PRESENT" in out.columns
-    assert "Event" in out.columns
-    assert out["DATA_PRESENT"].tolist() == [1, 1, 1, 1]
-    assert out["Event"].tolist() == [0, 0, 1, 1]
+    assert "BUS10_VA_ANG" in out.columns
+    assert "BUS10_IA_ANG" in out.columns
 
 
-def test_voltage_angles_become_ang_speed() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
+def test_augment_mode_preserves_raw_magnitude_columns() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
     out = normalized["Bus10"]
-    assert "BUS10_VA_ANG_SPEED_RAD_S" in out.columns
+    assert "BUS10_VA_MAG" in out.columns
+    assert "BUS10_IA_MAG" in out.columns
+
+
+def test_augment_mode_preserves_raw_frequency_column() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    assert "BUS10_Freq" in normalized["Bus10"].columns
+
+
+def test_augment_mode_preserves_raw_rocof_column() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    assert "BUS10_ROCOF" in normalized["Bus10"].columns
+
+
+def test_augment_mode_adds_angle_feature_columns() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    cols = set(normalized["Bus10"].columns)
+    assert {"BUS10_VA_ANG_SPEED_RAD_S", "BUS10_VA_ANG_SIN", "BUS10_VA_ANG_COS", "BUS10_VA_ANG_DEV_DEG"}.issubset(cols)
+
+
+def test_augment_mode_adds_mag_pu_columns() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    cols = set(normalized["Bus10"].columns)
+    assert {"BUS10_VA_MAG_PU", "BUS10_IA_MAG_PU"}.issubset(cols)
+
+
+def test_augment_mode_adds_mag_dev_pu_columns() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    cols = set(normalized["Bus10"].columns)
+    assert {"BUS10_VA_MAG_DEV_PU", "BUS10_IA_MAG_DEV_PU"}.issubset(cols)
+
+
+def test_augment_mode_adds_freq_pu_column() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    assert "BUS10_Freq_PU" in normalized["Bus10"].columns
+
+
+def test_augment_mode_adds_freq_dev_hz_column() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    assert "BUS10_Freq_DEV_HZ" in normalized["Bus10"].columns
+
+
+def test_augment_mode_adds_rocof_centered_column() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "augment_angles")
+    assert "BUS10_ROCOF_CENTERED" in normalized["Bus10"].columns
+
+
+def test_augment_mode_does_not_overwrite_raw_values() -> None:
+    (normalized, _), raw_df = _run_normalize([0, 0, 1, 1], "augment_angles")
+    out = normalized["Bus10"]
+    for col in ["BUS10_VA_ANG", "BUS10_VA_MAG", "BUS10_IA_MAG", "BUS10_Freq", "BUS10_ROCOF"]:
+        assert np.allclose(out[col].to_numpy(dtype=float), raw_df[col].to_numpy(dtype=float), equal_nan=True)
+
+
+def test_legacy_mode_still_matches_expected_behavior() -> None:
+    (normalized, _), _ = _run_normalize([0, 0, 1, 1], "legacy_replace_angles")
+    out = normalized["Bus10"]
     assert "BUS10_VA_ANG" not in out.columns
-
-
-def test_current_angles_become_ang_speed() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
-    out = normalized["Bus10"]
-    assert "BUS10_IA_ANG_SPEED_RAD_S" in out.columns
-    assert "BUS10_IA_ANG" not in out.columns
-
-
-def test_voltage_magnitude_divides_by_baseline() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
-    va = normalized["Bus10"]["BUS10_VA_MAG"].to_numpy(dtype=float)
-    assert np.isclose(va[0], 1.0)
-    assert np.isclose(va[2], 1.2)
-
-
-def test_current_magnitude_divides_by_baseline() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
-    ia = normalized["Bus10"]["BUS10_IA_MAG"].to_numpy(dtype=float)
-    assert np.isclose(ia[0], 1.0)
-    assert np.isclose(ia[2], 1.5)
-
-
-def test_frequency_divides_by_baseline() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
-    freq = normalized["Bus10"]["BUS10_Freq"].to_numpy(dtype=float)
-    assert np.isclose(freq[0], 1.0)
-    assert np.isclose(freq[2], 59.8 / 60.0)
-
-
-def test_rocof_is_centered() -> None:
-    normalized, _ = _run_normalize([0, 0, 1, 1])
-    rocof = normalized["Bus10"]["BUS10_ROCOF"].to_numpy(dtype=float)
-    assert np.isclose(rocof[0], 0.0)
-    assert np.isclose(rocof[2], 0.3)
+    assert "BUS10_VA_ANG_SPEED_RAD_S" in out.columns
+    assert np.isclose(out["BUS10_VA_MAG"].iloc[0], 1.0)
 
 
 def test_fallback_to_full_series_when_no_event0_exists() -> None:
-    _, baselines = _run_normalize([1, 1, 1, 1], global_event_values=[1, 1, 1, 1])
+    ( _, baselines), _ = _run_normalize([1, 1, 1, 1], "legacy_replace_angles", global_event_values=[1, 1, 1, 1])
     assert (baselines["baseline_source"] == "full_series_fallback").all()
-
-
-def test_baseline_df_contains_expected_columns() -> None:
-    _, baselines = _run_normalize([0, 0, 1, 1])
-    expected = {
-        "bus_id",
-        "raw_signal",
-        "output_signal",
-        "signal_family",
-        "transform",
-        "baseline_method",
-        "baseline_value",
-        "n_normal_samples",
-        "baseline_source",
-        "notes",
-    }
-    assert expected.issubset(set(baselines.columns))

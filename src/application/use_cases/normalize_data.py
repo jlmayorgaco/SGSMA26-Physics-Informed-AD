@@ -20,13 +20,18 @@ def run_normalize_data_use_case(
     input_dir: str | Path,
     output_dir: str | Path,
     generate_plots: bool = True,
+    feature_mode: str = "augment_angles",
 ) -> dict[str, Any]:
     """Run end-to-end normalized chunk generation with legacy-compatible outputs."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     raw_bus_data, event_df = load_and_synchronize_data(input_dir)
-    normalized_data, baseline_df = normalize_bus_data(raw_bus_data, event_df)
+    normalized_data, baseline_df = normalize_bus_data(
+        raw_bus_data,
+        event_df,
+        feature_mode=feature_mode,
+    )
 
     baselines_csv = export_baselines_csv(baseline_df, output_dir)
     chunk_meta_list, chunk_index_entries, max_time_s = export_normalized_chunks(
@@ -62,4 +67,5 @@ def run_normalize_data_use_case(
         "event0_chunk_count": len([c for c in chunk_meta_list if int(c["label"]) == 0]),
         "bus_count": len(normalized_data),
         "plots_generated": bool(generate_plots),
+        "feature_mode": feature_mode,
     }
