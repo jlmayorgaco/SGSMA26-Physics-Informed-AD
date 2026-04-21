@@ -1,0 +1,125 @@
+{
+  "counts": {
+    "test": 3,
+    "train": 17,
+    "val": 4
+  },
+  "difficulty_balance": {
+    "adversarial": {
+      "test": 0,
+      "train": 3,
+      "val": 3
+    },
+    "easy": {
+      "test": 1,
+      "train": 5,
+      "val": 0
+    },
+    "hard": {
+      "test": 1,
+      "train": 4,
+      "val": 1
+    },
+    "medium": {
+      "test": 1,
+      "train": 5,
+      "val": 0
+    }
+  },
+  "label_balance": {
+    "0": {
+      "test": 1,
+      "train": 2,
+      "val": 0
+    },
+    "1": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "2": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "3": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "4": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "5": {
+      "test": 0,
+      "train": 3,
+      "val": 0
+    },
+    "6": {
+      "test": 1,
+      "train": 1,
+      "val": 0
+    },
+    "7": {
+      "test": 0,
+      "train": 2,
+      "val": 0
+    },
+    "8": {
+      "test": 1,
+      "train": 1,
+      "val": 0
+    }
+  },
+  "no_near_duplicate_family_leakage": true,
+  "no_scenario_leakage": true,
+  "subtype_balance": {
+    "TEMPLATE_EVENT0_NORMAL": {
+      "test": 1,
+      "train": 2,
+      "val": 0
+    },
+    "TEMPLATE_EVENT1_FAULT": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "TEMPLATE_EVENT2_LINE_OUTAGE": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "TEMPLATE_EVENT3_GENERATION_CHANGE": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "TEMPLATE_EVENT4_LOAD_CHANGE": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "TEMPLATE_EVENT5_MISSING_ONLY": {
+      "test": 0,
+      "train": 3,
+      "val": 0
+    },
+    "TEMPLATE_EVENT6_CONCURRENT_MISSING_PLUS_PHYSICAL": {
+      "test": 1,
+      "train": 1,
+      "val": 0
+    },
+    "TEMPLATE_EVENT7_BAD_DATA": {
+      "test": 0,
+      "train": 2,
+      "val": 0
+    },
+    "TEMPLATE_EVENT8_UNKNOWN_COMPOSITE": {
+      "test": 1,
+      "train": 1,
+      "val": 0
+    }
+  }
+}

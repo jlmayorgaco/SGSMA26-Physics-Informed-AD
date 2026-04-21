@@ -1,0 +1,10 @@
+{
+  "scenarios": [
+    {
+      "manifest_path": ".tmp_pytest\\m9_smoke\\SIMTINY\\scenario_manifest.json",
+      "scenario_id": "SIMTINY",
+      "scenario_template": "TEMPLATE_EVENT5_MISSING_ONLY",
+      "updated_at_utc": "2026-04-20T14:42:19.519417+00:00"
+    }
+  ]
+}

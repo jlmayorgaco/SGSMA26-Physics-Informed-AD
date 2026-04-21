@@ -1,0 +1,561 @@
+{
+  "repo_alignment": {
+    "existing_detector_baseline": {
+      "module_root": "src/detectors",
+      "key_existing_files": [
+        "src/detectors/configs.py",
+        "src/detectors/models.py",
+        "src/detectors/runtime.py",
+        "src/detectors/data/ingestion.py",
+        "src/detectors/data/preprocessing.py",
+        "src/detectors/data/window_builder.py",
+        "src/detectors/cyber/branch.py",
+        "src/detectors/physical/branch.py",
+        "src/detectors/fusion/strategy.py",
+        "src/detectors/postprocessing/hysteresis.py",
+        "src/detectors/postprocessing/state_machine.py",
+        "src/detectors/postprocessing/chunker.py"
+      ],
+      "pipeline_entrypoints": [
+        "src/pipelines/m10_train_detector.py",
+        "src/pipelines/m10_eval_detector.py",
+        "src/pipelines/m10_infer_detector.py"
+      ]
+    },
+    "upstream_data_dependencies": {
+      "splits": [
+        "train_scenarios_v2.csv",
+        "val_scenarios_v2.csv",
+        "test_scenarios_v2.csv",
+        "split_manifest_v2.json",
+        "split_balance_report_v2.json"
+      ],
+      "scenario_artifacts": [
+        "data/scenarios/SIMxxxx/pmu/*.csv",
+        "data/scenarios/SIMxxxx/labels/event_frame_labels.csv",
+        "data/scenarios/SIMxxxx/labels/event_intervals.csv",
+        "data/scenarios/SIMxxxx/metadata/scenario_manifest.json",
+        "data/scenarios/SIMxxxx/metadata/scenario_scoring.json"
+      ],
+      "event_semantics_source": [
+        "src/simulation/m9/templates.py",
+        "src/simulation/m9/constants.py",
+        "src/simulation/m9/exports.py"
+      ]
+    },
+    "test_and_reporting_alignment": {
+      "existing_detector_tests": [
+        "tests/unit/test_detector_window_builder.py",
+        "tests/unit/test_cyber_branch_rules_and_model.py",
+        "tests/unit/test_physical_tcn_branch.py",
+        "tests/unit/test_detector_fusion_postprocessing.py",
+        "tests/unit/test_m10_detector_metrics.py",
+        "tests/integration/test_m10_detector_train_eval_infer.py"
+      ],
+      "reporting_style_reference": [
+        "report/m9_1_hardening_report.json",
+        "report/m9_2_final_polish_report.json"
+      ]
+    },
+    "gaps_identified_for_phase_1": [
+      "Domain interfaces exist only in a single contracts file; require split interface modules and stronger ownership boundaries.",
+      "DTOs are centralized in src/detectors/models.py and need domain-scoped model modules with serialization policy.",
+      "Pipeline orchestration exists but evaluator/calibration/reporting responsibilities are mixed inside m10_train_detector.py.",
+      "Family-group analysis currently collapses event 5..8 as cyber-heavy; concurrent/ambiguous events need explicit group treatment.",
+      "No AGENTS.md or PLANS.md existed at repository root before this phase."
+    ]
+  },
+  "proposed_file_tree": {
+    "principles": [
+      "Keep src/detectors as canonical module root.",
+      "Add new files incrementally and keep compatibility wrappers in existing files during migration.",
+      "Retain src/pipelines/m10_*.py public entrypoints."
+    ],
+    "add": [
+      "src/detectors/domain/interfaces/detector.py",
+      "src/detectors/domain/interfaces/branch_detector.py",
+      "src/detectors/domain/interfaces/feature_extractor.py",
+      "src/detectors/domain/interfaces/preprocessor.py",
+      "src/detectors/domain/interfaces/fusion_strategy.py",
+      "src/detectors/domain/interfaces/postprocessor.py",
+      "src/detectors/domain/models/detection_input.py",
+      "src/detectors/domain/models/detection_output.py",
+      "src/detectors/domain/models/branch_score.py",
+      "src/detectors/domain/models/window_sample.py",
+      "src/detectors/domain/models/detector_config.py",
+      "src/detectors/domain/models/detector_metrics.py",
+      "src/detectors/domain/enums/event_family.py",
+      "src/detectors/domain/enums/detector_mode.py",
+      "src/detectors/shared/preprocessing/pmu_alignment.py",
+      "src/detectors/shared/preprocessing/pmu_window_builder.py",
+      "src/detectors/shared/preprocessing/nan_masking.py",
+      "src/detectors/shared/preprocessing/normalization.py",
+      "src/detectors/shared/preprocessing/angle_features.py",
+      "src/detectors/shared/preprocessing/positive_sequence_features.py",
+      "src/detectors/shared/preprocessing/estimator_feature_adapter.py",
+      "src/detectors/shared/features/temporal_stats.py",
+      "src/detectors/shared/features/derivative_features.py",
+      "src/detectors/shared/features/spectral_features.py",
+      "src/detectors/shared/features/topology_features.py",
+      "src/detectors/shared/features/estimator_residual_features.py",
+      "src/detectors/shared/utils/label_mapping.py",
+      "src/detectors/shared/utils/thresholding.py",
+      "src/detectors/shared/utils/hysteresis.py",
+      "src/detectors/shared/utils/calibration.py",
+      "src/detectors/cyber/heuristics/missing_data_rules.py",
+      "src/detectors/cyber/heuristics/stuck_value_rules.py",
+      "src/detectors/cyber/heuristics/spike_rules.py",
+      "src/detectors/cyber/heuristics/timestamp_rules.py",
+      "src/detectors/cyber/features/cyber_feature_extractor.py",
+      "src/detectors/cyber/ml/cyber_gbdt_detector.py",
+      "src/detectors/cyber/services/cyber_branch_service.py",
+      "src/detectors/physical/features/physical_feature_extractor.py",
+      "src/detectors/physical/ml/tcn_physical_detector.py",
+      "src/detectors/physical/ml/xgb_physical_detector.py",
+      "src/detectors/physical/services/physical_branch_service.py",
+      "src/detectors/fusion/strategies/rule_gated_fusion.py",
+      "src/detectors/fusion/strategies/weighted_fusion.py",
+      "src/detectors/fusion/services/detector_fusion_service.py",
+      "src/detectors/postprocessing/event_state_machine.py",
+      "src/detectors/postprocessing/event_chunker.py",
+      "src/detectors/postprocessing/alert_smoother.py",
+      "src/detectors/training/datasets/detector_dataset_builder.py",
+      "src/detectors/training/datasets/detector_split_loader.py",
+      "src/detectors/training/datasets/balanced_sampler.py",
+      "src/detectors/training/trainers/cyber_trainer.py",
+      "src/detectors/training/trainers/physical_trainer.py",
+      "src/detectors/training/trainers/hybrid_detector_trainer.py",
+      "src/detectors/training/evaluators/detector_evaluator.py",
+      "src/detectors/training/evaluators/threshold_tuner.py",
+      "src/detectors/training/evaluators/calibration_evaluator.py",
+      "src/detectors/training/reports/detector_report_builder.py",
+      "src/detectors/inference/online_detector_runner.py",
+      "src/detectors/inference/offline_detector_runner.py",
+      "tests/unit/detectors/",
+      "tests/integration/detectors/",
+      "tests/e2e/test_m10_detector_end_to_end.py"
+    ],
+    "modify": [
+      "src/detectors/models.py",
+      "src/detectors/configs.py",
+      "src/detectors/runtime.py",
+      "src/detectors/pipeline_utils.py",
+      "src/detectors/data/ingestion.py",
+      "src/detectors/data/preprocessing.py",
+      "src/detectors/data/window_builder.py",
+      "src/pipelines/m10_train_detector.py",
+      "src/pipelines/m10_eval_detector.py",
+      "src/pipelines/m10_infer_detector.py",
+      "tests/unit/test_detector_window_builder.py",
+      "tests/unit/test_detector_fusion_postprocessing.py",
+      "tests/integration/test_m10_detector_train_eval_infer.py"
+    ],
+    "compatibility_strategy": [
+      "Keep current imports working by retaining old module paths as wrappers.",
+      "Move business logic into new submodules first, then deprecate wrappers in a later phase.",
+      "Do not rename m10 pipeline files."
+    ]
+  },
+  "contracts": {
+    "interfaces": {
+      "Detector": {
+        "purpose": "Top-level hybrid detector contract for train/eval/infer lifecycle.",
+        "methods": [
+          "fit(samples: list[WindowSample], config: DetectorConfig) -> None",
+          "predict(inputs: DetectionInput) -> DetectionOutput",
+          "save(path: Path) -> None",
+          "load(path: Path) -> Detector"
+        ],
+        "ownership": "Owned by src/detectors/runtime.py orchestration and consumed by pipeline entrypoints.",
+        "serialization": "Model artifact bundle plus JSON metadata/config snapshot."
+      },
+      "BranchDetector": {
+        "purpose": "Common contract for cyber and physical branch implementations.",
+        "methods": [
+          "fit(samples: list[WindowSample]) -> None",
+          "score(inputs: DetectionInput) -> BranchScore"
+        ],
+        "ownership": "Owned by branch services under src/detectors/cyber and src/detectors/physical.",
+        "serialization": "Branch-specific model file + feature schema JSON."
+      },
+      "FeatureExtractor": {
+        "purpose": "Build deterministic branch-ready feature matrices from aligned windows.",
+        "methods": [
+          "extract(inputs: DetectionInput) -> dict[str, ndarray]"
+        ],
+        "ownership": "Owned by shared/cyber/physical feature modules.",
+        "serialization": "No persisted state unless fitted scalers/statistics are required."
+      },
+      "Preprocessor": {
+        "purpose": "Convert PMU frames into normalized, aligned, NaN-safe windows with metadata.",
+        "methods": [
+          "fit(frames: list[pd.DataFrame]) -> None",
+          "transform(frame: pd.DataFrame) -> list[WindowSample]"
+        ],
+        "ownership": "Owned by shared preprocessing layer; called by dataset builder and infer runner.",
+        "serialization": "Store medians/scales/feature-order in JSON-compatible dict."
+      },
+      "FusionStrategy": {
+        "purpose": "Combine cyber and physical scores into calibrated abnormal probability and explainability fields.",
+        "methods": [
+          "fuse(cyber: BranchScore, physical: BranchScore, context: dict[str, Any]) -> BranchScore"
+        ],
+        "ownership": "Owned by src/detectors/fusion/strategies.",
+        "serialization": "Fusion weights/thresholds/calibration params in config JSON."
+      },
+      "Postprocessor": {
+        "purpose": "Turn frame-level probabilities into stable decisions and chunk proposals.",
+        "methods": [
+          "smooth(probabilities: ndarray) -> ndarray",
+          "state_machine(binary: ndarray) -> ndarray",
+          "chunk(binary: ndarray, timestamps: ndarray, probs: ndarray) -> list[dict[str, Any]]"
+        ],
+        "ownership": "Owned by src/detectors/postprocessing modules.",
+        "serialization": "Thresholds/min-on-off params in config JSON."
+      }
+    },
+    "dtos": {
+      "DetectionInput": {
+        "purpose": "Canonical detector input payload for a frame/window batch.",
+        "key_fields": [
+          "scenario_id: str",
+          "timestamps: ndarray[float]",
+          "x_windows: ndarray[float]  # [n_windows, window_size, n_features]",
+          "feature_names: list[str]",
+          "metadata: pd.DataFrame"
+        ],
+        "type_expectations": "x_windows float32/float64; timestamps monotonic per scenario; metadata row count equals n_windows.",
+        "owner": "Produced by dataset builder/preprocessor, consumed by branches and fusion.",
+        "serialization": "Parquet/NPZ for offline; in-memory dataclass for runtime."
+      },
+      "DetectionOutput": {
+        "purpose": "Unified detector output for eval/infer and downstream handoff.",
+        "key_fields": [
+          "p_abnormal: ndarray[float]",
+          "p_cyber: ndarray[float]",
+          "p_physical: ndarray[float]",
+          "y_pred_frame: ndarray[int]",
+          "y_pred_stable: ndarray[int]",
+          "chunks: list[dict[str, Any]]",
+          "diagnostics: dict[str, Any]"
+        ],
+        "type_expectations": "Probabilities clipped [0,1], arrays length-aligned to windows.",
+        "owner": "Produced by Detector.predict, consumed by evaluators and inference runners.",
+        "serialization": "CSV/Parquet for frame outputs and JSON for summary diagnostics."
+      },
+      "BranchScore": {
+        "purpose": "Branch-specific score payload before and after fusion.",
+        "key_fields": [
+          "probability: ndarray[float]",
+          "raw_score: ndarray[float] | None",
+          "detail: dict[str, Any]",
+          "backend: str"
+        ],
+        "type_expectations": "Length equals number of windows.",
+        "owner": "Produced by each branch and fusion strategy.",
+        "serialization": "Typically not persisted standalone; embedded in evaluation outputs."
+      },
+      "WindowSample": {
+        "purpose": "Atomic training/evaluation example representing one detector window.",
+        "key_fields": [
+          "scenario_id: str",
+          "window_index: int",
+          "start_idx: int",
+          "end_idx: int",
+          "center_timestamp: float",
+          "x: ndarray[float]",
+          "y_frame_any: int",
+          "y_window_ratio: float",
+          "event_max: int",
+          "event_family: str",
+          "is_concurrent: bool",
+          "data_present_ratio: float"
+        ],
+        "type_expectations": "x shape [window_size, n_features], labels in known ranges.",
+        "owner": "Built by window builder; consumed by trainers/evaluators.",
+        "serialization": "Parquet/NPZ dataset shard for reproducible training."
+      },
+      "DetectorConfig": {
+        "purpose": "Central config object controlling preprocessing, branches, fusion, postprocessing, and artifact paths.",
+        "key_fields": [
+          "window",
+          "preprocessing",
+          "cyber",
+          "physical",
+          "fusion",
+          "postprocessing",
+          "artifact_paths",
+          "seeds"
+        ],
+        "type_expectations": "Typed dataclass with explicit defaults and path normalization.",
+        "owner": "Loaded by pipelines and runtime.",
+        "serialization": "JSON snapshot adjacent to saved model artifacts."
+      },
+      "DetectorMetrics": {
+        "purpose": "Structured metric outputs for train/val/test and per-group reporting.",
+        "key_fields": [
+          "f1_abnormal",
+          "precision_abnormal",
+          "recall_abnormal",
+          "balanced_accuracy",
+          "false_positives_per_minute",
+          "detection_delay_s",
+          "roc_auc",
+          "pr_auc",
+          "brier_score",
+          "ece",
+          "support_abnormal",
+          "support_normal"
+        ],
+        "type_expectations": "Floats or null where undefined; support counts are integers.",
+        "owner": "Produced by evaluator and report builder.",
+        "serialization": "JSON + CSV metric tables."
+      }
+    }
+  },
+  "data_flow": {
+    "overview": [
+      "1) Load scenario split CSV/manifest rows produced by M9.2 split rebuilder.",
+      "2) Resolve each scenario directory and read PMU multibus CSVs from scenario/pmu.",
+      "3) Merge PMU channels by TIMESTAMP, aggregate DATA_PRESENT, and recover EVENT labels (from PMU Event columns and labels/event_frame_labels.csv when available).",
+      "4) Apply shared preprocessing: numeric coercion, NaN handling, clipping/scaling, angle-safe transforms, optional positive-sequence and estimator feature adapters.",
+      "5) Build sliding windows with deterministic size/stride and per-window metadata.",
+      "6) Assign frame/window labels and event-family tags.",
+      "7) Generate cyber and physical branch features/scores.",
+      "8) Fuse branch scores into p_abnormal plus branch explainability scores.",
+      "9) Postprocess with hysteresis/state-machine and extract stable event chunks.",
+      "10) Export frame/chunk outputs for downstream classifier/localizer candidate generation."
+    ],
+    "label_definitions": {
+      "frame_level": {
+        "event_coarse": "EVENT integer in [0..8] from scenario labels",
+        "binary_abnormal": "1 if EVENT != 0 else 0",
+        "family_mapping": {
+          "normal": [0],
+          "physical_heavy": [1, 2, 3, 4],
+          "cyber_heavy": [5, 7],
+          "concurrent_or_ambiguous": [6, 8]
+        },
+        "concurrent_representation": "Use labels columns IS_CONCURRENT_EVENT and EVENT=6/8 semantics; preserve as metadata flag even in binary mode."
+      },
+      "window_level": {
+        "positive_ratio": "mean(frame_binary_abnormal) across window",
+        "window_binary": "1 if positive_ratio >= config.window.positive_ratio_threshold else 0",
+        "window_event_max": "max(EVENT) in window",
+        "window_family": "derived from window_event_max with concurrent override if any concurrent frame exists"
+      }
+    },
+    "nan_and_data_present_policy": {
+      "nan_handling": "coerce numeric, ffill/bfill where enabled, remaining NaN -> 0, inf -> 0",
+      "data_present": "aggregate DATA_PRESENT = min across PMUs; maintain per-PMU DATA_PRESENT_* columns when present",
+      "rule_integration": "cyber heuristics read data_present_ratio and missing bursts",
+      "quality_flags": "store missing_ratio, stuck_ratio, spike_ratio, timestamp_jitter metrics per window"
+    },
+    "estimator_assist": {
+      "source": "scenario metadata/scenario_scoring.json and future estimator residual exports",
+      "current_available_fields": [
+        "ESTIMATOR_DIFFICULTY_SCORE",
+        "DETECTOR_DIFFICULTY_SCORE",
+        "OVERALL_TRAINING_VALUE_SCORE"
+      ],
+      "adapter_contract": "EstimatorFeatureAdapter returns optional standardized estimator feature vector appended to shared features when enabled."
+    },
+    "downstream_chunk_export_contract": {
+      "minimum_fields": [
+        "scenario_id",
+        "chunk_id",
+        "start_time_s",
+        "end_time_s",
+        "duration_s",
+        "mean_p_abnormal",
+        "max_p_abnormal",
+        "p_cyber_mean",
+        "p_physical_mean",
+        "dominant_family_hint",
+        "source_window_indices"
+      ],
+      "purpose": "Provide candidate abnormal intervals for downstream multiclass classifier/localizer."
+    }
+  },
+  "pipelines": {
+    "m10_train_detector.py": {
+      "required_inputs": [
+        "--train-split",
+        "--val-split",
+        "--workspace-root",
+        "--output-root",
+        "window and threshold config overrides"
+      ],
+      "processing_stages": [
+        "Load split records and scenario frames",
+        "Fit shared preprocessor on train; transform val",
+        "Build train/val windows",
+        "Train cyber branch",
+        "Train physical branch",
+        "Train/tune fusion on val",
+        "Tune postprocessing thresholds on val",
+        "Persist model + config + threshold bundle"
+      ],
+      "artifacts": [
+        "output/detector_m10/detector_model.pkl",
+        "output/detector_m10/detector_model.json",
+        "output/detector_m10/threshold_sweep.csv",
+        "output/detector_m10/detector_training_report.json",
+        "output/detector_m10/detector_training_report.md",
+        "output/detector_m10/training_summary.json"
+      ]
+    },
+    "m10_eval_detector.py": {
+      "required_inputs": [
+        "--split-csv",
+        "--model-path",
+        "--workspace-root",
+        "--output-root",
+        "--run-name"
+      ],
+      "processing_stages": [
+        "Load detector artifacts",
+        "Rebuild windows using stored preprocessing schema",
+        "Run branch + fusion scores",
+        "Apply postprocessing",
+        "Compute full metric suite",
+        "Compute per-scenario and family-group analysis",
+        "Compute ROC/PR/calibration and confusion"
+      ],
+      "artifacts": [
+        "{run_name}_frame_predictions.csv",
+        "{run_name}_event_chunks.csv",
+        "{run_name}_metrics.csv",
+        "{run_name}_branch_summary.csv",
+        "{run_name}_summary.json",
+        "per_scenario_metrics.csv",
+        "roc_curve_points.csv",
+        "pr_curve_points.csv",
+        "calibration_curve_points.csv",
+        "confusion_matrix.png"
+      ]
+    },
+    "m10_infer_detector.py": {
+      "required_inputs": [
+        "--scenario-dir",
+        "--scenario-id",
+        "--model-path",
+        "--output-root"
+      ],
+      "processing_stages": [
+        "Load model and preprocessing schema",
+        "Read one scenario PMU directory",
+        "Build windows and score branches/fusion",
+        "Apply postprocessing",
+        "Emit stable binary alerts",
+        "Emit chunk proposals for downstream models"
+      ],
+      "artifacts": [
+        "infer_{scenario_id}_frame_predictions.csv",
+        "infer_{scenario_id}_event_chunks.csv",
+        "infer_{scenario_id}_summary.json"
+      ]
+    }
+  },
+  "metrics_and_acceptance_criteria": {
+    "core_metrics": [
+      "f1_abnormal",
+      "precision_abnormal",
+      "recall_abnormal",
+      "balanced_accuracy",
+      "false_positives_per_minute",
+      "detection_delay_s",
+      "roc_auc",
+      "pr_auc",
+      "brier_score",
+      "ece",
+      "per_scenario_metrics",
+      "cyber_vs_physical_vs_concurrent group performance"
+    ],
+    "phase_3_ready_targets": {
+      "f1_abnormal_min": 0.78,
+      "precision_abnormal_min": 0.75,
+      "recall_abnormal_min": 0.82,
+      "balanced_accuracy_min": 0.80,
+      "false_positives_per_minute_max": 2.0,
+      "detection_delay_p95_s_max": 2.0,
+      "roc_auc_min": 0.88,
+      "pr_auc_min": 0.85,
+      "brier_score_max": 0.18,
+      "ece_max": 0.08,
+      "family_targets": {
+        "physical_heavy_recall_min": 0.80,
+        "cyber_heavy_recall_min": 0.75,
+        "concurrent_or_ambiguous_recall_min": 0.70
+      },
+      "coverage_requirements": [
+        "No split leakage by scenario_id or scenario_family",
+        "Val+test must contain at least one scenario from physical-heavy, cyber-heavy, and concurrent/ambiguous families or report explicit fallback pool metrics"
+      ]
+    },
+    "governance_notes": [
+      "Targets are planning gates, not guaranteed immediate results.",
+      "Failing any gate blocks phase-3 sign-off and triggers threshold/model review."
+    ]
+  },
+  "test_plan": {
+    "unit_tests": [
+      "DTO validation and serialization round-trip tests",
+      "Interface contract conformance for Detector/BranchDetector/Preprocessor/Fusion/Postprocessor",
+      "Label mapping tests for frame/window/family/concurrent flags",
+      "Window builder tests (size/stride/ratio threshold/metadata)",
+      "NaN and DATA_PRESENT semantics tests",
+      "Angle-safe transform and wrap invariance tests",
+      "Cyber heuristic tests (missing/stuck/spike/timestamp)",
+      "Fusion strategy tests including estimator-assisted adjustment",
+      "Hysteresis and state-machine edge case tests",
+      "Evaluator metric tests (ROC/PR/Brier/ECE/delay/FP-min)",
+      "Report schema tests for detector JSON/MD outputs"
+    ],
+    "integration_tests": [
+      "m10 train pipeline smoke on tiny split",
+      "m10 eval pipeline smoke on tiny split",
+      "m10 infer pipeline smoke on one scenario",
+      "End-to-end detector on one generated M9 scenario",
+      "End-to-end detector on small split set with family-group report assertions"
+    ],
+    "e2e_tests": [
+      "Generate scenarios -> build splits -> train detector -> eval -> infer -> verify report/chunk contracts"
+    ],
+    "phase_1_priority_tests": [
+      "contract and dto schema tests",
+      "window and label mapping tests",
+      "nan/data_present handling tests",
+      "pipeline argument/artifact smoke tests"
+    ]
+  },
+  "planning_docs": {
+    "created": [
+      "AGENTS.md",
+      "PLANS.md",
+      "report/phase_0_detector_architecture.json",
+      "report/phase_0_detector_architecture.md"
+    ],
+    "updated": [],
+    "notes": [
+      "AGENTS.md defines detector architecture, style, testing, and artifact guardrails.",
+      "PLANS.md defines Phase 0-3 milestones, dependencies, and acceptance gates."
+    ]
+  },
+  "overall_verdict": {
+    "phase_0_complete": true,
+    "main_decisions": [
+      "Reuse and harden the existing src/detectors and m10 pipeline structure instead of creating a parallel architecture.",
+      "Adopt explicit domain interfaces and DTO modules while preserving compatibility wrappers.",
+      "Use binary detector target (event 0 vs 1..8) with preserved family/concurrent metadata for downstream tasks.",
+      "Keep TCN-first physical branch and rules+tabular cyber branch with estimator-assisted feature option.",
+      "Formalize calibration, threshold tuning, and chunk-export contracts as first-class pipeline artifacts."
+    ],
+    "main_risks": [
+      "Sparse cyber-heavy/concurrent coverage in val/test can destabilize family-level conclusions.",
+      "Optional tabular backend dependency (LightGBM) may not be installed and fallback behavior must stay deterministic.",
+      "Schema drift between scenario labels and detector ingestion can silently break training labels without contract tests."
+    ],
+    "next_phase": "phase_1_foundations"
+  }
+}

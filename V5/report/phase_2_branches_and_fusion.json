@@ -1,0 +1,151 @@
+{
+  "repo_alignment": {
+    "phase_0_and_1_alignment": true,
+    "contracts_reused": [
+      "DetectionInput",
+      "BranchScore",
+      "DetectionOutput",
+      "Detector interface",
+      "Phase-1 dataset/split/window foundations"
+    ],
+    "notes": "Phase-2 implementation added real cyber+physical branches, fusion, postprocessing, and detector pipelines on top of Phase-1 modules."
+  },
+  "implemented_components": {
+    "cyber_branch": {
+      "heuristics": [
+        "src/detectors/cyber/heuristics/missing_data_rules.py",
+        "src/detectors/cyber/heuristics/stuck_value_rules.py",
+        "src/detectors/cyber/heuristics/spike_rules.py",
+        "src/detectors/cyber/heuristics/timestamp_rules.py"
+      ],
+      "feature_extractor": "src/detectors/cyber/features/cyber_feature_extractor.py",
+      "ml_model": "src/detectors/cyber/ml/cyber_gbdt_detector.py",
+      "service": "src/detectors/cyber/services/cyber_branch_service.py",
+      "status": "implemented"
+    },
+    "physical_branch": {
+      "heuristics": [
+        "src/detectors/physical/heuristics/voltage_sag_rules.py",
+        "src/detectors/physical/heuristics/current_surge_rules.py",
+        "src/detectors/physical/heuristics/freq_rocof_rules.py",
+        "src/detectors/physical/heuristics/estimator_innovation_rules.py"
+      ],
+      "feature_extractor": "src/detectors/physical/features/physical_feature_extractor.py",
+      "temporal_model": "src/detectors/physical/ml/tcn_physical_detector.py",
+      "fallback_model": "src/detectors/physical/ml/xgb_physical_detector.py",
+      "service": "src/detectors/physical/services/physical_branch_service.py",
+      "status": "implemented"
+    },
+    "fusion": {
+      "strategy": "src/detectors/fusion/strategies/rule_gated_fusion.py",
+      "service": "src/detectors/fusion/services/detector_fusion_service.py",
+      "status": "implemented"
+    },
+    "postprocessing": {
+      "smoother": "src/detectors/postprocessing/alert_smoother.py",
+      "state_machine": "src/detectors/postprocessing/event_state_machine.py",
+      "chunker": "src/detectors/postprocessing/event_chunker.py",
+      "status": "implemented"
+    },
+    "pipelines": {
+      "train": "src/detectors/pipelines/m10_train_detector.py",
+      "eval": "src/detectors/pipelines/m10_eval_detector.py",
+      "infer": "src/detectors/pipelines/m10_infer_detector.py",
+      "status": "implemented"
+    }
+  },
+  "artifacts": {
+    "smoke_run_output_root": "output/phase2_smoke_run/artifacts",
+    "train_outputs": [
+      "hybrid_detector.pkl",
+      "training_summary.json",
+      "threshold_sweep.csv",
+      "train_frame_predictions.csv",
+      "val_frame_predictions.csv"
+    ],
+    "eval_outputs": [
+      "phase2_smoke_eval_report.json",
+      "phase2_smoke_frame_predictions.csv",
+      "phase2_smoke_chunks.csv",
+      "phase2_smoke_roc_curve.csv",
+      "phase2_smoke_pr_curve.csv",
+      "phase2_smoke_per_scenario_metrics.csv"
+    ],
+    "infer_outputs": [
+      "infer_SIMR2_summary.json",
+      "infer_SIMR2_frame_predictions.csv",
+      "infer_SIMR2_chunks.csv"
+    ]
+  },
+  "tests": {
+    "unit": {
+      "added": [
+        "tests/unit/test_cyber_rules.py",
+        "tests/unit/test_cyber_feature_extractor.py",
+        "tests/unit/test_cyber_gbdt_detector.py",
+        "tests/unit/test_physical_heuristics.py",
+        "tests/unit/test_tcn_physical_detector.py",
+        "tests/unit/test_fusion_strategy.py",
+        "tests/unit/test_event_state_machine.py",
+        "tests/unit/test_event_chunker.py",
+        "tests/unit/test_hybrid_detector_wrapper.py",
+        "tests/unit/test_pipeline_configs.py"
+      ],
+      "status": "pass"
+    },
+    "integration": {
+      "added": [
+        "tests/integration/test_phase2_train_smoke.py",
+        "tests/integration/test_phase2_eval_smoke.py",
+        "tests/integration/test_phase2_infer_smoke.py",
+        "tests/integration/test_phase2_branch_fusion_flow.py",
+        "tests/integration/test_phase2_reports_exist.py"
+      ],
+      "status": "pass"
+    },
+    "e2e": {
+      "added": [
+        "tests/e2e/test_phase2_detector_e2e.py"
+      ],
+      "status": "pass"
+    },
+    "execution_summary": {
+      "command": "pytest -q tests/unit/test_cyber_rules.py tests/unit/test_cyber_feature_extractor.py tests/unit/test_cyber_gbdt_detector.py tests/unit/test_physical_heuristics.py tests/unit/test_tcn_physical_detector.py tests/unit/test_fusion_strategy.py tests/unit/test_event_state_machine.py tests/unit/test_event_chunker.py tests/unit/test_hybrid_detector_wrapper.py tests/unit/test_pipeline_configs.py tests/integration/test_phase2_train_smoke.py tests/integration/test_phase2_eval_smoke.py tests/integration/test_phase2_infer_smoke.py tests/integration/test_phase2_branch_fusion_flow.py tests/integration/test_phase2_reports_exist.py tests/e2e/test_phase2_detector_e2e.py",
+      "result": "16 passed"
+    }
+  },
+  "initial_metrics": {
+    "source": "output/phase2_smoke_run/artifacts/phase2_smoke_eval_report.json",
+    "f1_abnormal": 0.125,
+    "precision_abnormal": 1.0,
+    "recall_abnormal": 0.06666666666666667,
+    "balanced_accuracy": 0.5333333333333333,
+    "false_positives_per_minute": 0.0,
+    "detection_delay_s": 1.1199999999999999,
+    "roc_auc": 0.9111111111111111,
+    "pr_auc": 0.9156968684909861,
+    "confusion": {
+      "tp": 1,
+      "tn": 3,
+      "fp": 0,
+      "fn": 14
+    }
+  },
+  "known_gaps_for_phase_3": [
+    "Threshold, calibration, and postprocessing hyperparameters need hardening/tuning on broader splits.",
+    "Physical temporal branch currently uses deterministic numpy TCN-style fallback rather than full deep TCN stack.",
+    "Family-level and per-event robustness targets are not yet hardened.",
+    "Advanced calibration outputs (ECE/Brier governance and calibration plots) should be expanded in Phase 3.",
+    "Detector operating point selection should include stricter delay/FP-per-minute constraints by scenario family."
+  ],
+  "overall_verdict": {
+    "phase_2_complete": true,
+    "ready_for_phase_3": true,
+    "main_risks": [
+      "Metrics are from smoke-size synthetic scenarios and not representative of final production quality.",
+      "Without full deep-learning dependencies, temporal modeling remains a compact fallback implementation.",
+      "Fusion and state-machine thresholds require broader validation before deployment."
+    ],
+    "next_phase": "phase_3_training_validation_hardening"
+  }
+}

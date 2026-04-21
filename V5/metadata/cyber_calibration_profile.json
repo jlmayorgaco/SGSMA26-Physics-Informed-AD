@@ -1,0 +1,20 @@
+{
+  "burst_length_mean": 842.5,
+  "burst_length_p95": 869.95,
+  "inter_burst_mean": 2333.0,
+  "modes": {
+    "adversarial_stress": {
+      "target_missing_fraction": 0.06
+    },
+    "official_style_missing_data": {
+      "target_missing_fraction": 0.01
+    },
+    "research_style_cyber": {
+      "target_missing_fraction": 0.03
+    }
+  },
+  "overall_missing_fraction": 0.005265625,
+  "partial_channel_dropout_mean": 0.0,
+  "periodicity_score": 0.12484510701746261,
+  "reference_pmu_dir": "data\\RAW0001"
+}

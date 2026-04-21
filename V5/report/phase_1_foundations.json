@@ -1,0 +1,202 @@
+{
+  "repo_alignment": {
+    "baseline_used": [
+      "src/detectors existing hybrid scaffold",
+      "src/pipelines/m10_train_detector.py",
+      "src/pipelines/m10_eval_detector.py",
+      "src/pipelines/m10_infer_detector.py",
+      "M9.2 split artifacts and scenario labels"
+    ],
+    "phase_1_scope": "foundations only: contracts, DTOs, preprocessing, dataset/split/window flow, tests"
+  },
+  "created_or_modified_files": [
+    "src/detectors/domain/interfaces/__init__.py",
+    "src/detectors/domain/enums/__init__.py",
+    "src/detectors/domain/enums/event_family.py",
+    "src/detectors/domain/enums/detector_mode.py",
+    "src/detectors/domain/interfaces/detector.py",
+    "src/detectors/domain/interfaces/branch_detector.py",
+    "src/detectors/domain/interfaces/feature_extractor.py",
+    "src/detectors/domain/interfaces/preprocessor.py",
+    "src/detectors/domain/interfaces/fusion_strategy.py",
+    "src/detectors/domain/interfaces/postprocessor.py",
+    "src/detectors/domain/models/__init__.py",
+    "src/detectors/domain/models/detection_input.py",
+    "src/detectors/domain/models/detection_output.py",
+    "src/detectors/domain/models/branch_score.py",
+    "src/detectors/domain/models/window_sample.py",
+    "src/detectors/domain/models/detector_config.py",
+    "src/detectors/domain/models/detector_metrics.py",
+    "src/detectors/shared/__init__.py",
+    "src/detectors/shared/preprocessing/__init__.py",
+    "src/detectors/shared/preprocessing/pmu_alignment.py",
+    "src/detectors/shared/preprocessing/pmu_window_builder.py",
+    "src/detectors/shared/preprocessing/nan_masking.py",
+    "src/detectors/shared/preprocessing/normalization.py",
+    "src/detectors/shared/preprocessing/angle_features.py",
+    "src/detectors/shared/preprocessing/positive_sequence_features.py",
+    "src/detectors/shared/preprocessing/estimator_feature_adapter.py",
+    "src/detectors/shared/features/__init__.py",
+    "src/detectors/shared/features/temporal_stats.py",
+    "src/detectors/shared/features/derivative_features.py",
+    "src/detectors/shared/utils/__init__.py",
+    "src/detectors/shared/utils/label_mapping.py",
+    "src/detectors/shared/utils/thresholding.py",
+    "src/detectors/shared/utils/hysteresis.py",
+    "src/detectors/shared/utils/calibration.py",
+    "src/detectors/training/__init__.py",
+    "src/detectors/training/datasets/__init__.py",
+    "src/detectors/training/datasets/detector_split_loader.py",
+    "src/detectors/training/datasets/detector_dataset_builder.py",
+    "src/detectors/training/datasets/balanced_sampler.py",
+    "src/detectors/training/reports/__init__.py",
+    "src/detectors/training/reports/phase1_reporting.py",
+    "src/detectors/cyber/interfaces/__init__.py",
+    "src/detectors/cyber/interfaces/cyber_detector.py",
+    "src/detectors/physical/interfaces/__init__.py",
+    "src/detectors/physical/interfaces/physical_detector.py",
+    "src/detectors/fusion/strategies/__init__.py",
+    "src/detectors/fusion/strategies/fusion_strategy_stub.py",
+    "src/detectors/postprocessing/event_state_machine.py",
+    "tests/helpers/detector_phase1_utils.py",
+    "tests/unit/test_detection_models.py",
+    "tests/unit/test_interfaces_compile.py",
+    "tests/unit/test_label_mapping.py",
+    "tests/unit/test_pmu_alignment.py",
+    "tests/unit/test_nan_masking.py",
+    "tests/unit/test_angle_features.py",
+    "tests/unit/test_window_builder.py",
+    "tests/unit/test_split_loader.py",
+    "tests/unit/test_dataset_builder.py",
+    "tests/unit/test_estimator_feature_adapter_stub.py",
+    "tests/integration/test_phase1_dataset_flow_smoke.py",
+    "tests/integration/test_phase1_binary_label_pipeline.py",
+    "tests/integration/test_phase1_report_generation.py"
+  ],
+  "domain_contracts": {
+    "interfaces": [
+      "Detector",
+      "BranchDetector",
+      "FeatureExtractor",
+      "Preprocessor",
+      "FusionStrategy",
+      "Postprocessor"
+    ],
+    "models": [
+      "DetectionInput",
+      "DetectionOutput",
+      "BranchScore",
+      "WindowSample",
+      "DetectorConfigV2",
+      "DetectorMetricsV2"
+    ],
+    "enums": [
+      "EventFamily",
+      "DetectorMode"
+    ],
+    "status": "implemented with typed protocols/dataclasses"
+  },
+  "shared_preprocessing": {
+    "modules": [
+      "pmu_alignment",
+      "pmu_window_builder",
+      "nan_masking",
+      "normalization",
+      "angle_features",
+      "positive_sequence_features",
+      "estimator_feature_adapter"
+    ],
+    "core_behavior": {
+      "alignment": "merge PMU CSVs by TIMESTAMP with deterministic ordering",
+      "nan_policy": "numeric coercion + deterministic NaN mask + fill strategy",
+      "normalization": "median/quantile scale fit and apply",
+      "angle_safety": "wrap-safe angle normalization and sin/cos derivatives",
+      "windowing": "size/stride windows with metadata and binary label alignment"
+    }
+  },
+  "dataset_foundations": {
+    "split_loader": "implemented in detector_split_loader.py",
+    "dataset_builder": "implemented in detector_dataset_builder.py",
+    "balanced_sampler": "implemented deterministic class balancing helper",
+    "flow_enabled": [
+      "split csv -> split records",
+      "scenario pmu load + labels merge",
+      "shared preprocessing",
+      "window sample creation",
+      "DetectionInput collation per scenario"
+    ],
+    "metadata_preserved": [
+      "scenario_id",
+      "split",
+      "window indices",
+      "center timestamp",
+      "event_coarse",
+      "difficulty_level",
+      "subtype/origin",
+      "is_cyber_event",
+      "is_physical_event",
+      "is_concurrent_event",
+      "data_present_ratio"
+    ]
+  },
+  "label_mapping": {
+    "central_module": "src/detectors/shared/utils/label_mapping.py",
+    "binary_rule": {
+      "event_0": 0,
+      "event_1_to_8": 1
+    },
+    "family_mapping": {
+      "normal": [0],
+      "physical_heavy": [1, 2, 3, 4],
+      "cyber_heavy": [5, 7],
+      "concurrent_or_ambiguous": [6, 8]
+    },
+    "flag_policy": "metadata flags preserved when available, inferred otherwise"
+  },
+  "tests": {
+    "unit": {
+      "added": [
+        "tests/unit/test_detection_models.py",
+        "tests/unit/test_interfaces_compile.py",
+        "tests/unit/test_label_mapping.py",
+        "tests/unit/test_pmu_alignment.py",
+        "tests/unit/test_nan_masking.py",
+        "tests/unit/test_angle_features.py",
+        "tests/unit/test_window_builder.py",
+        "tests/unit/test_split_loader.py",
+        "tests/unit/test_dataset_builder.py",
+        "tests/unit/test_estimator_feature_adapter_stub.py"
+      ],
+      "status": "pass"
+    },
+    "integration": {
+      "added": [
+        "tests/integration/test_phase1_dataset_flow_smoke.py",
+        "tests/integration/test_phase1_binary_label_pipeline.py",
+        "tests/integration/test_phase1_report_generation.py"
+      ],
+      "status": "pass"
+    },
+    "execution": {
+      "command": "pytest -q tests/unit/test_detection_models.py tests/unit/test_interfaces_compile.py tests/unit/test_label_mapping.py tests/unit/test_pmu_alignment.py tests/unit/test_nan_masking.py tests/unit/test_angle_features.py tests/unit/test_window_builder.py tests/unit/test_split_loader.py tests/unit/test_dataset_builder.py tests/unit/test_estimator_feature_adapter_stub.py tests/integration/test_phase1_dataset_flow_smoke.py tests/integration/test_phase1_binary_label_pipeline.py tests/integration/test_phase1_report_generation.py",
+      "result": "17 passed"
+    }
+  },
+  "known_gaps_for_phase_2": [
+    "Cyber detector branch logic remains a contract/stub only.",
+    "Physical detector branch logic remains a contract/stub only.",
+    "Fusion strategy currently has a simple placeholder stub.",
+    "Event state machine is a foundational stub and not final behavior tuning.",
+    "No model training/tuning/calibration optimization implemented in this phase."
+  ],
+  "overall_verdict": {
+    "phase_1_complete": true,
+    "ready_for_phase_2": true,
+    "main_risks": [
+      "Synthetic test fixtures are lightweight; full behavior still depends on broader scenario diversity in later phases.",
+      "Family-level performance constraints are not yet enforced because branch models are intentionally unimplemented.",
+      "Compatibility wrappers may be needed when migrating old modules to new contracts during Phase 2 integration."
+    ],
+    "next_phase": "phase_2_branches_and_fusion"
+  }
+}

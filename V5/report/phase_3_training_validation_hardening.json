@@ -1,0 +1,29 @@
+{
+  "implemented_components": {
+    "training": true,
+    "threshold_tuning": true,
+    "evaluation": true,
+    "calibration": true,
+    "familywise_metrics": true,
+    "readiness_verdict": true
+  },
+  "artifacts_root": "output\\detector_m10_final",
+  "required_artifacts": {
+    "detector_training_report.json": "output\\detector_m10_final\\metrics\\detector_training_report.json",
+    "detector_training_report.md": "output\\detector_m10_final\\metrics\\detector_training_report.md",
+    "per_scenario_metrics.csv": "output\\detector_m10_final\\metrics\\per_scenario_metrics.csv",
+    "threshold_sweep.csv": "output\\detector_m10_final\\metrics\\threshold_sweep.csv",
+    "test_frame_predictions.csv": "output\\detector_m10_final\\metrics\\test_frame_predictions.csv",
+    "training_summary.json": "output\\detector_m10_final\\metrics\\training_summary.json",
+    "confusion_matrix.png": "output\\detector_m10_final\\plots\\confusion_matrix.png",
+    "pr_curve.png": "output\\detector_m10_final\\plots\\pr_curve.png",
+    "roc_curve.png": "output\\detector_m10_final\\plots\\roc_curve.png",
+    "calibration_curve.png": "output\\detector_m10_final\\plots\\calibration_curve.png"
+  },
+  "overall_verdict": {
+    "phase_3_complete": true,
+    "binary_detector_ready_for_classifier_localizer": false,
+    "verdict": "not_ready",
+    "next_phase": "phase_4_classifier_localizer_integration"
+  }
+}

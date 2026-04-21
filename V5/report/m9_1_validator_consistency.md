@@ -1,0 +1,5 @@
+# M9.1 Validator Consistency
+| aggregate | pass | children | reasons |
+| --- | --- | --- | --- |
+| overall_readiness | True | schema_checks_pass, labels_checks_pass, realism_v2_pass, angular_realism_pass, missing_calibration_pass, batch_balance_pass, estimator_scoring_pass, split_generation_pass, estimator_training_ready, identifier_training_ready, detector_training_ready, cyber_detector_training_ready, physical_detector_training_ready, classifier_training_ready, localizer_training_ready, estimator_assisted_localizer_ready |  |
+| downstream_all_ready | True | estimator_training_ready, identifier_training_ready, detector_training_ready, cyber_detector_training_ready, physical_detector_training_ready, classifier_training_ready, localizer_training_ready, estimator_assisted_localizer_ready |  |

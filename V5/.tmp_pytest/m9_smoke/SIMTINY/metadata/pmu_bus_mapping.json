@@ -1,0 +1,22 @@
+{
+  "pmu_buses": [
+    "BUS39",
+    "BUS29",
+    "BUS10",
+    "BUS22",
+    "BUS19",
+    "BUS2",
+    "BUS5",
+    "BUS6"
+  ],
+  "pmu_map": {
+    "PMU1": "BUS39",
+    "PMU2": "BUS29",
+    "PMU3": "BUS10",
+    "PMU4": "BUS22",
+    "PMU5": "BUS19",
+    "PMU6": "BUS2",
+    "PMU7": "BUS5",
+    "PMU8": "BUS6"
+  }
+}

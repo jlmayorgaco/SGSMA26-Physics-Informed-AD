@@ -1,0 +1,94 @@
+{
+  "cross_pmu_correlation": [
+    {
+      "bus_count": 8,
+      "mean_abs_corr_delta": 0.0,
+      "signal": "VA_MAG"
+    },
+    {
+      "bus_count": 8,
+      "mean_abs_corr_delta": 0.0,
+      "signal": "Freq"
+    }
+  ],
+  "freq_rocof_coherence": [
+    {
+      "bus": "BUS39",
+      "delta": 0.0,
+      "ref_coherence": 0.009565314060175963,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS29",
+      "delta": 0.0,
+      "ref_coherence": -0.0010808269469217639,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS10",
+      "delta": 0.0,
+      "ref_coherence": 0.00539669822215521,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS22",
+      "delta": 0.0,
+      "ref_coherence": 0.008756355456215613,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS19",
+      "delta": 0.0,
+      "ref_coherence": 0.02449083235419797,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS2",
+      "delta": 0.0,
+      "ref_coherence": 0.002750538340749568,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS5",
+      "delta": 0.0,
+      "ref_coherence": 0.009694010422835329,
+      "sim_coherence": null
+    },
+    {
+      "bus": "BUS6",
+      "delta": 0.0,
+      "ref_coherence": 0.02399278209203602,
+      "sim_coherence": null
+    }
+  ],
+  "pass_flags": {
+    "autocorr": true,
+    "cross_pmu_corr": true,
+    "derivative": true,
+    "freq_rocof": true,
+    "ks": true,
+    "psd": true,
+    "wasserstein": true
+  },
+  "pass_realism_v2": true,
+  "reference_pmu_dir": "data\\RAW0001",
+  "scenario_count": 24,
+  "summary": {
+    "autocorr": 0.523604749820092,
+    "cross_pmu_corr": 0.0,
+    "derivative": 0.29557667666160664,
+    "freq_rocof": 0.0,
+    "ks": 0.331051128604793,
+    "psd": 0.007338881741575285,
+    "wasserstein": 0.5769974779512508
+  },
+  "thresholds": {
+    "autocorr_delta_max": 0.6,
+    "cross_pmu_corr_delta_max": 0.35,
+    "derivative_wasserstein_max": 1.5,
+    "freq_rocof_coherence_delta_max": 0.6,
+    "ks_max": 0.45,
+    "psd_l1_max": 0.75,
+    "wasserstein_max": 1.5
+  }
+}

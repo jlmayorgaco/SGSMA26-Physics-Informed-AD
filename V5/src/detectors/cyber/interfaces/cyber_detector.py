@@ -1,0 +1,10 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+from src.detectors.domain.interfaces.branch_detector import BranchDetector
+
+
+class CyberDetector(BranchDetector, Protocol):
+    """Phase-1 cyber branch contract stub."""
+

@@ -1,0 +1,356 @@
+{
+  "angular_realism": {
+    "mean_cos_distance": 0.9974318719261689,
+    "mean_sin_distance": 0.6084124663122105,
+    "mean_wrap_abs_diff": 88.48736210818511,
+    "pass_angular_realism": true,
+    "rows": 48,
+    "scenario_count": 24
+  },
+  "balanced_batch_factory": {
+    "batch_generation_manifest_path": "C:\\Users\\walla\\AppData\\Local\\Temp\\pytest-of-walla\\pytest-124\\test_m9_1_e2e_hardening0\\data\\scenarios\\batch_generation_manifest.json",
+    "batch_mode": "balanced_core",
+    "dataset_balance_report_path": "C:\\Users\\walla\\AppData\\Local\\Temp\\pytest-of-walla\\pytest-124\\test_m9_1_e2e_hardening0\\data\\scenarios\\dataset_balance_report.json",
+    "n_scenarios": 24,
+    "scenario_registry_path": "C:\\Users\\walla\\AppData\\Local\\Temp\\pytest-of-walla\\pytest-124\\test_m9_1_e2e_hardening0\\data\\scenarios\\scenario_registry.json"
+  },
+  "cyber_pattern_calibration": {
+    "burst_length_mean": 842.5,
+    "burst_length_p95": 869.95,
+    "inter_burst_mean": 2333.0,
+    "mean_missing_fraction": 0.06476512003693444,
+    "modes": {
+      "adversarial_stress": {
+        "target_missing_fraction": 0.06
+      },
+      "official_style_missing_data": {
+        "target_missing_fraction": 0.01
+      },
+      "research_style_cyber": {
+        "target_missing_fraction": 0.03
+      }
+    },
+    "overall_missing_fraction": 0.005265625,
+    "partial_channel_dropout_mean": 0.0,
+    "periodicity_score": 0.12484510701746261,
+    "reference_pmu_dir": "data\\RAW0001",
+    "rows": 192,
+    "scenario_count": 24
+  },
+  "downstream_training_readiness": {
+    "classifier_training_ready": true,
+    "cyber_detector_training_ready": true,
+    "detector_training_ready": true,
+    "estimator_assisted_localizer_ready": true,
+    "estimator_training_ready": true,
+    "identifier_training_ready": true,
+    "localizer_training_ready": true,
+    "physical_detector_training_ready": true
+  },
+  "estimator_in_the_loop_scoring": {
+    "mean_estimator_difficulty": 0.6632655260684543,
+    "mean_training_value": 0.6049321927351209,
+    "scenario_count": 24
+  },
+  "overall_verdict": {
+    "m9_1_hardened": true,
+    "main_failures": [],
+    "main_strengths": [
+      "Deterministic aggregate readiness with explicit child conditions and reasons.",
+      "Realism validation v2 includes Wasserstein, KS, autocorrelation, derivative, PSD, and coherence checks.",
+      "Angular realism uses circular statistics and wrap-safe metrics.",
+      "Balanced scenario batch generation, estimator-aware scoring, and leakage-safe split manifests are produced."
+    ],
+    "next_actions": []
+  },
+  "realism_validation_v2": {
+    "cross_pmu_correlation": [
+      {
+        "bus_count": 8,
+        "mean_abs_corr_delta": 0.0,
+        "signal": "VA_MAG"
+      },
+      {
+        "bus_count": 8,
+        "mean_abs_corr_delta": 0.0,
+        "signal": "Freq"
+      }
+    ],
+    "freq_rocof_coherence": [
+      {
+        "bus": "BUS39",
+        "delta": 0.0,
+        "ref_coherence": 0.009565314060175963,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS29",
+        "delta": 0.0,
+        "ref_coherence": -0.0010808269469217639,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS10",
+        "delta": 0.0,
+        "ref_coherence": 0.00539669822215521,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS22",
+        "delta": 0.0,
+        "ref_coherence": 0.008756355456215613,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS19",
+        "delta": 0.0,
+        "ref_coherence": 0.02449083235419797,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS2",
+        "delta": 0.0,
+        "ref_coherence": 0.002750538340749568,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS5",
+        "delta": 0.0,
+        "ref_coherence": 0.009694010422835329,
+        "sim_coherence": null
+      },
+      {
+        "bus": "BUS6",
+        "delta": 0.0,
+        "ref_coherence": 0.02399278209203602,
+        "sim_coherence": null
+      }
+    ],
+    "pass_flags": {
+      "autocorr": true,
+      "cross_pmu_corr": true,
+      "derivative": true,
+      "freq_rocof": true,
+      "ks": true,
+      "psd": true,
+      "wasserstein": true
+    },
+    "pass_realism_v2": true,
+    "reference_pmu_dir": "data\\RAW0001",
+    "scenario_count": 24,
+    "summary": {
+      "autocorr": 0.523604749820092,
+      "cross_pmu_corr": 0.0,
+      "derivative": 0.29557667666160664,
+      "freq_rocof": 0.0,
+      "ks": 0.331051128604793,
+      "psd": 0.007338881741575285,
+      "wasserstein": 0.5769974779512508
+    },
+    "thresholds": {
+      "autocorr_delta_max": 0.6,
+      "cross_pmu_corr_delta_max": 0.35,
+      "derivative_wasserstein_max": 1.5,
+      "freq_rocof_coherence_delta_max": 0.6,
+      "ks_max": 0.45,
+      "psd_l1_max": 0.75,
+      "wasserstein_max": 1.5
+    }
+  },
+  "run_metadata": {
+    "batch_mode": "balanced_core",
+    "difficulty_mode": "curriculum_easy_to_hard",
+    "generated_at_utc": "2026-04-20T16:48:56.856083+00:00",
+    "n_scenarios": 24,
+    "output_root": "C:\\Users\\walla\\AppData\\Local\\Temp\\pytest-of-walla\\pytest-124\\test_m9_1_e2e_hardening0",
+    "pmu_location_path": "data\\metadata\\PMUbus_ Location.txt",
+    "raw_path": "data\\metadata\\IEEE_39_Bus_Power_System.raw",
+    "reference_pmu_dir": "data\\RAW0001",
+    "scenario_template": "TEMPLATE_OFFICIAL_STYLE_MULTI_EVENT"
+  },
+  "split_generation": {
+    "counts": {
+      "test": 3,
+      "train": 17,
+      "val": 4
+    },
+    "difficulty_balance": {
+      "adversarial": {
+        "test": 0,
+        "train": 3,
+        "val": 3
+      },
+      "easy": {
+        "test": 1,
+        "train": 5,
+        "val": 0
+      },
+      "hard": {
+        "test": 1,
+        "train": 4,
+        "val": 1
+      },
+      "medium": {
+        "test": 1,
+        "train": 5,
+        "val": 0
+      }
+    },
+    "label_balance": {
+      "0": {
+        "test": 1,
+        "train": 2,
+        "val": 0
+      },
+      "1": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "2": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "3": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "4": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "5": {
+        "test": 0,
+        "train": 3,
+        "val": 0
+      },
+      "6": {
+        "test": 1,
+        "train": 1,
+        "val": 0
+      },
+      "7": {
+        "test": 0,
+        "train": 2,
+        "val": 0
+      },
+      "8": {
+        "test": 1,
+        "train": 1,
+        "val": 0
+      }
+    },
+    "no_near_duplicate_family_leakage": true,
+    "no_scenario_leakage": true,
+    "split_balance_report_path": "C:\\Users\\walla\\AppData\\Local\\Temp\\pytest-of-walla\\pytest-124\\test_m9_1_e2e_hardening0\\split_balance_report.json",
+    "split_manifest_path": "C:\\Users\\walla\\AppData\\Local\\Temp\\pytest-of-walla\\pytest-124\\test_m9_1_e2e_hardening0\\split_manifest.json",
+    "subtype_balance": {
+      "TEMPLATE_EVENT0_NORMAL": {
+        "test": 1,
+        "train": 2,
+        "val": 0
+      },
+      "TEMPLATE_EVENT1_FAULT": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "TEMPLATE_EVENT2_LINE_OUTAGE": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "TEMPLATE_EVENT3_GENERATION_CHANGE": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "TEMPLATE_EVENT4_LOAD_CHANGE": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "TEMPLATE_EVENT5_MISSING_ONLY": {
+        "test": 0,
+        "train": 3,
+        "val": 0
+      },
+      "TEMPLATE_EVENT6_CONCURRENT_MISSING_PLUS_PHYSICAL": {
+        "test": 1,
+        "train": 1,
+        "val": 0
+      },
+      "TEMPLATE_EVENT7_BAD_DATA": {
+        "test": 0,
+        "train": 2,
+        "val": 0
+      },
+      "TEMPLATE_EVENT8_UNKNOWN_COMPOSITE": {
+        "test": 1,
+        "train": 1,
+        "val": 0
+      }
+    }
+  },
+  "validator_consistency": {
+    "aggregates": {
+      "downstream_all_ready": true,
+      "overall_readiness": true
+    },
+    "children": {
+      "downstream_all_ready": [
+        "estimator_training_ready",
+        "identifier_training_ready",
+        "detector_training_ready",
+        "cyber_detector_training_ready",
+        "physical_detector_training_ready",
+        "classifier_training_ready",
+        "localizer_training_ready",
+        "estimator_assisted_localizer_ready"
+      ],
+      "overall_readiness": [
+        "schema_checks_pass",
+        "labels_checks_pass",
+        "realism_v2_pass",
+        "angular_realism_pass",
+        "missing_calibration_pass",
+        "batch_balance_pass",
+        "estimator_scoring_pass",
+        "split_generation_pass",
+        "estimator_training_ready",
+        "identifier_training_ready",
+        "detector_training_ready",
+        "cyber_detector_training_ready",
+        "physical_detector_training_ready",
+        "classifier_training_ready",
+        "localizer_training_ready",
+        "estimator_assisted_localizer_ready"
+      ]
+    },
+    "flags": {
+      "angular_realism_pass": true,
+      "batch_balance_pass": true,
+      "classifier_training_ready": true,
+      "cyber_detector_training_ready": true,
+      "detector_training_ready": true,
+      "estimator_assisted_localizer_ready": true,
+      "estimator_scoring_pass": true,
+      "estimator_training_ready": true,
+      "identifier_training_ready": true,
+      "labels_checks_pass": true,
+      "localizer_training_ready": true,
+      "missing_calibration_pass": true,
+      "physical_detector_training_ready": true,
+      "realism_v2_pass": true,
+      "schema_checks_pass": true,
+      "split_generation_pass": true
+    },
+    "reasons": {
+      "downstream_all_ready": [],
+      "overall_readiness": []
+    }
+  }
+}

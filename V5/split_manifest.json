@@ -1,0 +1,32 @@
+{
+  "test": [
+    "SIMB0001",
+    "SIMB0007",
+    "SIMB0018"
+  ],
+  "train": [
+    "SIMB0002",
+    "SIMB0003",
+    "SIMB0004",
+    "SIMB0005",
+    "SIMB0006",
+    "SIMB0008",
+    "SIMB0009",
+    "SIMB0010",
+    "SIMB0011",
+    "SIMB0012",
+    "SIMB0014",
+    "SIMB0015",
+    "SIMB0016",
+    "SIMB0017",
+    "SIMB0019",
+    "SIMB0022",
+    "SIMB0024"
+  ],
+  "val": [
+    "SIMB0013",
+    "SIMB0020",
+    "SIMB0021",
+    "SIMB0023"
+  ]
+}

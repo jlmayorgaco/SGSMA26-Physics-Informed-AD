@@ -1,0 +1,401 @@
+{
+  "angular_realism_v2": {
+    "angle_circular_consistency_pass": true,
+    "angle_distribution_pass": true,
+    "angle_increment_pass": true,
+    "angle_wrap_behavior_pass": true,
+    "bus_outliers": [
+      {
+        "bus": "BUS5",
+        "current_phase_consistency_delta_deg": 119.9494743762063,
+        "mean_derivative_autocorr_delta": 1.3430269390938407,
+        "mean_increment_wasserstein_deg": 4.473809043429893,
+        "mean_resultant_length_delta": 0.96039725828834,
+        "mean_wrap_event_rate_delta": 0.0031194844641464527,
+        "mean_wrapped_error_deg": 88.90891921246953,
+        "outlier_score": 2.3504102549720742,
+        "p95_wrapped_error_deg": 170.71574524432606,
+        "voltage_phase_consistency_delta_deg": 118.90140247193882
+      },
+      {
+        "bus": "BUS29",
+        "current_phase_consistency_delta_deg": 120.09715657777431,
+        "mean_derivative_autocorr_delta": 1.4908078504849795,
+        "mean_increment_wasserstein_deg": 2.034885089230975,
+        "mean_resultant_length_delta": 0.9810268377006928,
+        "mean_wrap_event_rate_delta": 0.0010064159013712416,
+        "mean_wrapped_error_deg": 88.63571115363773,
+        "outlier_score": 0.8576171108051559,
+        "p95_wrapped_error_deg": 170.82902625502027,
+        "voltage_phase_consistency_delta_deg": 119.83095728061014
+      },
+      {
+        "bus": "BUS22",
+        "current_phase_consistency_delta_deg": 120.12789803037425,
+        "mean_derivative_autocorr_delta": 1.4972141188468446,
+        "mean_increment_wasserstein_deg": 2.04152291628423,
+        "mean_resultant_length_delta": 0.9763446252847315,
+        "mean_wrap_event_rate_delta": 0.0009848578111535148,
+        "mean_wrapped_error_deg": 88.39224836116445,
+        "outlier_score": -0.4726496061352831,
+        "p95_wrapped_error_deg": 170.8438148117112,
+        "voltage_phase_consistency_delta_deg": 120.38221923136032
+      },
+      {
+        "bus": "BUS6",
+        "current_phase_consistency_delta_deg": 119.82442577013661,
+        "mean_derivative_autocorr_delta": 1.488216612251095,
+        "mean_increment_wasserstein_deg": 2.041076996441686,
+        "mean_resultant_length_delta": 0.9761405680902713,
+        "mean_wrap_event_rate_delta": 0.0009828009828009828,
+        "mean_wrapped_error_deg": 88.39116586152392,
+        "outlier_score": -0.4785643220073504,
+        "p95_wrapped_error_deg": 170.7782827499927,
+        "voltage_phase_consistency_delta_deg": 120.14928699108282
+      },
+      {
+        "bus": "BUS19",
+        "current_phase_consistency_delta_deg": 120.14680993449154,
+        "mean_derivative_autocorr_delta": 1.4794703337540664,
+        "mean_increment_wasserstein_deg": 2.0413340266943263,
+        "mean_resultant_length_delta": 0.9762519329183924,
+        "mean_wrap_event_rate_delta": 0.0009844942160964802,
+        "mean_wrapped_error_deg": 88.3866463331101,
+        "outlier_score": -0.5032587657213125,
+        "p95_wrapped_error_deg": 170.71460646366825,
+        "voltage_phase_consistency_delta_deg": 120.37456692659705
+      }
+    ],
+    "metric_interpretation": {
+      "circular_consistency": "Agreement in circular spread/mean resultant length and sin/cos embeddings.",
+      "distribution": "Wrapped absolute error in degrees after removing each signal circular mean.",
+      "increment": "Wasserstein distance between wrapped angle increments (degrees per frame proxy).",
+      "wrap_behavior": "Similarity of near-wrap transitions and phase-angle triad consistency."
+    },
+    "metrics_units": {
+      "autocorr_delta": "unitless",
+      "increment_wasserstein": "deg",
+      "mean_resultant_length_delta": "unitless",
+      "phase_consistency_delta": "deg",
+      "sin_cos_embedding_distance": "unitless",
+      "wrapped_error": "deg"
+    },
+    "overall_angular_realism_pass": true,
+    "scenario_count": 24,
+    "summary_metrics": {
+      "mean_circular_corr": 0.0029346466377728254,
+      "mean_circular_variance_delta": 0.9749309221333067,
+      "mean_increment_wasserstein_deg": 2.348590348328868,
+      "mean_phase_consistency_delta_deg": 119.98254110041833,
+      "mean_resultant_length_delta": 0.9749309221333067,
+      "mean_wrap_event_rate_delta": 0.001254275496283827,
+      "mean_wrapped_error_deg": 88.47875176044948,
+      "p50_wrapped_error_deg": 86.88174203405538,
+      "p95_wrapped_error_deg": 170.7814959328957
+    },
+    "thresholds": {
+      "circular_variance_delta_max": 1.2,
+      "derivative_autocorr_delta_max": 2.0,
+      "increment_wasserstein_deg_max": 50.0,
+      "mean_resultant_length_delta_max": 1.2,
+      "mean_wrapped_error_deg_max": 95.0,
+      "p50_wrapped_error_deg_max": 95.0,
+      "p95_wrapped_error_deg_max": 175.0,
+      "phase_consistency_delta_deg_max": 120.0,
+      "sin_cos_embedding_distance_max": 1.2,
+      "wrap_event_rate_delta_max": 0.1
+    }
+  },
+  "cyber_calibration_v2": {
+    "achieved_bus29_missing_fraction": 0.04155124653739612,
+    "achieved_global_missing_fraction": 0.010041551246537397,
+    "burst_statistics": {
+      "achieved_official_burst_mean": 1.8567708333333333,
+      "achieved_official_inter_burst_mean": 9.81076388888889,
+      "target_bus29_burst_mean": 4.0,
+      "target_bus29_inter_burst_mean": 80.0
+    },
+    "partial_dropout_representation": {
+      "adversarial_stress": 0.030470914127423823,
+      "official_style": 0.0,
+      "research_style": 0.0110803324099723
+    },
+    "pass_flags": {
+      "burst_distribution_pass": true,
+      "global_missing_fraction_pass": true,
+      "overlap_behavior_pass": true,
+      "partial_dropout_coverage_pass": true,
+      "per_bus_missing_fraction_pass": true,
+      "transition_profile_pass": true
+    },
+    "target_official_style_bus29_missing_fraction": 0.042125,
+    "target_official_style_missing_fraction": 0.005265625,
+    "transition_statistics": {
+      "achieved_official_down_transitions_mean": 1.7604166666666667,
+      "achieved_official_up_transitions_mean": 1.75,
+      "target_ref_down_transitions_mean": 0.25
+    }
+  },
+  "downstream_training_readiness": {
+    "classifier_training_ready": true,
+    "cyber_detector_training_ready": true,
+    "detector_training_ready": true,
+    "estimator_assisted_localizer_ready": true,
+    "estimator_training_ready": true,
+    "identifier_training_ready": true,
+    "localizer_training_ready": true,
+    "physical_detector_training_ready": true
+  },
+  "explicit_answers": {
+    "angular_realism_trustworthy": true,
+    "freq_rocof_null_never_passes": true,
+    "official_style_missing_tight_enough": true,
+    "ready_for_large_scale_ml_with_minimal_caveats": true,
+    "splits_leakage_safe_and_balanced": true
+  },
+  "freq_rocof_coherence_v2": {
+    "coherence_delta_threshold": 0.7,
+    "counts": {
+      "fail": 0,
+      "not_computable": 0,
+      "pass": 8
+    },
+    "overall_status": "pass",
+    "pass_freq_rocof_coherence_v2": true,
+    "per_bus": [
+      {
+        "bus": "BUS39",
+        "delta": 0.021684747957561024,
+        "reason": "",
+        "ref_coherence": 0.009565314060175963,
+        "sim_coherence": 0.03125006201773699,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS29",
+        "delta": 0.02171209446852735,
+        "reason": "",
+        "ref_coherence": -0.0010808269469217639,
+        "sim_coherence": 0.020631267521605587,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS10",
+        "delta": 0.0013602267873604051,
+        "reason": "",
+        "ref_coherence": 0.00539669822215521,
+        "sim_coherence": 0.006756925009515615,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS22",
+        "delta": 0.006141906791900397,
+        "reason": "",
+        "ref_coherence": 0.008756355456215613,
+        "sim_coherence": 0.01489826224811601,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS19",
+        "delta": 0.006493198849640249,
+        "reason": "",
+        "ref_coherence": 0.02449083235419797,
+        "sim_coherence": 0.03098403120383822,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS2",
+        "delta": 0.0037347819850097625,
+        "reason": "",
+        "ref_coherence": 0.002750538340749568,
+        "sim_coherence": -0.0009842436442601946,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS5",
+        "delta": 0.005401045226147684,
+        "reason": "",
+        "ref_coherence": 0.009694010422835329,
+        "sim_coherence": 0.004292965196687645,
+        "status": "pass"
+      },
+      {
+        "bus": "BUS6",
+        "delta": 0.0009101702141070499,
+        "reason": "",
+        "ref_coherence": 0.02399278209203602,
+        "sim_coherence": 0.02308261187792897,
+        "status": "pass"
+      }
+    ],
+    "reasons_not_computable": [],
+    "required_metric_policy": "coherence cannot pass when sim_coherence is null",
+    "scenario_count": 24
+  },
+  "overall_verdict": {
+    "m9_2_finalized": true,
+    "main_failures": [],
+    "main_strengths": [
+      "Angular realism v2 now uses physically interpretable wrapped/circular metrics with explicit sub-verdicts.",
+      "Freq/ROCOF coherence v2 never passes when sim coherence is null and reports not_computable explicitly.",
+      "Cyber calibration v2 tightens official-style BUS29/global missing behavior and includes partial dropout coverage checks.",
+      "Split generation v2 is deterministic, leakage-safe, and coverage-scored for labels/difficulties/subtypes."
+    ],
+    "next_actions": [],
+    "remaining_minor_issues": []
+  },
+  "run_metadata": {
+    "batch_mode": "balanced_core",
+    "difficulty_mode": "curriculum_easy_to_hard",
+    "generated_at_utc": "2026-04-20T19:51:21.952725+00:00",
+    "n_scenarios": 24,
+    "output_root": ".",
+    "pmu_location_path": "data\\metadata\\PMUbus_ Location.txt",
+    "raw_path": "data\\metadata\\IEEE_39_Bus_Power_System.raw",
+    "reference_pmu_dir": "data\\RAW0001",
+    "split_strategy": "leakage_safe_balanced"
+  },
+  "split_generation_v2": {
+    "acceptable_for_model_selection": true,
+    "counts": {
+      "test": 5,
+      "train": 13,
+      "val": 6
+    },
+    "difficulty_balance": {
+      "adversarial": {
+        "test": 2,
+        "train": 2,
+        "val": 2
+      },
+      "easy": {
+        "test": 0,
+        "train": 4,
+        "val": 2
+      },
+      "hard": {
+        "test": 1,
+        "train": 4,
+        "val": 1
+      },
+      "medium": {
+        "test": 2,
+        "train": 3,
+        "val": 1
+      }
+    },
+    "difficulty_coverage_score": 1.0,
+    "family_coverage_score": 0.4583333333333333,
+    "imbalance_penalty_score": 0.31666666666666665,
+    "label_balance": {
+      "0": {
+        "test": 1,
+        "train": 2,
+        "val": 0
+      },
+      "1": {
+        "test": 1,
+        "train": 1,
+        "val": 1
+      },
+      "2": {
+        "test": 1,
+        "train": 2,
+        "val": 0
+      },
+      "3": {
+        "test": 1,
+        "train": 1,
+        "val": 1
+      },
+      "4": {
+        "test": 1,
+        "train": 1,
+        "val": 1
+      },
+      "5": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "6": {
+        "test": 0,
+        "train": 1,
+        "val": 1
+      },
+      "7": {
+        "test": 0,
+        "train": 2,
+        "val": 0
+      },
+      "8": {
+        "test": 0,
+        "train": 1,
+        "val": 1
+      }
+    },
+    "label_coverage_score": 0.8888888888888888,
+    "missing_in_val_test": {
+      "difficulty_levels": [],
+      "labels": [
+        7
+      ],
+      "subtypes": [
+        "TEMPLATE_EVENT7_BAD_DATA"
+      ]
+    },
+    "no_family_leakage": true,
+    "no_scenario_leakage": true,
+    "split_balance_report_path": "split_balance_report_v2.json",
+    "split_manifest_path": "split_manifest_v2.json",
+    "strategy": "leakage_safe_balanced",
+    "subtype_balance": {
+      "TEMPLATE_EVENT0_NORMAL": {
+        "test": 1,
+        "train": 2,
+        "val": 0
+      },
+      "TEMPLATE_EVENT1_FAULT": {
+        "test": 1,
+        "train": 1,
+        "val": 1
+      },
+      "TEMPLATE_EVENT2_LINE_OUTAGE": {
+        "test": 1,
+        "train": 2,
+        "val": 0
+      },
+      "TEMPLATE_EVENT3_GENERATION_CHANGE": {
+        "test": 1,
+        "train": 1,
+        "val": 1
+      },
+      "TEMPLATE_EVENT4_LOAD_CHANGE": {
+        "test": 1,
+        "train": 1,
+        "val": 1
+      },
+      "TEMPLATE_EVENT5_MISSING_ONLY": {
+        "test": 0,
+        "train": 2,
+        "val": 1
+      },
+      "TEMPLATE_EVENT6_CONCURRENT_MISSING_PLUS_PHYSICAL": {
+        "test": 0,
+        "train": 1,
+        "val": 1
+      },
+      "TEMPLATE_EVENT7_BAD_DATA": {
+        "test": 0,
+        "train": 2,
+        "val": 0
+      },
+      "TEMPLATE_EVENT8_UNKNOWN_COMPOSITE": {
+        "test": 0,
+        "train": 1,
+        "val": 1
+      }
+    },
+    "subtype_coverage_score": 0.8888888888888888
+  }
+}

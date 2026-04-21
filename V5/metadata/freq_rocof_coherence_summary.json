@@ -1,0 +1,79 @@
+{
+  "coherence_delta_threshold": 0.7,
+  "counts": {
+    "fail": 0,
+    "not_computable": 0,
+    "pass": 8
+  },
+  "overall_status": "pass",
+  "pass_freq_rocof_coherence_v2": true,
+  "per_bus": [
+    {
+      "bus": "BUS39",
+      "delta": 0.021684747957561024,
+      "reason": "",
+      "ref_coherence": 0.009565314060175963,
+      "sim_coherence": 0.03125006201773699,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS29",
+      "delta": 0.02171209446852735,
+      "reason": "",
+      "ref_coherence": -0.0010808269469217639,
+      "sim_coherence": 0.020631267521605587,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS10",
+      "delta": 0.0013602267873604051,
+      "reason": "",
+      "ref_coherence": 0.00539669822215521,
+      "sim_coherence": 0.006756925009515615,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS22",
+      "delta": 0.006141906791900397,
+      "reason": "",
+      "ref_coherence": 0.008756355456215613,
+      "sim_coherence": 0.01489826224811601,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS19",
+      "delta": 0.006493198849640249,
+      "reason": "",
+      "ref_coherence": 0.02449083235419797,
+      "sim_coherence": 0.03098403120383822,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS2",
+      "delta": 0.0037347819850097625,
+      "reason": "",
+      "ref_coherence": 0.002750538340749568,
+      "sim_coherence": -0.0009842436442601946,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS5",
+      "delta": 0.005401045226147684,
+      "reason": "",
+      "ref_coherence": 0.009694010422835329,
+      "sim_coherence": 0.004292965196687645,
+      "status": "pass"
+    },
+    {
+      "bus": "BUS6",
+      "delta": 0.0009101702141070499,
+      "reason": "",
+      "ref_coherence": 0.02399278209203602,
+      "sim_coherence": 0.02308261187792897,
+      "status": "pass"
+    }
+  ],
+  "reasons_not_computable": [],
+  "required_metric_policy": "coherence cannot pass when sim_coherence is null",
+  "scenario_count": 24
+}

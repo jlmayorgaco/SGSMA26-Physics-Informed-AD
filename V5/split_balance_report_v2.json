@@ -1,0 +1,141 @@
+{
+  "acceptable_for_model_selection": true,
+  "counts": {
+    "test": 5,
+    "train": 13,
+    "val": 6
+  },
+  "difficulty_balance": {
+    "adversarial": {
+      "test": 2,
+      "train": 2,
+      "val": 2
+    },
+    "easy": {
+      "test": 0,
+      "train": 4,
+      "val": 2
+    },
+    "hard": {
+      "test": 1,
+      "train": 4,
+      "val": 1
+    },
+    "medium": {
+      "test": 2,
+      "train": 3,
+      "val": 1
+    }
+  },
+  "difficulty_coverage_score": 1.0,
+  "family_coverage_score": 0.4583333333333333,
+  "imbalance_penalty_score": 0.31666666666666665,
+  "label_balance": {
+    "0": {
+      "test": 1,
+      "train": 2,
+      "val": 0
+    },
+    "1": {
+      "test": 1,
+      "train": 1,
+      "val": 1
+    },
+    "2": {
+      "test": 1,
+      "train": 2,
+      "val": 0
+    },
+    "3": {
+      "test": 1,
+      "train": 1,
+      "val": 1
+    },
+    "4": {
+      "test": 1,
+      "train": 1,
+      "val": 1
+    },
+    "5": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "6": {
+      "test": 0,
+      "train": 1,
+      "val": 1
+    },
+    "7": {
+      "test": 0,
+      "train": 2,
+      "val": 0
+    },
+    "8": {
+      "test": 0,
+      "train": 1,
+      "val": 1
+    }
+  },
+  "label_coverage_score": 0.8888888888888888,
+  "missing_in_val_test": {
+    "difficulty_levels": [],
+    "labels": [
+      7
+    ],
+    "subtypes": [
+      "TEMPLATE_EVENT7_BAD_DATA"
+    ]
+  },
+  "no_family_leakage": true,
+  "no_scenario_leakage": true,
+  "strategy": "leakage_safe_balanced",
+  "subtype_balance": {
+    "TEMPLATE_EVENT0_NORMAL": {
+      "test": 1,
+      "train": 2,
+      "val": 0
+    },
+    "TEMPLATE_EVENT1_FAULT": {
+      "test": 1,
+      "train": 1,
+      "val": 1
+    },
+    "TEMPLATE_EVENT2_LINE_OUTAGE": {
+      "test": 1,
+      "train": 2,
+      "val": 0
+    },
+    "TEMPLATE_EVENT3_GENERATION_CHANGE": {
+      "test": 1,
+      "train": 1,
+      "val": 1
+    },
+    "TEMPLATE_EVENT4_LOAD_CHANGE": {
+      "test": 1,
+      "train": 1,
+      "val": 1
+    },
+    "TEMPLATE_EVENT5_MISSING_ONLY": {
+      "test": 0,
+      "train": 2,
+      "val": 1
+    },
+    "TEMPLATE_EVENT6_CONCURRENT_MISSING_PLUS_PHYSICAL": {
+      "test": 0,
+      "train": 1,
+      "val": 1
+    },
+    "TEMPLATE_EVENT7_BAD_DATA": {
+      "test": 0,
+      "train": 2,
+      "val": 0
+    },
+    "TEMPLATE_EVENT8_UNKNOWN_COMPOSITE": {
+      "test": 0,
+      "train": 1,
+      "val": 1
+    }
+  },
+  "subtype_coverage_score": 0.8888888888888888
+}

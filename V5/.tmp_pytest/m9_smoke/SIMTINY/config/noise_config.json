@@ -1,0 +1,7 @@
+{
+  "calibrated_from_raw0001": true,
+  "per_channel_empirical_mean_std": true,
+  "profile": "raw0001_empirical",
+  "reference": "data\\RAW0001",
+  "seed": 101
+}

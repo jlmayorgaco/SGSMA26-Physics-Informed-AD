@@ -1,0 +1,2328 @@
+{
+  "distance_summary": {
+    "heuristic_thresholds": {
+      "mean_delta_max": 0.35,
+      "std_delta_max": 2.5
+    },
+    "mean_normalized_mean_delta": 0.0017152087559412002,
+    "mean_normalized_std_delta": 0.5643454416463392
+  },
+  "notes": [
+    "Statistics compare channel means/stds and are intended as a guardrail, not a formal two-sample test.",
+    "Synthetic noise is calibrated to RAW0001 channel scale where reference files are available."
+  ],
+  "pass_realism": true,
+  "per_bus": {
+    "BUS10": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.001916322188717165,
+        "std_distance": 0.622290589996569
+      },
+      "channel_deltas": {
+        "BUS10_Freq": {
+          "normalized_mean_delta": 0.00010599561989477222,
+          "normalized_std_delta": 0.004135073836610841,
+          "reference_mean": 59.96872468914661,
+          "reference_std": 0.010805678918863117,
+          "sim_mean": 59.96236826699889,
+          "sim_std": 0.014940752755473958
+        },
+        "BUS10_IA_ANG": {
+          "normalized_mean_delta": 0.001915204925120285,
+          "normalized_std_delta": 0.9850695460926546,
+          "reference_mean": 0.31976218762955033,
+          "reference_std": 103.9574375583448,
+          "sim_mean": 0.12066239121492388,
+          "sim_std": 1.5521317297905965
+        },
+        "BUS10_IA_MAG": {
+          "normalized_mean_delta": 0.0004925656450595654,
+          "normalized_std_delta": 0.6109079839665768,
+          "reference_mean": 616.4962773856168,
+          "reference_std": 2.888874985501248,
+          "sim_mean": 616.1926124990696,
+          "sim_std": 4.653711778825289
+        },
+        "BUS10_IB_ANG": {
+          "normalized_mean_delta": 0.0034301792690182007,
+          "normalized_std_delta": 0.987409676893887,
+          "reference_mean": -0.14223858613629908,
+          "reference_std": 103.37095036687023,
+          "sim_mean": -0.4968194771034467,
+          "sim_std": 1.3014736649048604
+        },
+        "BUS10_IB_MAG": {
+          "normalized_mean_delta": 0.0018124855842904604,
+          "normalized_std_delta": 0.5459135370303079,
+          "reference_mean": 616.4408862814987,
+          "reference_std": 2.8728868500580425,
+          "sim_mean": 615.3235960615463,
+          "sim_std": 4.441234671861088
+        },
+        "BUS10_IC_ANG": {
+          "normalized_mean_delta": 0.0041700927418757165,
+          "normalized_std_delta": 0.9855700595846448,
+          "reference_mean": 0.04376159924985004,
+          "reference_std": 104.33728894782509,
+          "sim_mean": -0.3913345720984648,
+          "sim_std": 1.5055808626168035
+        },
+        "BUS10_IC_MAG": {
+          "normalized_mean_delta": 0.0006776527155379239,
+          "normalized_std_delta": 0.4480584657856203,
+          "reference_mean": 616.4442212405477,
+          "reference_std": 2.8625899292690375,
+          "sim_mean": 616.861956341049,
+          "sim_std": 4.14519758115069
+        },
+        "BUS10_ROCOF": {
+          "normalized_mean_delta": 0.001129482089266423,
+          "normalized_std_delta": 0.006634409472260152,
+          "reference_mean": 6.322545722424502e-06,
+          "reference_std": 0.008748140640024906,
+          "sim_mean": 0.0011358046349888476,
+          "sim_std": 0.015382550112285058
+        },
+        "BUS10_VA_ANG": {
+          "normalized_mean_delta": 0.005500394650742454,
+          "normalized_std_delta": 0.9838217034834927,
+          "reference_mean": 0.3193143787133011,
+          "reference_std": 103.98812823038922,
+          "sim_mean": 0.8912901229724545,
+          "sim_std": 1.682350772707818
+        },
+        "BUS10_VA_MAG": {
+          "normalized_mean_delta": 0.0021208663150373923,
+          "normalized_std_delta": 0.06453292057592414,
+          "reference_mean": 202625.30201516495,
+          "reference_std": 906.3145011885778,
+          "sim_mean": 202195.5608375467,
+          "sim_std": 847.827379466567
+        },
+        "BUS10_VB_ANG": {
+          "normalized_mean_delta": 0.0012066179386363142,
+          "normalized_std_delta": 0.9824745045999803,
+          "reference_mean": 0.39731508320239844,
+          "reference_std": 103.37822335064972,
+          "sim_mean": 0.5220531019616439,
+          "sim_std": 1.811754577794019
+        },
+        "BUS10_VB_MAG": {
+          "normalized_mean_delta": 0.0020048203559280644,
+          "normalized_std_delta": 0.7404963886010089,
+          "reference_mean": 202632.88468507593,
+          "reference_std": 901.3243436200518,
+          "sim_mean": 202226.64215307886,
+          "sim_std": 1568.7517650288748
+        },
+        "BUS10_VC_ANG": {
+          "normalized_mean_delta": 0.0006534024737314808,
+          "normalized_std_delta": 0.9829038359779665,
+          "reference_mean": -0.13668445224399994,
+          "reference_std": 104.33411322770235,
+          "sim_mean": -0.06851228456643882,
+          "sim_std": 1.7837131128342214
+        },
+        "BUS10_VC_MAG": {
+          "normalized_mean_delta": 0.0016087503179012571,
+          "normalized_std_delta": 0.3841401540510311,
+          "reference_mean": 202620.6464495264,
+          "reference_std": 907.1791917314144,
+          "sim_mean": 202294.68042013736,
+          "sim_std": 1255.6631461950099
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS19": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.001957987991165778,
+        "std_distance": 0.5991650459674834
+      },
+      "channel_deltas": {
+        "BUS19_Freq": {
+          "normalized_mean_delta": 0.00012517227794815505,
+          "normalized_std_delta": 0.0034603673172594347,
+          "reference_mean": 59.968570145533306,
+          "reference_std": 0.010731750655173924,
+          "sim_mean": 59.976076548063716,
+          "sim_std": 0.014192117972433358
+        },
+        "BUS19_IA_ANG": {
+          "normalized_mean_delta": 0.0016092079641590834,
+          "normalized_std_delta": 0.9899893685184826,
+          "reference_mean": 0.2843040682657996,
+          "reference_std": 103.9849670284641,
+          "sim_mean": 0.11697063117077548,
+          "sim_std": 1.040955184539682
+        },
+        "BUS19_IA_MAG": {
+          "normalized_mean_delta": 0.0006485349385283477,
+          "normalized_std_delta": 0.06093144807381196,
+          "reference_mean": 842.5660819901631,
+          "reference_std": 4.047752020861937,
+          "sim_mean": 842.0196484479735,
+          "sim_std": 4.294387412936754
+        },
+        "BUS19_IB_ANG": {
+          "normalized_mean_delta": 0.004171084388030655,
+          "normalized_std_delta": 0.9844087527116309,
+          "reference_mean": 0.25430039575990065,
+          "reference_std": 103.37327594724279,
+          "sim_mean": 0.6854790532030298,
+          "sim_std": 1.611718308302287
+        },
+        "BUS19_IB_MAG": {
+          "normalized_mean_delta": 0.002229316256241155,
+          "normalized_std_delta": 0.45189232055152345,
+          "reference_mean": 842.557410215416,
+          "reference_std": 4.028212855757067,
+          "sim_mean": 844.4357371468257,
+          "sim_std": 5.848531310820607
+        },
+        "BUS19_IC_ANG": {
+          "normalized_mean_delta": 0.00020349825452295171,
+          "normalized_std_delta": 0.9841252950305552,
+          "reference_mean": -0.06369753040594915,
+          "reference_std": 104.33568989612445,
+          "sim_mean": -0.08492966118425845,
+          "sim_std": 1.6562982948844542
+        },
+        "BUS19_IC_MAG": {
+          "normalized_mean_delta": 0.0017878664121887891,
+          "normalized_std_delta": 0.29460193552108144,
+          "reference_mean": 842.5738039183293,
+          "reference_std": 4.048723964351514,
+          "sim_mean": 844.080213322145,
+          "sim_std": 5.241485880640056
+        },
+        "BUS19_ROCOF": {
+          "normalized_mean_delta": 0.0015840700555929783,
+          "normalized_std_delta": 0.0033042961997227947,
+          "reference_mean": -5.754448849963897e-06,
+          "reference_std": 0.006678009184237616,
+          "sim_mean": 0.0015783156067430144,
+          "sim_std": 0.00998230538396041
+        },
+        "BUS19_VA_ANG": {
+          "normalized_mean_delta": 0.007947098497367756,
+          "normalized_std_delta": 0.9878410561603397,
+          "reference_mean": 0.28818802028480167,
+          "reference_std": 103.99826518423941,
+          "sim_mean": 1.1146724772593242,
+          "sim_std": 1.26450906579727
+        },
+        "BUS19_VA_MAG": {
+          "normalized_mean_delta": 0.0010222247994022362,
+          "normalized_std_delta": 0.5071830481253159,
+          "reference_mean": 208695.05576703066,
+          "reference_std": 928.0088181307211,
+          "sim_mean": 208481.72250551297,
+          "sim_std": 1398.6791591974322
+        },
+        "BUS19_VB_ANG": {
+          "normalized_mean_delta": 0.0001788798059735108,
+          "normalized_std_delta": 0.9872279786543449,
+          "reference_mean": 0.6181884674873998,
+          "reference_std": 103.40346030974372,
+          "sim_mean": 0.5996916765702032,
+          "sim_std": 1.3206712022906542
+        },
+        "BUS19_VB_MAG": {
+          "normalized_mean_delta": 0.00025038677965688995,
+          "normalized_std_delta": 0.5352633293466638,
+          "reference_mean": 208693.22515731983,
+          "reference_std": 929.3580512087824,
+          "sim_mean": 208640.97113273648,
+          "sim_std": 1426.8093358539224
+        },
+        "BUS19_VC_ANG": {
+          "normalized_mean_delta": 0.0026199618057174624,
+          "normalized_std_delta": 0.9850489267585518,
+          "reference_mean": -0.2038111870044494,
+          "reference_std": 104.3253246577924,
+          "sim_mean": 0.06951717896804087,
+          "sim_std": 1.5597755698965141
+        },
+        "BUS19_VC_MAG": {
+          "normalized_mean_delta": 0.0036178508752714882,
+          "normalized_std_delta": 0.2892749041682857,
+          "reference_mean": 208712.78086095795,
+          "reference_std": 936.0502206522417,
+          "sim_mean": 207957.6891440398,
+          "sim_std": 1206.8260585281216
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS2": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.0018323652040183823,
+        "std_distance": 0.5720249952243973
+      },
+      "channel_deltas": {
+        "BUS2_Freq": {
+          "normalized_mean_delta": 8.540020555199973e-05,
+          "normalized_std_delta": 0.0059940403934409595,
+          "reference_mean": 59.96874914544086,
+          "reference_std": 0.010574917496523329,
+          "sim_mean": 59.96362780193714,
+          "sim_std": 0.01656895788996429
+        },
+        "BUS2_IA_ANG": {
+          "normalized_mean_delta": 0.0030023777251718072,
+          "normalized_std_delta": 0.9919864461805032,
+          "reference_mean": -1.0314769663681493,
+          "reference_std": 104.12464770944345,
+          "sim_mean": -0.7188554434439547,
+          "sim_std": 0.83440846835576
+        },
+        "BUS2_IA_MAG": {
+          "normalized_mean_delta": 0.0017410032314525712,
+          "normalized_std_delta": 0.13507081736264262,
+          "reference_mean": 583.6976658067476,
+          "reference_std": 2.7476733635922885,
+          "sim_mean": 582.6814462843868,
+          "sim_std": 3.1188038506582605
+        },
+        "BUS2_IB_ANG": {
+          "normalized_mean_delta": 0.0025125631144397756,
+          "normalized_std_delta": 0.9853213306446903,
+          "reference_mean": 0.39652289461340007,
+          "reference_std": 104.11466315351664,
+          "sim_mean": 0.658117556925248,
+          "sim_std": 1.5282647154699103
+        },
+        "BUS2_IB_MAG": {
+          "normalized_mean_delta": 0.0011876202171287804,
+          "normalized_std_delta": 0.3027444737137725,
+          "reference_mean": 583.7538489943195,
+          "reference_std": 14.222632638002056,
+          "sim_mean": 583.0605711214271,
+          "sim_std": 18.52845607081831
+        },
+        "BUS2_IC_ANG": {
+          "normalized_mean_delta": 0.005016336409580867,
+          "normalized_std_delta": 0.986981735279418,
+          "reference_mean": 0.6905228671243484,
+          "reference_std": 103.6129855294397,
+          "sim_mean": 0.17076527530764452,
+          "sim_std": 1.3488612741120807
+        },
+        "BUS2_IC_MAG": {
+          "normalized_mean_delta": 0.0003856586860927644,
+          "normalized_std_delta": 0.23290827707269518,
+          "reference_mean": 583.6580377922327,
+          "reference_std": 2.7139891150479185,
+          "sim_mean": 583.4329450002502,
+          "sim_std": 3.346099643827778
+        },
+        "BUS2_ROCOF": {
+          "normalized_mean_delta": 0.002697593005835875,
+          "normalized_std_delta": 0.0024812465512311557,
+          "reference_mean": -1.178365765348996e-06,
+          "reference_std": 0.006078107277691902,
+          "sim_mean": -0.002698771371601224,
+          "sim_std": 0.008559353828923057
+        },
+        "BUS2_VA_ANG": {
+          "normalized_mean_delta": 0.001339298568411846,
+          "normalized_std_delta": 0.980331351796341,
+          "reference_mean": 0.25712628727859954,
+          "reference_std": 103.98471428135014,
+          "sim_mean": 0.3963928662523266,
+          "sim_std": 2.045238763757871
+        },
+        "BUS2_VA_MAG": {
+          "normalized_mean_delta": 0.00227900310801632,
+          "normalized_std_delta": 0.7742115663357132,
+          "reference_mean": 208703.46706519657,
+          "reference_std": 925.6389151621349,
+          "sim_mean": 209179.10291529194,
+          "sim_std": 1642.2792695311018
+        },
+        "BUS2_VB_ANG": {
+          "normalized_mean_delta": 0.004576690115605314,
+          "normalized_std_delta": 0.9872965810850328,
+          "reference_mean": 0.2991261563259008,
+          "reference_std": 103.37765707367254,
+          "sim_mean": -0.1740013449776121,
+          "sim_std": 1.3132496842546801
+        },
+        "BUS2_VB_MAG": {
+          "normalized_mean_delta": 0.0003554150321266042,
+          "normalized_std_delta": 0.06435398700839912,
+          "reference_mean": 208714.58456594634,
+          "reference_std": 926.4053254753012,
+          "sim_mean": 208788.76486672513,
+          "sim_std": 986.0232017554505
+        },
+        "BUS2_VC_ANG": {
+          "normalized_mean_delta": 0.0014796324406028886,
+          "normalized_std_delta": 0.9841525456925193,
+          "reference_mean": -0.10887355954629993,
+          "reference_std": 104.33521232718259,
+          "sim_mean": -0.2632513244027897,
+          "sim_std": 1.6534475100163166
+        },
+        "BUS2_VC_MAG": {
+          "normalized_mean_delta": 0.0014315066518254603,
+          "normalized_std_delta": 0.1916813597244695,
+          "reference_mean": 208714.96353093177,
+          "reference_std": 1041.3322789126535,
+          "sim_mean": 209013.7403895618,
+          "sim_std": 1240.9362660596114
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS22": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.0018971910157061474,
+        "std_distance": 0.5842744169655726
+      },
+      "channel_deltas": {
+        "BUS22_Freq": {
+          "normalized_mean_delta": 6.527266897091934e-05,
+          "normalized_std_delta": 0.002514308113812501,
+          "reference_mean": 59.968581132558455,
+          "reference_std": 0.010759123756646378,
+          "sim_mean": 59.964666823213534,
+          "sim_std": 0.013273431870458879
+        },
+        "BUS22_IA_ANG": {
+          "normalized_mean_delta": 0.001032564848941669,
+          "normalized_std_delta": 0.9870142264081838,
+          "reference_mean": 0.2930530882344992,
+          "reference_std": 103.97611137594181,
+          "sim_mean": 0.40041516597094073,
+          "sim_std": 1.350210241285445
+        },
+        "BUS22_IA_MAG": {
+          "normalized_mean_delta": 0.003966222423221701,
+          "normalized_std_delta": 0.0327376259356989,
+          "reference_mean": 999.5987620388925,
+          "reference_std": 4.541409948019237,
+          "sim_mean": 995.6341310146692,
+          "sim_std": 4.392734967920322
+        },
+        "BUS22_IB_ANG": {
+          "normalized_mean_delta": 0.0013397614821587804,
+          "normalized_std_delta": 0.9826600067465846,
+          "reference_mean": 0.20905103034374897,
+          "reference_std": 103.37352623662092,
+          "sim_mean": 0.07055516161699416,
+          "sim_std": 1.7924962475247739
+        },
+        "BUS22_IB_MAG": {
+          "normalized_mean_delta": 0.003421588054384352,
+          "normalized_std_delta": 0.18789154526144686,
+          "reference_mean": 999.6472022966753,
+          "reference_std": 4.575694824368599,
+          "sim_mean": 996.2268213706983,
+          "sim_std": 5.435429195564019
+        },
+        "BUS22_IC_ANG": {
+          "normalized_mean_delta": 0.001322874889848015,
+          "normalized_std_delta": 0.9895891729763399,
+          "reference_mean": -0.03694876666270047,
+          "reference_std": 104.33536911056548,
+          "sim_mean": 0.10107387325669084,
+          "sim_std": 1.08621748025983
+        },
+        "BUS22_IC_MAG": {
+          "normalized_mean_delta": 0.000550439233560397,
+          "normalized_std_delta": 0.32036511253094796,
+          "reference_mean": 999.6078706255552,
+          "reference_std": 4.548190876084761,
+          "sim_mean": 1000.1580940157232,
+          "sim_std": 6.005272557913886
+        },
+        "BUS22_ROCOF": {
+          "normalized_mean_delta": 0.0007275608359145518,
+          "normalized_std_delta": 0.0022132970666489437,
+          "reference_mean": -1.5287110476261052e-06,
+          "reference_std": 0.004518835676538254,
+          "sim_mean": 0.0007260321248669257,
+          "sim_std": 0.006732132743187198
+        },
+        "BUS22_VA_ANG": {
+          "normalized_mean_delta": 0.0026073942421364436,
+          "normalized_std_delta": 0.9857285005127149,
+          "reference_mean": 0.2602939725097993,
+          "reference_std": 104.00338984039419,
+          "sim_mean": 0.531471812342315,
+          "sim_std": 1.4842843247831
+        },
+        "BUS22_VA_MAG": {
+          "normalized_mean_delta": 0.002399717105021477,
+          "normalized_std_delta": 0.510666504303802,
+          "reference_mean": 209077.30232317172,
+          "reference_std": 934.2386703140052,
+          "sim_mean": 209579.02870182839,
+          "sim_std": 1411.3230662686904
+        },
+        "BUS22_VB_ANG": {
+          "normalized_mean_delta": 3.4481258780368645e-05,
+          "normalized_std_delta": 0.9859681216095691,
+          "reference_mean": 0.5902946939478503,
+          "reference_std": 103.41244065194125,
+          "sim_mean": 0.5938604850750794,
+          "sim_std": 1.4510707912856937
+        },
+        "BUS22_VB_MAG": {
+          "normalized_mean_delta": 0.0016374688722011436,
+          "normalized_std_delta": 0.41921326686671967,
+          "reference_mean": 209073.2683463322,
+          "reference_std": 934.2080264066035,
+          "sim_mean": 208730.9173774057,
+          "sim_std": 1325.8404250896265
+        },
+        "BUS22_VC_ANG": {
+          "normalized_mean_delta": 0.004836510981566812,
+          "normalized_std_delta": 0.9817482973077717,
+          "reference_mean": -0.24970530817114886,
+          "reference_std": 104.32234623046743,
+          "sim_mean": 0.25485086499532195,
+          "sim_std": 1.9040604475541962
+        },
+        "BUS22_VC_MAG": {
+          "normalized_mean_delta": 0.0009165020103098073,
+          "normalized_std_delta": 0.3745942398242692,
+          "reference_mean": 209088.95692220976,
+          "reference_std": 935.8468514576423,
+          "sim_mean": 208897.32647285698,
+          "sim_std": 1286.4096913713536
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS29": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.0017888476030257833,
+        "std_distance": 0.5788613197654809
+      },
+      "channel_deltas": {
+        "BUS29_Freq": {
+          "normalized_mean_delta": 7.343007041651379e-05,
+          "normalized_std_delta": 0.0038801372683411883,
+          "reference_mean": 59.96862954183398,
+          "reference_std": 0.010762350038066016,
+          "sim_mean": 59.96422604114394,
+          "sim_std": 0.014642487306407204
+        },
+        "BUS29_IA_ANG": {
+          "normalized_mean_delta": 0.0041474569568638155,
+          "normalized_std_delta": 0.9848260156576382,
+          "reference_mean": -2.4280735969025944,
+          "reference_std": 104.00004752432973,
+          "sim_mean": -2.859409317521543,
+          "sim_std": 1.5780950927390625
+        },
+        "BUS29_IA_MAG": {
+          "normalized_mean_delta": 0.0008311176959139976,
+          "normalized_std_delta": 0.44121948117836846,
+          "reference_mean": 575.4414027075879,
+          "reference_std": 2.733317131219717,
+          "sim_mean": 575.9196622403398,
+          "sim_std": 3.939309897752427
+        },
+        "BUS29_IB_ANG": {
+          "normalized_mean_delta": 0.00017840240961593945,
+          "normalized_std_delta": 0.9828620896677458,
+          "reference_mean": 0.9527540659895175,
+          "reference_std": 103.98645919328278,
+          "sim_mean": 0.9713055008770287,
+          "sim_std": 1.7821106134230928
+        },
+        "BUS29_IB_MAG": {
+          "normalized_mean_delta": 0.001573957362085276,
+          "normalized_std_delta": 0.17670702289713278,
+          "reference_mean": 575.4881478366949,
+          "reference_std": 2.719265216064094,
+          "sim_mean": 576.3939416437753,
+          "sim_std": 3.199778476862509
+        },
+        "BUS29_IC_ANG": {
+          "normalized_mean_delta": 0.004348303865211177,
+          "normalized_std_delta": 0.987704371319791,
+          "reference_mean": 0.7955469498895442,
+          "reference_std": 103.83915037996152,
+          "sim_mean": 0.34402277093211286,
+          "sim_std": 1.2767676355403867
+        },
+        "BUS29_IC_MAG": {
+          "normalized_mean_delta": 0.0012979785973294595,
+          "normalized_std_delta": 0.047058672875411954,
+          "reference_mean": 575.49750746635,
+          "reference_std": 2.716331373405618,
+          "sim_mean": 576.2444909138578,
+          "sim_std": 2.8441583229279312
+        },
+        "BUS29_ROCOF": {
+          "normalized_mean_delta": 3.49012140847237e-05,
+          "normalized_std_delta": 0.0001681050778245387,
+          "reference_mean": -1.9656019383019383e-05,
+          "reference_std": 0.0014740066915126175,
+          "sim_mean": 1.5245194701704321e-05,
+          "sim_std": 0.0013059016136880788
+        },
+        "BUS29_VA_ANG": {
+          "normalized_mean_delta": 0.0010415561137831722,
+          "normalized_std_delta": 0.9839661577003993,
+          "reference_mean": -0.18679803771777082,
+          "reference_std": 103.76694619567199,
+          "sim_mean": -0.07871894049905916,
+          "sim_std": 1.6637828512125652
+        },
+        "BUS29_VA_MAG": {
+          "normalized_mean_delta": 0.0007166403447917735,
+          "normalized_std_delta": 0.2947369845707601,
+          "reference_mean": 208652.75592698532,
+          "reference_std": 935.7852945985452,
+          "sim_mean": 208802.2849099346,
+          "sim_std": 1211.5958305341808
+        },
+        "BUS29_VB_ANG": {
+          "normalized_mean_delta": 0.0014186298137120106,
+          "normalized_std_delta": 0.9854263455777784,
+          "reference_mean": 0.5404988326176897,
+          "reference_std": 103.30665496591334,
+          "sim_mean": 0.6870527333071943,
+          "sim_std": 1.505555488988903
+        },
+        "BUS29_VB_MAG": {
+          "normalized_mean_delta": 0.0017912521548831307,
+          "normalized_std_delta": 0.5300741498769401,
+          "reference_mean": 208649.48973663268,
+          "reference_std": 937.7135477727394,
+          "sim_mean": 209023.2335847387,
+          "sim_std": 1434.7712594364637
+        },
+        "BUS29_VC_ANG": {
+          "normalized_mean_delta": 0.0030366881548927085,
+          "normalized_std_delta": 0.989066930457884,
+          "reference_mean": 0.874673510333825,
+          "reference_std": 104.61528023825572,
+          "sim_mean": 1.1923574926541174,
+          "sim_std": 1.1437661340128122
+        },
+        "BUS29_VC_MAG": {
+          "normalized_mean_delta": 3.1283562019617536e-06,
+          "normalized_std_delta": 0.4690119301868768,
+          "reference_mean": 208646.94724009608,
+          "reference_std": 942.5341662922217,
+          "sim_mean": 208646.29451812466,
+          "sim_std": 1384.5939348920153
+        }
+      },
+      "data_present_fraction_ref": 0.91575,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS39": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.0017901274690413607,
+        "std_distance": 0.5672521923415895
+      },
+      "channel_deltas": {
+        "BUS39_Freq": {
+          "normalized_mean_delta": 7.836015157097303e-05,
+          "normalized_std_delta": 0.003009075104150029,
+          "reference_mean": 59.968828255098614,
+          "reference_std": 0.010638838413075962,
+          "sim_mean": 59.96412908862701,
+          "sim_std": 0.01364791351722599
+        },
+        "BUS39_IA_ANG": {
+          "normalized_mean_delta": 0.0007077672229386884,
+          "normalized_std_delta": 0.9866449610031276,
+          "reference_mean": 0.3217463962010006,
+          "reference_std": 103.93216932734505,
+          "sim_mean": 0.24818661334219205,
+          "sim_std": 1.388018174396236
+        },
+        "BUS39_IA_MAG": {
+          "normalized_mean_delta": 0.0031572017975214934,
+          "normalized_std_delta": 0.3592565974420964,
+          "reference_mean": 246.14853024353184,
+          "reference_std": 2.000408985695997,
+          "sim_mean": 245.37138966138968,
+          "sim_std": 2.7190691113897363
+        },
+        "BUS39_IB_ANG": {
+          "normalized_mean_delta": 0.001304583577803762,
+          "normalized_std_delta": 0.9849515175031686,
+          "reference_mean": -0.4237111628112503,
+          "reference_std": 103.3861897179323,
+          "sim_mean": -0.2888352375335317,
+          "sim_std": 1.5558052663843986
+        },
+        "BUS39_IB_MAG": {
+          "normalized_mean_delta": 0.0022421116668248924,
+          "normalized_std_delta": 0.003727277700655953,
+          "reference_mean": 246.78217989831828,
+          "reference_std": 1.414092897793354,
+          "sim_mean": 246.22886669360378,
+          "sim_std": 1.4088221808687529
+        },
+        "BUS39_IC_ANG": {
+          "normalized_mean_delta": 0.0016869272587879077,
+          "normalized_std_delta": 0.9860439042979458,
+          "reference_mean": 0.12463708880085023,
+          "reference_std": 104.33582207576303,
+          "sim_mean": -0.051369853526799555,
+          "sim_std": 1.4561207180418647
+        },
+        "BUS39_IC_MAG": {
+          "normalized_mean_delta": 0.00022906864384933897,
+          "normalized_std_delta": 0.17379775718681978,
+          "reference_mean": 246.34812469317075,
+          "reference_std": 1.4121869863967225,
+          "sim_mean": 246.40455532400904,
+          "sim_std": 1.166752055432558
+        },
+        "BUS39_ROCOF": {
+          "normalized_mean_delta": 1.8615046972069365e-05,
+          "normalized_std_delta": 4.136081453109432e-05,
+          "reference_mean": 3e-06,
+          "reference_std": 0.00017317909804586296,
+          "sim_mean": -1.5615046972069367e-05,
+          "sim_std": 0.00021453991257695728
+        },
+        "BUS39_VA_ANG": {
+          "normalized_mean_delta": 0.0008253926927075892,
+          "normalized_std_delta": 0.9849546366721244,
+          "reference_mean": 0.30939228366269944,
+          "reference_std": 103.96942617385179,
+          "sim_mean": 0.22357667903380102,
+          "sim_std": 1.5642577917763412
+        },
+        "BUS39_VA_MAG": {
+          "normalized_mean_delta": 0.0003789499908420187,
+          "normalized_std_delta": 0.2523470345777397,
+          "reference_mean": 204441.20883807965,
+          "reference_std": 1123.4887354218222,
+          "sim_mean": 204363.73584386273,
+          "sim_std": 1406.9977861870138
+        },
+        "BUS39_VB_ANG": {
+          "normalized_mean_delta": 0.002634193682112477,
+          "normalized_std_delta": 0.984302564846502,
+          "reference_mean": 0.05712057917985039,
+          "reference_std": 103.36572548680132,
+          "sim_mean": 0.3294059202041551,
+          "sim_std": 1.6225767729233345
+        },
+        "BUS39_VB_MAG": {
+          "normalized_mean_delta": 0.0022890752282598344,
+          "normalized_std_delta": 0.4271130394191204,
+          "reference_mean": 204312.04722231894,
+          "reference_std": 916.1510089343426,
+          "sim_mean": 203844.36157618728,
+          "sim_std": 1307.4510509271834
+        },
+        "BUS39_VC_ANG": {
+          "normalized_mean_delta": 0.0045748492700164204,
+          "normalized_std_delta": 0.982150879027106,
+          "reference_mean": -0.025278889344599702,
+          "reference_std": 104.33976944396095,
+          "sim_mean": -0.5026176074189861,
+          "sim_std": 1.8623731670891337
+        },
+        "BUS39_VC_MAG": {
+          "normalized_mean_delta": 0.001978046887980144,
+          "normalized_std_delta": 0.47909388539063025,
+          "reference_mean": 204681.33682080708,
+          "reference_std": 915.1826687892657,
+          "sim_mean": 204276.46753948106,
+          "sim_std": 1353.6410894216813
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS5": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.001799443570145142,
+        "std_distance": 0.567255527349854
+      },
+      "channel_deltas": {
+        "BUS5_Freq": {
+          "normalized_mean_delta": 9.630116023195248e-06,
+          "normalized_std_delta": 0.004226475743324784,
+          "reference_mean": 59.968826660722584,
+          "reference_std": 0.010716035125882633,
+          "sim_mean": 59.96824915396407,
+          "sim_std": 0.014942510869207417
+        },
+        "BUS5_IA_ANG": {
+          "normalized_mean_delta": 0.0013090705313878366,
+          "normalized_std_delta": 0.988983437996844,
+          "reference_mean": -1.2373161634776522,
+          "reference_std": 104.0022696974579,
+          "sim_mean": -1.1011698570192598,
+          "sim_std": 1.145747452590989
+        },
+        "BUS5_IA_MAG": {
+          "normalized_mean_delta": 0.000419489342744392,
+          "normalized_std_delta": 0.36455068444277466,
+          "reference_mean": 788.6084397036182,
+          "reference_std": 3.581770085454766,
+          "sim_mean": 788.2776268675642,
+          "sim_std": 4.8875068216239566
+        },
+        "BUS5_IB_ANG": {
+          "normalized_mean_delta": 0.0011315833672647863,
+          "normalized_std_delta": 0.9888049186927397,
+          "reference_mean": 0.4966826857513508,
+          "reference_std": 104.15895606889617,
+          "sim_mean": 0.37881814351212434,
+          "sim_std": 1.166067982070645
+        },
+        "BUS5_IB_MAG": {
+          "normalized_mean_delta": 0.0036563369300158743,
+          "normalized_std_delta": 0.03477058184344232,
+          "reference_mean": 788.6780359668771,
+          "reference_std": 3.5844473586272043,
+          "sim_mean": 791.5617085956752,
+          "sim_std": 3.4598140383805465
+        },
+        "BUS5_IC_ANG": {
+          "normalized_mean_delta": 8.767292879557345e-05,
+          "normalized_std_delta": 0.9857397564834196,
+          "reference_mean": 0.5926822256676989,
+          "reference_std": 103.68503910574616,
+          "sim_mean": 0.6017725967183832,
+          "sim_std": 1.4785739066741033
+        },
+        "BUS5_IC_MAG": {
+          "normalized_mean_delta": 0.0020996566378095106,
+          "normalized_std_delta": 0.5860468828100891,
+          "reference_mean": 788.6534167053507,
+          "reference_std": 3.6325255499509574,
+          "sim_mean": 786.9975153240341,
+          "sim_std": 5.761355825227721
+        },
+        "BUS5_ROCOF": {
+          "normalized_mean_delta": 0.004286895120113991,
+          "normalized_std_delta": 0.0020601709884586206,
+          "reference_mean": 4.844042353734064e-06,
+          "reference_std": 0.008927629498057539,
+          "sim_mean": 0.004291739162467724,
+          "sim_std": 0.01098780048651616
+        },
+        "BUS5_VA_ANG": {
+          "normalized_mean_delta": 0.0015947329777813558,
+          "normalized_std_delta": 0.9861379766537044,
+          "reference_mean": 0.27669429864405065,
+          "reference_std": 103.97877026330961,
+          "sim_mean": 0.11087592471599941,
+          "sim_std": 1.4413561409091142
+        },
+        "BUS5_VA_MAG": {
+          "normalized_mean_delta": 5.530998377954066e-05,
+          "normalized_std_delta": 0.4380158731521828,
+          "reference_mean": 200224.5535261021,
+          "reference_std": 886.550900264274,
+          "sim_mean": 200235.6279429099,
+          "sim_std": 1274.8742669373837
+        },
+        "BUS5_VB_ANG": {
+          "normalized_mean_delta": 0.006759809509209725,
+          "normalized_std_delta": 0.9855585387649031,
+          "reference_mean": 0.19269428134785122,
+          "reference_std": 103.36958461338602,
+          "sim_mean": 0.8914529823804774,
+          "sim_std": 1.4928078490822845
+        },
+        "BUS5_VB_MAG": {
+          "normalized_mean_delta": 0.001196206441968593,
+          "normalized_std_delta": 0.4777482765262614,
+          "reference_mean": 200234.77049014324,
+          "reference_std": 888.0187019158105,
+          "sim_mean": 200474.29261250966,
+          "sim_std": 1312.268106279177
+        },
+        "BUS5_VC_ANG": {
+          "normalized_mean_delta": 0.0016492731578731472,
+          "normalized_std_delta": 0.984543752838013,
+          "reference_mean": -0.07130553663495011,
+          "reference_std": 104.33758314907205,
+          "sim_mean": -0.24338671188007224,
+          "sim_std": 1.612667473436427
+        },
+        "BUS5_VC_MAG": {
+          "normalized_mean_delta": 0.0017190954299820696,
+          "normalized_std_delta": 0.11467019665600856,
+          "reference_mean": 200220.4352703405,
+          "reference_std": 896.3829956690226,
+          "sim_mean": 199876.23723507824,
+          "sim_std": 999.1714100614915
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    },
+    "BUS6": {
+      "aggregate_seen_so_far": {
+        "mean_distance": 0.0017152087559412002,
+        "std_distance": 0.5643454416463392
+      },
+      "channel_deltas": {
+        "BUS6_Freq": {
+          "normalized_mean_delta": 3.7963382991024503e-05,
+          "normalized_std_delta": 0.006250282673362828,
+          "reference_mean": 59.96870410378262,
+          "reference_std": 0.010670594052068891,
+          "sim_mean": 59.96642748890125,
+          "sim_std": 0.01692087672543172
+        },
+        "BUS6_IA_ANG": {
+          "normalized_mean_delta": 0.002171063233291564,
+          "normalized_std_delta": 0.9889316243313651,
+          "reference_mean": 0.30071979358014994,
+          "reference_std": 103.945933212899,
+          "sim_mean": 0.5263929874288554,
+          "sim_std": 1.1505126380272082
+        },
+        "BUS6_IA_MAG": {
+          "normalized_mean_delta": 0.001655269807713283,
+          "normalized_std_delta": 0.017356835667946765,
+          "reference_mean": 718.5246923398162,
+          "reference_std": 3.337479919825961,
+          "sim_mean": 717.3353401104896,
+          "sim_std": 3.2795518293124695
+        },
+        "BUS6_IB_ANG": {
+          "normalized_mean_delta": 0.003259181432999006,
+          "normalized_std_delta": 0.987324451496296,
+          "reference_mean": -0.2872817362677006,
+          "reference_std": 103.37630259537964,
+          "sim_mean": -0.6242038622986489,
+          "sim_std": 1.3103513376813078
+        },
+        "BUS6_IB_MAG": {
+          "normalized_mean_delta": 0.0019171548654038752,
+          "normalized_std_delta": 0.23776713965238513,
+          "reference_mean": 718.5218566692084,
+          "reference_std": 3.34523051500088,
+          "sim_mean": 717.144338995796,
+          "sim_std": 4.140616406030515
+        },
+        "BUS6_IC_ANG": {
+          "normalized_mean_delta": 0.00019718541266042032,
+          "normalized_std_delta": 0.988870670376755,
+          "reference_mean": 0.04271933639194958,
+          "reference_std": 104.33697394022052,
+          "sim_mean": 0.06329306565409148,
+          "sim_std": 1.161200574872633
+        },
+        "BUS6_IC_MAG": {
+          "normalized_mean_delta": 0.002473556935224233,
+          "normalized_std_delta": 0.21663058512513067,
+          "reference_mean": 718.5211159263681,
+          "reference_std": 3.344275116853281,
+          "sim_mean": 716.7438130369634,
+          "sim_std": 4.068747392236622
+        },
+        "BUS6_ROCOF": {
+          "normalized_mean_delta": 0.0015776797173123718,
+          "normalized_std_delta": 0.005572412683002565,
+          "reference_mean": 5.08940751765279e-06,
+          "reference_std": 0.008917774979675122,
+          "sim_mean": -0.001572590309794719,
+          "sim_std": 0.014490187662677687
+        },
+        "BUS6_VA_ANG": {
+          "normalized_mean_delta": 0.00016369165158991648,
+          "normalized_std_delta": 0.9814936902971481,
+          "reference_mean": 0.25730886923149976,
+          "reference_std": 103.98085617158975,
+          "sim_mean": 0.27432966731196085,
+          "sim_std": 1.9243019274791442
+        },
+        "BUS6_VA_MAG": {
+          "normalized_mean_delta": 0.000433060739135194,
+          "normalized_std_delta": 0.6131962790234716,
+          "reference_mean": 200783.71426387085,
+          "reference_std": 898.7540611836507,
+          "sim_mean": 200696.76272016542,
+          "sim_std": 1449.8667072586989
+        },
+        "BUS6_VB_ANG": {
+          "normalized_mean_delta": 4.418231693570889e-05,
+          "normalized_std_delta": 0.985958079188253,
+          "reference_mean": 0.24530906569619965,
+          "reference_std": 103.37097144053813,
+          "sim_mean": 0.24074189667406168,
+          "sim_std": 1.451526995201402
+        },
+        "BUS6_VB_MAG": {
+          "normalized_mean_delta": 0.0004263147104986019,
+          "normalized_std_delta": 0.3759789143480588,
+          "reference_mean": 200772.76941353988,
+          "reference_std": 891.136585243161,
+          "sim_mean": 200687.17702847134,
+          "sim_std": 1226.185151098721
+        },
+        "BUS6_VC_ANG": {
+          "normalized_mean_delta": 0.0007940763063612762,
+          "normalized_std_delta": 0.987939618200832,
+          "reference_mean": -0.09069065558314979,
+          "reference_std": 104.33701145587412,
+          "sim_mean": -0.007839106909495104,
+          "sim_std": 1.2583441939420117
+        },
+        "BUS6_VC_MAG": {
+          "normalized_mean_delta": 0.0006075302790740409,
+          "normalized_std_delta": 0.22237720104028608,
+          "reference_mean": 200780.95132253252,
+          "reference_std": 885.6360598058831,
+          "sim_mean": 200902.93182992225,
+          "sim_std": 1082.5813279258628
+        }
+      },
+      "data_present_fraction_ref": 1.0,
+      "data_present_fraction_sim": 1.0,
+      "pass_mean_scale": true,
+      "pass_std_scale": true
+    }
+  },
+  "reference_source": "RAW0001",
+  "sim_stats": {
+    "bus_count": 8,
+    "buses": {
+      "BUS10": {
+        "channels": {
+          "BUS10_Freq": {
+            "count": 21,
+            "increment_std": 0.019238922266500636,
+            "iqr": 0.021218100352207614,
+            "max": 59.98478754018178,
+            "mean": 59.96236826699889,
+            "median": 59.96188601768822,
+            "min": 59.930899853841176,
+            "nan_fraction": 0.0,
+            "std": 0.014940752755473958
+          },
+          "BUS10_IA_ANG": {
+            "count": 21,
+            "increment_std": 2.289596170340103,
+            "iqr": 2.2833021770384505,
+            "max": 3.8095966435467687,
+            "mean": 0.12066239121492388,
+            "median": -0.3438133224846069,
+            "min": -1.9051970037856163,
+            "nan_fraction": 0.0,
+            "std": 1.5521317297905965
+          },
+          "BUS10_IA_MAG": {
+            "count": 21,
+            "increment_std": 7.630648923528353,
+            "iqr": 4.42707258915982,
+            "max": 627.447151258784,
+            "mean": 616.1926124990696,
+            "median": 616.0926107604702,
+            "min": 605.4817263811273,
+            "nan_fraction": 0.0,
+            "std": 4.653711778825289
+          },
+          "BUS10_IB_ANG": {
+            "count": 21,
+            "increment_std": 2.037510553325662,
+            "iqr": 1.5608072982633134,
+            "max": 2.069202216588621,
+            "mean": -0.4968194771034467,
+            "median": -0.6475254987159644,
+            "min": -2.4746315596957515,
+            "nan_fraction": 0.0,
+            "std": 1.3014736649048604
+          },
+          "BUS10_IB_MAG": {
+            "count": 21,
+            "increment_std": 6.697252974447114,
+            "iqr": 4.997218646411511,
+            "max": 623.21274250041,
+            "mean": 615.3235960615463,
+            "median": 616.1209504418024,
+            "min": 605.3312958138571,
+            "nan_fraction": 0.0,
+            "std": 4.441234671861088
+          },
+          "BUS10_IC_ANG": {
+            "count": 21,
+            "increment_std": 1.8980135854978943,
+            "iqr": 1.701260153745892,
+            "max": 2.028024212529033,
+            "mean": -0.3913345720984648,
+            "median": -0.4194894708687684,
+            "min": -3.738957421822079,
+            "nan_fraction": 0.0,
+            "std": 1.5055808626168035
+          },
+          "BUS10_IC_MAG": {
+            "count": 21,
+            "increment_std": 6.808981707139013,
+            "iqr": 3.159111125739514,
+            "max": 628.1395526260463,
+            "mean": 616.861956341049,
+            "median": 617.2962907455099,
+            "min": 610.9597357796133,
+            "nan_fraction": 0.0,
+            "std": 4.14519758115069
+          },
+          "BUS10_ROCOF": {
+            "count": 21,
+            "increment_std": 0.02373138037242954,
+            "iqr": 0.021440546643419302,
+            "max": 0.0300690976322725,
+            "mean": 0.0011358046349888476,
+            "median": 0.0015199051288899,
+            "min": -0.0305373446718159,
+            "nan_fraction": 0.0,
+            "std": 0.015382550112285058
+          },
+          "BUS10_VA_ANG": {
+            "count": 21,
+            "increment_std": 2.3517201445606255,
+            "iqr": 1.4879760335211358,
+            "max": 5.2733711368969125,
+            "mean": 0.8912901229724545,
+            "median": 0.7252817139122385,
+            "min": -2.6530011178901134,
+            "nan_fraction": 0.0,
+            "std": 1.682350772707818
+          },
+          "BUS10_VA_MAG": {
+            "count": 21,
+            "increment_std": 1359.9069572403362,
+            "iqr": 1554.8949130507826,
+            "max": 203260.83591655432,
+            "mean": 202195.5608375467,
+            "median": 202404.3715135981,
+            "min": 200642.9298953411,
+            "nan_fraction": 0.0,
+            "std": 847.827379466567
+          },
+          "BUS10_VB_ANG": {
+            "count": 21,
+            "increment_std": 1.891306574509211,
+            "iqr": 2.5713733844329454,
+            "max": 3.702896793547069,
+            "mean": 0.5220531019616439,
+            "median": 0.7527181394990805,
+            "min": -3.4597959298709497,
+            "nan_fraction": 0.0,
+            "std": 1.811754577794019
+          },
+          "BUS10_VB_MAG": {
+            "count": 21,
+            "increment_std": 1998.6047627669745,
+            "iqr": 2094.385525172431,
+            "max": 205140.5758858839,
+            "mean": 202226.64215307886,
+            "median": 201911.3108678833,
+            "min": 198947.6401925416,
+            "nan_fraction": 0.0,
+            "std": 1568.7517650288748
+          },
+          "BUS10_VC_ANG": {
+            "count": 21,
+            "increment_std": 2.630138032116278,
+            "iqr": 2.519613701590231,
+            "max": 3.5308062135383693,
+            "mean": -0.06851228456643882,
+            "median": 0.1316356178273849,
+            "min": -2.775710752785983,
+            "nan_fraction": 0.0,
+            "std": 1.7837131128342214
+          },
+          "BUS10_VC_MAG": {
+            "count": 21,
+            "increment_std": 1579.6513965670817,
+            "iqr": 2357.3341758410097,
+            "max": 204369.49898720364,
+            "mean": 202294.68042013736,
+            "median": 202074.7435240041,
+            "min": 200450.63886715748,
+            "nan_fraction": 0.0,
+            "std": 1255.6631461950099
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus10_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS19": {
+        "channels": {
+          "BUS19_Freq": {
+            "count": 21,
+            "increment_std": 0.019997312698926063,
+            "iqr": 0.015152754914559807,
+            "max": 59.99869196153558,
+            "mean": 59.976076548063716,
+            "median": 59.97645043980902,
+            "min": 59.93835820137389,
+            "nan_fraction": 0.0,
+            "std": 0.014192117972433358
+          },
+          "BUS19_IA_ANG": {
+            "count": 21,
+            "increment_std": 1.498278027427986,
+            "iqr": 0.8595828272748349,
+            "max": 2.3344913010665778,
+            "mean": 0.11697063117077548,
+            "median": -0.0252279429958832,
+            "min": -1.5746166073625432,
+            "nan_fraction": 0.0,
+            "std": 1.040955184539682
+          },
+          "BUS19_IA_MAG": {
+            "count": 21,
+            "increment_std": 6.646728612066528,
+            "iqr": 4.674220496998828,
+            "max": 849.4835637683777,
+            "mean": 842.0196484479735,
+            "median": 842.8711744092473,
+            "min": 832.2387508963458,
+            "nan_fraction": 0.0,
+            "std": 4.294387412936754
+          },
+          "BUS19_IB_ANG": {
+            "count": 21,
+            "increment_std": 2.138040371844228,
+            "iqr": 2.7168393519894494,
+            "max": 2.843522414855613,
+            "mean": 0.6854790532030298,
+            "median": 0.9478861401278208,
+            "min": -2.523422038076859,
+            "nan_fraction": 0.0,
+            "std": 1.611718308302287
+          },
+          "BUS19_IB_MAG": {
+            "count": 21,
+            "increment_std": 7.991221592648779,
+            "iqr": 7.615749114228265,
+            "max": 853.9595122690893,
+            "mean": 844.4357371468257,
+            "median": 844.9044650615253,
+            "min": 831.1075756963733,
+            "nan_fraction": 0.0,
+            "std": 5.848531310820607
+          },
+          "BUS19_IC_ANG": {
+            "count": 21,
+            "increment_std": 2.1681742052912876,
+            "iqr": 2.0797055607569064,
+            "max": 3.4905590528885,
+            "mean": -0.08492966118425845,
+            "median": 0.3455859176952458,
+            "min": -4.079102184136019,
+            "nan_fraction": 0.0,
+            "std": 1.6562982948844542
+          },
+          "BUS19_IC_MAG": {
+            "count": 21,
+            "increment_std": 7.029572692542282,
+            "iqr": 6.39339102885458,
+            "max": 852.8700830979626,
+            "mean": 844.080213322145,
+            "median": 844.1339004403613,
+            "min": 830.3841496570909,
+            "nan_fraction": 0.0,
+            "std": 5.241485880640056
+          },
+          "BUS19_ROCOF": {
+            "count": 21,
+            "increment_std": 0.014366836362843957,
+            "iqr": 0.0112066808307953,
+            "max": 0.0230746304702548,
+            "mean": 0.0015783156067430144,
+            "median": 0.0013572689416367,
+            "min": -0.0169344594660806,
+            "nan_fraction": 0.0,
+            "std": 0.00998230538396041
+          },
+          "BUS19_VA_ANG": {
+            "count": 21,
+            "increment_std": 1.8577409959617233,
+            "iqr": 1.9797916618997817,
+            "max": 2.936093330457624,
+            "mean": 1.1146724772593242,
+            "median": 1.1529437529531776,
+            "min": -1.5472512583072842,
+            "nan_fraction": 0.0,
+            "std": 1.26450906579727
+          },
+          "BUS19_VA_MAG": {
+            "count": 21,
+            "increment_std": 2147.646359478921,
+            "iqr": 1733.3042685405817,
+            "max": 210882.2749329021,
+            "mean": 208481.72250551297,
+            "median": 208662.18143438484,
+            "min": 205097.50358605225,
+            "nan_fraction": 0.0,
+            "std": 1398.6791591974322
+          },
+          "BUS19_VB_ANG": {
+            "count": 21,
+            "increment_std": 1.8828945016456997,
+            "iqr": 1.1936719286070172,
+            "max": 2.6704906899347804,
+            "mean": 0.5996916765702032,
+            "median": 0.8961247477061249,
+            "min": -3.598707065868865,
+            "nan_fraction": 0.0,
+            "std": 1.3206712022906542
+          },
+          "BUS19_VB_MAG": {
+            "count": 21,
+            "increment_std": 1963.264608534504,
+            "iqr": 2414.202301240526,
+            "max": 210820.77178328973,
+            "mean": 208640.97113273648,
+            "median": 208682.34564148547,
+            "min": 204947.25229100935,
+            "nan_fraction": 0.0,
+            "std": 1426.8093358539224
+          },
+          "BUS19_VC_ANG": {
+            "count": 21,
+            "increment_std": 2.49722663576435,
+            "iqr": 2.6364624135505608,
+            "max": 2.3011014736405286,
+            "mean": 0.06951717896804087,
+            "median": 0.2605182121531584,
+            "min": -2.902719039079414,
+            "nan_fraction": 0.0,
+            "std": 1.5597755698965141
+          },
+          "BUS19_VC_MAG": {
+            "count": 21,
+            "increment_std": 1936.2451366909386,
+            "iqr": 1158.7477278360166,
+            "max": 210416.5155532923,
+            "mean": 207957.6891440398,
+            "median": 207858.704491006,
+            "min": 205555.97984920183,
+            "nan_fraction": 0.0,
+            "std": 1206.8260585281216
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus19_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS2": {
+        "channels": {
+          "BUS2_Freq": {
+            "count": 21,
+            "increment_std": 0.0197338152509141,
+            "iqr": 0.02316415039879871,
+            "max": 59.98626167643662,
+            "mean": 59.96362780193714,
+            "median": 59.96609301230705,
+            "min": 59.92434899253707,
+            "nan_fraction": 0.0,
+            "std": 0.01656895788996429
+          },
+          "BUS2_IA_ANG": {
+            "count": 21,
+            "increment_std": 1.0389159652500999,
+            "iqr": 0.8817829207244756,
+            "max": 1.1520889333126547,
+            "mean": -0.7188554434439547,
+            "median": -0.7471834105998312,
+            "min": -2.5202655021159046,
+            "nan_fraction": 0.0,
+            "std": 0.83440846835576
+          },
+          "BUS2_IA_MAG": {
+            "count": 21,
+            "increment_std": 3.2513931086308454,
+            "iqr": 4.366069259527308,
+            "max": 589.226397183907,
+            "mean": 582.6814462843868,
+            "median": 581.6840584040149,
+            "min": 578.5973604351776,
+            "nan_fraction": 0.0,
+            "std": 3.1188038506582605
+          },
+          "BUS2_IB_ANG": {
+            "count": 21,
+            "increment_std": 1.4540516872204576,
+            "iqr": 2.2764988247151905,
+            "max": 2.860457391818528,
+            "mean": 0.658117556925248,
+            "median": 0.3587823612487284,
+            "min": -2.756355444420535,
+            "nan_fraction": 0.0,
+            "std": 1.5282647154699103
+          },
+          "BUS2_IB_MAG": {
+            "count": 21,
+            "increment_std": 27.845184691461505,
+            "iqr": 23.90457122284147,
+            "max": 616.6332502397414,
+            "mean": 583.0605711214271,
+            "median": 583.1914388448099,
+            "min": 545.1220570469028,
+            "nan_fraction": 0.0,
+            "std": 18.52845607081831
+          },
+          "BUS2_IC_ANG": {
+            "count": 21,
+            "increment_std": 2.1740909623639006,
+            "iqr": 1.460201845518867,
+            "max": 3.634435557498677,
+            "mean": 0.17076527530764452,
+            "median": 0.4409886992378631,
+            "min": -2.8636864903258754,
+            "nan_fraction": 0.0,
+            "std": 1.3488612741120807
+          },
+          "BUS2_IC_MAG": {
+            "count": 21,
+            "increment_std": 4.25945457278101,
+            "iqr": 3.4362321509410094,
+            "max": 589.7504995083948,
+            "mean": 583.4329450002502,
+            "median": 583.5169878203106,
+            "min": 576.2998619162902,
+            "nan_fraction": 0.0,
+            "std": 3.346099643827778
+          },
+          "BUS2_ROCOF": {
+            "count": 21,
+            "increment_std": 0.010332316659491804,
+            "iqr": 0.0129041097880687,
+            "max": 0.012641952302966,
+            "mean": -0.002698771371601224,
+            "median": -0.0031694836766756,
+            "min": -0.0189846962263079,
+            "nan_fraction": 0.0,
+            "std": 0.008559353828923057
+          },
+          "BUS2_VA_ANG": {
+            "count": 21,
+            "increment_std": 3.5883949287583925,
+            "iqr": 2.892852305027077,
+            "max": 3.943113581895688,
+            "mean": 0.3963928662523266,
+            "median": 0.6056110230564968,
+            "min": -3.615451712142402,
+            "nan_fraction": 0.0,
+            "std": 2.045238763757871
+          },
+          "BUS2_VA_MAG": {
+            "count": 21,
+            "increment_std": 2148.4849168287174,
+            "iqr": 2232.329548061156,
+            "max": 211675.1590298889,
+            "mean": 209179.10291529194,
+            "median": 209074.8578351088,
+            "min": 206380.9379297117,
+            "nan_fraction": 0.0,
+            "std": 1642.2792695311018
+          },
+          "BUS2_VB_ANG": {
+            "count": 21,
+            "increment_std": 2.0500685009579884,
+            "iqr": 1.586139689585508,
+            "max": 3.23590934917516,
+            "mean": -0.1740013449776121,
+            "median": -0.6173347664288542,
+            "min": -2.336990672217695,
+            "nan_fraction": 0.0,
+            "std": 1.3132496842546801
+          },
+          "BUS2_VB_MAG": {
+            "count": 21,
+            "increment_std": 1122.0081737224302,
+            "iqr": 1084.8729080529884,
+            "max": 210939.2831153392,
+            "mean": 208788.76486672513,
+            "median": 208690.5455923924,
+            "min": 207037.47864076175,
+            "nan_fraction": 0.0,
+            "std": 986.0232017554505
+          },
+          "BUS2_VC_ANG": {
+            "count": 21,
+            "increment_std": 2.6631361271484018,
+            "iqr": 1.9900382249906556,
+            "max": 3.421658222194054,
+            "mean": -0.2632513244027897,
+            "median": -0.2231893984052817,
+            "min": -3.8665129288607143,
+            "nan_fraction": 0.0,
+            "std": 1.6534475100163166
+          },
+          "BUS2_VC_MAG": {
+            "count": 21,
+            "increment_std": 1822.0173164203807,
+            "iqr": 1514.456780340115,
+            "max": 211846.18303541903,
+            "mean": 209013.7403895618,
+            "median": 209168.84331579265,
+            "min": 206410.22084750203,
+            "nan_fraction": 0.0,
+            "std": 1240.9362660596114
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus2_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS22": {
+        "channels": {
+          "BUS22_Freq": {
+            "count": 21,
+            "increment_std": 0.018898093098976988,
+            "iqr": 0.01720490438564326,
+            "max": 59.990876626946346,
+            "mean": 59.964666823213534,
+            "median": 59.96623616983955,
+            "min": 59.935923116388494,
+            "nan_fraction": 0.0,
+            "std": 0.013273431870458879
+          },
+          "BUS22_IA_ANG": {
+            "count": 21,
+            "increment_std": 2.1435882932090418,
+            "iqr": 1.9425190193217645,
+            "max": 2.6049057045590303,
+            "mean": 0.40041516597094073,
+            "median": 0.2441424441950914,
+            "min": -2.2715643125485485,
+            "nan_fraction": 0.0,
+            "std": 1.350210241285445
+          },
+          "BUS22_IA_MAG": {
+            "count": 21,
+            "increment_std": 6.583456568696893,
+            "iqr": 6.858739970710417,
+            "max": 1004.453856993592,
+            "mean": 995.6341310146692,
+            "median": 995.0542879809328,
+            "min": 987.4077400144812,
+            "nan_fraction": 0.0,
+            "std": 4.392734967920322
+          },
+          "BUS22_IB_ANG": {
+            "count": 21,
+            "increment_std": 2.898513159028135,
+            "iqr": 3.3363284737827144,
+            "max": 3.230667214531536,
+            "mean": 0.07055516161699416,
+            "median": -0.4627610239168405,
+            "min": -2.568341354699669,
+            "nan_fraction": 0.0,
+            "std": 1.7924962475247739
+          },
+          "BUS22_IB_MAG": {
+            "count": 21,
+            "increment_std": 8.658905253692968,
+            "iqr": 7.539449434327935,
+            "max": 1007.2541114047932,
+            "mean": 996.2268213706983,
+            "median": 995.3297288337508,
+            "min": 987.2860644561569,
+            "nan_fraction": 0.0,
+            "std": 5.435429195564019
+          },
+          "BUS22_IC_ANG": {
+            "count": 21,
+            "increment_std": 1.4068976516136436,
+            "iqr": 1.7517265855623236,
+            "max": 1.9148547439311017,
+            "mean": 0.10107387325669084,
+            "median": 0.2333665619310352,
+            "min": -1.8284907630811915,
+            "nan_fraction": 0.0,
+            "std": 1.08621748025983
+          },
+          "BUS22_IC_MAG": {
+            "count": 21,
+            "increment_std": 7.786333216944652,
+            "iqr": 9.572040914369722,
+            "max": 1011.6277504851312,
+            "mean": 1000.1580940157232,
+            "median": 999.7037172259336,
+            "min": 990.7946545464424,
+            "nan_fraction": 0.0,
+            "std": 6.005272557913886
+          },
+          "BUS22_ROCOF": {
+            "count": 21,
+            "increment_std": 0.007608080238712031,
+            "iqr": 0.006060140569294,
+            "max": 0.0127281414995084,
+            "mean": 0.0007260321248669257,
+            "median": 0.0026328258371594,
+            "min": -0.0135001341933107,
+            "nan_fraction": 0.0,
+            "std": 0.006732132743187198
+          },
+          "BUS22_VA_ANG": {
+            "count": 21,
+            "increment_std": 1.9364880439050198,
+            "iqr": 2.7404556481455984,
+            "max": 2.6979785262944915,
+            "mean": 0.531471812342315,
+            "median": 0.8279958115384147,
+            "min": -2.3262150746317047,
+            "nan_fraction": 0.0,
+            "std": 1.4842843247831
+          },
+          "BUS22_VA_MAG": {
+            "count": 21,
+            "increment_std": 1713.7094528970365,
+            "iqr": 2065.748094094073,
+            "max": 212388.33288178884,
+            "mean": 209579.02870182839,
+            "median": 209441.47448156925,
+            "min": 206773.8293110946,
+            "nan_fraction": 0.0,
+            "std": 1411.3230662686904
+          },
+          "BUS22_VB_ANG": {
+            "count": 21,
+            "increment_std": 2.1710196942973288,
+            "iqr": 1.69458506458372,
+            "max": 3.06025698958453,
+            "mean": 0.5938604850750794,
+            "median": 0.6952774477318258,
+            "min": -2.3633411694476933,
+            "nan_fraction": 0.0,
+            "std": 1.4510707912856937
+          },
+          "BUS22_VB_MAG": {
+            "count": 21,
+            "increment_std": 2233.6104363982663,
+            "iqr": 1795.5694044491975,
+            "max": 211061.78755735565,
+            "mean": 208730.9173774057,
+            "median": 208670.79361257757,
+            "min": 205759.44238046464,
+            "nan_fraction": 0.0,
+            "std": 1325.8404250896265
+          },
+          "BUS22_VC_ANG": {
+            "count": 21,
+            "increment_std": 3.133757598936956,
+            "iqr": 3.469263015425497,
+            "max": 3.890953213423956,
+            "mean": 0.25485086499532195,
+            "median": 0.4282578243954162,
+            "min": -2.5397490904393294,
+            "nan_fraction": 0.0,
+            "std": 1.9040604475541962
+          },
+          "BUS22_VC_MAG": {
+            "count": 21,
+            "increment_std": 1931.8365552727932,
+            "iqr": 1495.2899129642465,
+            "max": 211143.6690299665,
+            "mean": 208897.32647285698,
+            "median": 208763.80097702483,
+            "min": 205831.409273697,
+            "nan_fraction": 0.0,
+            "std": 1286.4096913713536
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus22_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS29": {
+        "channels": {
+          "BUS29_Freq": {
+            "count": 21,
+            "increment_std": 0.020685134364685033,
+            "iqr": 0.024956137429406056,
+            "max": 59.98815830062997,
+            "mean": 59.96422604114394,
+            "median": 59.96495942606428,
+            "min": 59.93579068125731,
+            "nan_fraction": 0.0,
+            "std": 0.014642487306407204
+          },
+          "BUS29_IA_ANG": {
+            "count": 21,
+            "increment_std": 2.4850884838070306,
+            "iqr": 2.4277936270239873,
+            "max": -0.47773788397987,
+            "mean": -2.859409317521543,
+            "median": -3.0746301233051554,
+            "min": -6.211411124693285,
+            "nan_fraction": 0.0,
+            "std": 1.5780950927390625
+          },
+          "BUS29_IA_MAG": {
+            "count": 21,
+            "increment_std": 5.267266352216268,
+            "iqr": 6.3338609797112895,
+            "max": 583.1899180172321,
+            "mean": 575.9196622403398,
+            "median": 576.0377135698799,
+            "min": 568.6411936500857,
+            "nan_fraction": 0.0,
+            "std": 3.939309897752427
+          },
+          "BUS29_IB_ANG": {
+            "count": 21,
+            "increment_std": 2.4299700387668484,
+            "iqr": 2.2353321220112434,
+            "max": 4.761664022690979,
+            "mean": 0.9713055008770287,
+            "median": 0.5819988221492736,
+            "min": -2.089998707961968,
+            "nan_fraction": 0.0,
+            "std": 1.7821106134230928
+          },
+          "BUS29_IB_MAG": {
+            "count": 21,
+            "increment_std": 5.231594858148241,
+            "iqr": 5.389960336599074,
+            "max": 581.829264110683,
+            "mean": 576.3939416437753,
+            "median": 576.256013366322,
+            "min": 570.5470745695762,
+            "nan_fraction": 0.0,
+            "std": 3.199778476862509
+          },
+          "BUS29_IC_ANG": {
+            "count": 21,
+            "increment_std": 1.6872401170515139,
+            "iqr": 1.4726814068992269,
+            "max": 2.548983681827224,
+            "mean": 0.34402277093211286,
+            "median": 0.371316570608684,
+            "min": -2.3087986318253684,
+            "nan_fraction": 0.0,
+            "std": 1.2767676355403867
+          },
+          "BUS29_IC_MAG": {
+            "count": 21,
+            "increment_std": 3.3147505102531607,
+            "iqr": 4.006306214418714,
+            "max": 580.893944303554,
+            "mean": 576.2444909138578,
+            "median": 576.0282457429172,
+            "min": 569.4590152246941,
+            "nan_fraction": 0.0,
+            "std": 2.8441583229279312
+          },
+          "BUS29_ROCOF": {
+            "count": 21,
+            "increment_std": 0.0017773023734049594,
+            "iqr": 0.0020598179704413,
+            "max": 0.0023068412748367,
+            "mean": 1.5245194701704321e-05,
+            "median": 0.0003165493375572,
+            "min": -0.0028208784555492,
+            "nan_fraction": 0.0,
+            "std": 0.0013059016136880788
+          },
+          "BUS29_VA_ANG": {
+            "count": 21,
+            "increment_std": 2.2105605277589815,
+            "iqr": 1.9696996597051282,
+            "max": 3.425286298914614,
+            "mean": -0.07871894049905916,
+            "median": -0.0017101345757168,
+            "min": -3.1848577484915666,
+            "nan_fraction": 0.0,
+            "std": 1.6637828512125652
+          },
+          "BUS29_VA_MAG": {
+            "count": 21,
+            "increment_std": 1949.401540926674,
+            "iqr": 2040.3923737974546,
+            "max": 211081.6420008987,
+            "mean": 208802.2849099346,
+            "median": 208690.49950346333,
+            "min": 206664.2847156732,
+            "nan_fraction": 0.0,
+            "std": 1211.5958305341808
+          },
+          "BUS29_VB_ANG": {
+            "count": 21,
+            "increment_std": 2.121702104866977,
+            "iqr": 2.314668301988206,
+            "max": 3.464960783644443,
+            "mean": 0.6870527333071943,
+            "median": 0.801395182937739,
+            "min": -1.889969765314305,
+            "nan_fraction": 0.0,
+            "std": 1.505555488988903
+          },
+          "BUS29_VB_MAG": {
+            "count": 21,
+            "increment_std": 2255.682464044542,
+            "iqr": 972.1103155568999,
+            "max": 211909.5971780788,
+            "mean": 209023.2335847387,
+            "median": 209144.65483419813,
+            "min": 205497.6247710308,
+            "nan_fraction": 0.0,
+            "std": 1434.7712594364637
+          },
+          "BUS29_VC_ANG": {
+            "count": 21,
+            "increment_std": 1.5770739372647617,
+            "iqr": 1.105165455148608,
+            "max": 3.15838240118876,
+            "mean": 1.1923574926541174,
+            "median": 1.1955252843737585,
+            "min": -1.1628989697358634,
+            "nan_fraction": 0.0,
+            "std": 1.1437661340128122
+          },
+          "BUS29_VC_MAG": {
+            "count": 21,
+            "increment_std": 2094.5001621840497,
+            "iqr": 2378.109279088996,
+            "max": 211489.7047132984,
+            "mean": 208646.29451812466,
+            "median": 208633.0949515255,
+            "min": 206624.1354478064,
+            "nan_fraction": 0.0,
+            "std": 1384.5939348920153
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus29_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS39": {
+        "channels": {
+          "BUS39_Freq": {
+            "count": 21,
+            "increment_std": 0.017997199566412075,
+            "iqr": 0.01325399749275391,
+            "max": 59.99038132803327,
+            "mean": 59.96412908862701,
+            "median": 59.96517368833272,
+            "min": 59.934832834803736,
+            "nan_fraction": 0.0,
+            "std": 0.01364791351722599
+          },
+          "BUS39_IA_ANG": {
+            "count": 21,
+            "increment_std": 2.0170030052613157,
+            "iqr": 2.548332985158794,
+            "max": 3.058947511057738,
+            "mean": 0.24818661334219205,
+            "median": 0.2486016303882365,
+            "min": -1.8871381537034608,
+            "nan_fraction": 0.0,
+            "std": 1.388018174396236
+          },
+          "BUS39_IA_MAG": {
+            "count": 21,
+            "increment_std": 3.542973582000662,
+            "iqr": 4.553421286048263,
+            "max": 249.9151581246919,
+            "mean": 245.37138966138968,
+            "median": 244.8138618712268,
+            "min": 240.63201367699543,
+            "nan_fraction": 0.0,
+            "std": 2.7190691113897363
+          },
+          "BUS39_IB_ANG": {
+            "count": 21,
+            "increment_std": 2.5571854873223443,
+            "iqr": 2.716343306381958,
+            "max": 2.9327732036778684,
+            "mean": -0.2888352375335317,
+            "median": -0.8736456961396755,
+            "min": -2.424141776160724,
+            "nan_fraction": 0.0,
+            "std": 1.5558052663843986
+          },
+          "BUS39_IB_MAG": {
+            "count": 21,
+            "increment_std": 2.466010990437148,
+            "iqr": 1.822262568360884,
+            "max": 248.7210377272544,
+            "mean": 246.22886669360378,
+            "median": 245.96990789844165,
+            "min": 243.44129550971195,
+            "nan_fraction": 0.0,
+            "std": 1.4088221808687529
+          },
+          "BUS39_IC_ANG": {
+            "count": 21,
+            "increment_std": 1.8063203030144876,
+            "iqr": 2.590296036108498,
+            "max": 2.8523626584049566,
+            "mean": -0.051369853526799555,
+            "median": 0.3051125911003964,
+            "min": -2.398062696831289,
+            "nan_fraction": 0.0,
+            "std": 1.4561207180418647
+          },
+          "BUS39_IC_MAG": {
+            "count": 21,
+            "increment_std": 1.7727985518181053,
+            "iqr": 1.133027358643318,
+            "max": 248.2768196300709,
+            "mean": 246.40455532400904,
+            "median": 246.45157564650995,
+            "min": 243.18027099235456,
+            "nan_fraction": 0.0,
+            "std": 1.166752055432558
+          },
+          "BUS39_ROCOF": {
+            "count": 21,
+            "increment_std": 0.00030158083895237114,
+            "iqr": 0.00015767487007267738,
+            "max": 0.0004907023781053,
+            "mean": -1.5615046972069367e-05,
+            "median": -3.730479905192147e-05,
+            "min": -0.0005021631150708,
+            "nan_fraction": 0.0,
+            "std": 0.00021453991257695728
+          },
+          "BUS39_VA_ANG": {
+            "count": 21,
+            "increment_std": 2.122280836732547,
+            "iqr": 2.2638775196167273,
+            "max": 2.889064537879136,
+            "mean": 0.22357667903380102,
+            "median": 0.1628053937555194,
+            "min": -2.739819768833911,
+            "nan_fraction": 0.0,
+            "std": 1.5642577917763412
+          },
+          "BUS39_VA_MAG": {
+            "count": 21,
+            "increment_std": 1842.8817585489085,
+            "iqr": 2128.5273418653524,
+            "max": 207083.24756594657,
+            "mean": 204363.73584386273,
+            "median": 204443.8850354649,
+            "min": 202033.520959995,
+            "nan_fraction": 0.0,
+            "std": 1406.9977861870138
+          },
+          "BUS39_VB_ANG": {
+            "count": 21,
+            "increment_std": 1.5330827587236053,
+            "iqr": 2.4821281056001396,
+            "max": 3.2891689116950147,
+            "mean": 0.3294059202041551,
+            "median": 0.6089033494074272,
+            "min": -2.706337870479928,
+            "nan_fraction": 0.0,
+            "std": 1.6225767729233345
+          },
+          "BUS39_VB_MAG": {
+            "count": 21,
+            "increment_std": 1823.6393930478532,
+            "iqr": 1207.1652941988432,
+            "max": 205872.4428193633,
+            "mean": 203844.36157618728,
+            "median": 203813.81678412893,
+            "min": 200663.71257036648,
+            "nan_fraction": 0.0,
+            "std": 1307.4510509271834
+          },
+          "BUS39_VC_ANG": {
+            "count": 21,
+            "increment_std": 2.39591603430712,
+            "iqr": 2.069259612063348,
+            "max": 2.979820994844971,
+            "mean": -0.5026176074189861,
+            "median": -0.3931099860790255,
+            "min": -4.921717159444569,
+            "nan_fraction": 0.0,
+            "std": 1.8623731670891337
+          },
+          "BUS39_VC_MAG": {
+            "count": 21,
+            "increment_std": 2039.9959293138768,
+            "iqr": 1232.8802446479385,
+            "max": 206681.4246824824,
+            "mean": 204276.46753948106,
+            "median": 204060.34369558477,
+            "min": 201072.11528412765,
+            "nan_fraction": 0.0,
+            "std": 1353.6410894216813
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus39_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS5": {
+        "channels": {
+          "BUS5_Freq": {
+            "count": 21,
+            "increment_std": 0.02064529405729891,
+            "iqr": 0.019732341917816143,
+            "max": 59.99874492471036,
+            "mean": 59.96824915396407,
+            "median": 59.96895675287661,
+            "min": 59.94686566833141,
+            "nan_fraction": 0.0,
+            "std": 0.014942510869207417
+          },
+          "BUS5_IA_ANG": {
+            "count": 21,
+            "increment_std": 1.6663264088816725,
+            "iqr": 1.6145065980167603,
+            "max": 1.260702027739569,
+            "mean": -1.1011698570192598,
+            "median": -1.1055837814904237,
+            "min": -3.0555014246198766,
+            "nan_fraction": 0.0,
+            "std": 1.145747452590989
+          },
+          "BUS5_IA_MAG": {
+            "count": 21,
+            "increment_std": 6.557490954494839,
+            "iqr": 5.26018041613122,
+            "max": 798.6308435556883,
+            "mean": 788.2776268675642,
+            "median": 788.4708651936731,
+            "min": 779.3936507550118,
+            "nan_fraction": 0.0,
+            "std": 4.8875068216239566
+          },
+          "BUS5_IB_ANG": {
+            "count": 21,
+            "increment_std": 1.8312410806743338,
+            "iqr": 1.2677374056567317,
+            "max": 2.505334414626589,
+            "mean": 0.37881814351212434,
+            "median": 0.8239460474405007,
+            "min": -2.151200870609415,
+            "nan_fraction": 0.0,
+            "std": 1.166067982070645
+          },
+          "BUS5_IB_MAG": {
+            "count": 21,
+            "increment_std": 5.207177249886868,
+            "iqr": 5.109423694394081,
+            "max": 798.7207130635478,
+            "mean": 791.5617085956752,
+            "median": 791.9888499311662,
+            "min": 784.7473033456675,
+            "nan_fraction": 0.0,
+            "std": 3.4598140383805465
+          },
+          "BUS5_IC_ANG": {
+            "count": 21,
+            "increment_std": 2.2012030134203933,
+            "iqr": 2.2349609966592254,
+            "max": 2.877631164611472,
+            "mean": 0.6017725967183832,
+            "median": 0.6217548199431633,
+            "min": -2.430858570751127,
+            "nan_fraction": 0.0,
+            "std": 1.4785739066741033
+          },
+          "BUS5_IC_MAG": {
+            "count": 21,
+            "increment_std": 9.544139277783952,
+            "iqr": 8.239270372743249,
+            "max": 799.1359511726278,
+            "mean": 786.9975153240341,
+            "median": 784.8997128319388,
+            "min": 775.4847154434312,
+            "nan_fraction": 0.0,
+            "std": 5.761355825227721
+          },
+          "BUS5_ROCOF": {
+            "count": 21,
+            "increment_std": 0.01877941806986556,
+            "iqr": 0.0151342191637783,
+            "max": 0.0184991691882542,
+            "mean": 0.004291739162467724,
+            "median": 0.0064938879081072,
+            "min": -0.0210756361574652,
+            "nan_fraction": 0.0,
+            "std": 0.01098780048651616
+          },
+          "BUS5_VA_ANG": {
+            "count": 21,
+            "increment_std": 1.9580430113482987,
+            "iqr": 1.8340797096753079,
+            "max": 3.407525054345598,
+            "mean": 0.11087592471599941,
+            "median": -0.1238035800646457,
+            "min": -2.0029180053582536,
+            "nan_fraction": 0.0,
+            "std": 1.4413561409091142
+          },
+          "BUS5_VA_MAG": {
+            "count": 21,
+            "increment_std": 1435.3682730166292,
+            "iqr": 1522.4565066747891,
+            "max": 202451.4063135834,
+            "mean": 200235.6279429099,
+            "median": 200368.07135001445,
+            "min": 197455.7345462696,
+            "nan_fraction": 0.0,
+            "std": 1274.8742669373837
+          },
+          "BUS5_VB_ANG": {
+            "count": 21,
+            "increment_std": 2.135566571332528,
+            "iqr": 1.8967999549373924,
+            "max": 3.319138384793036,
+            "mean": 0.8914529823804774,
+            "median": 1.3899135960604383,
+            "min": -1.88983995255262,
+            "nan_fraction": 0.0,
+            "std": 1.4928078490822845
+          },
+          "BUS5_VB_MAG": {
+            "count": 21,
+            "increment_std": 1996.4949436872425,
+            "iqr": 2098.5468985463085,
+            "max": 202602.1590039808,
+            "mean": 200474.29261250966,
+            "median": 200548.6545170273,
+            "min": 197737.64944867644,
+            "nan_fraction": 0.0,
+            "std": 1312.268106279177
+          },
+          "BUS5_VC_ANG": {
+            "count": 21,
+            "increment_std": 2.3566472177822964,
+            "iqr": 2.320148975295467,
+            "max": 2.874610225822352,
+            "mean": -0.24338671188007224,
+            "median": 0.1719826249061782,
+            "min": -3.1524418707522277,
+            "nan_fraction": 0.0,
+            "std": 1.612667473436427
+          },
+          "BUS5_VC_MAG": {
+            "count": 21,
+            "increment_std": 1247.965292785048,
+            "iqr": 1605.0380149994744,
+            "max": 202046.9681405391,
+            "mean": 199876.23723507824,
+            "median": 199782.0304436969,
+            "min": 197797.15997251016,
+            "nan_fraction": 0.0,
+            "std": 999.1714100614915
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus5_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      },
+      "BUS6": {
+        "channels": {
+          "BUS6_Freq": {
+            "count": 21,
+            "increment_std": 0.028481916902850995,
+            "iqr": 0.018293813588456942,
+            "max": 60.01019073560097,
+            "mean": 59.96642748890125,
+            "median": 59.960903237018094,
+            "min": 59.93503607358766,
+            "nan_fraction": 0.0,
+            "std": 0.01692087672543172
+          },
+          "BUS6_IA_ANG": {
+            "count": 21,
+            "increment_std": 1.6130112060099442,
+            "iqr": 2.024684402290518,
+            "max": 2.548155711911761,
+            "mean": 0.5263929874288554,
+            "median": 0.3902273090385222,
+            "min": -1.5867662619067175,
+            "nan_fraction": 0.0,
+            "std": 1.1505126380272082
+          },
+          "BUS6_IA_MAG": {
+            "count": 21,
+            "increment_std": 4.71449595324438,
+            "iqr": 5.243366672609568,
+            "max": 725.1095643158279,
+            "mean": 717.3353401104896,
+            "median": 717.0983143708384,
+            "min": 710.9277629726422,
+            "nan_fraction": 0.0,
+            "std": 3.2795518293124695
+          },
+          "BUS6_IB_ANG": {
+            "count": 21,
+            "increment_std": 1.9907752181961922,
+            "iqr": 1.4413404554882732,
+            "max": 1.53637773705654,
+            "mean": -0.6242038622986489,
+            "median": -0.8164454096269083,
+            "min": -3.3243997754954933,
+            "nan_fraction": 0.0,
+            "std": 1.3103513376813078
+          },
+          "BUS6_IB_MAG": {
+            "count": 21,
+            "increment_std": 6.342279936009511,
+            "iqr": 7.100515279172441,
+            "max": 723.0125510647855,
+            "mean": 717.144338995796,
+            "median": 717.8324576001484,
+            "min": 709.9183728039206,
+            "nan_fraction": 0.0,
+            "std": 4.140616406030515
+          },
+          "BUS6_IC_ANG": {
+            "count": 21,
+            "increment_std": 1.6404411070442195,
+            "iqr": 1.1095840929984888,
+            "max": 2.3941302123717207,
+            "mean": 0.06329306565409148,
+            "median": 0.2676267081508285,
+            "min": -2.3259905633713918,
+            "nan_fraction": 0.0,
+            "std": 1.161200574872633
+          },
+          "BUS6_IC_MAG": {
+            "count": 21,
+            "increment_std": 5.757075570307219,
+            "iqr": 7.600566365963459,
+            "max": 723.4630121058044,
+            "mean": 716.7438130369634,
+            "median": 717.2734732973415,
+            "min": 709.7589850229564,
+            "nan_fraction": 0.0,
+            "std": 4.068747392236622
+          },
+          "BUS6_ROCOF": {
+            "count": 21,
+            "increment_std": 0.02391720328588777,
+            "iqr": 0.0182638736562064,
+            "max": 0.0242045652990215,
+            "mean": -0.001572590309794719,
+            "median": -0.0047021659442431,
+            "min": -0.0359373258748404,
+            "nan_fraction": 0.0,
+            "std": 0.014490187662677687
+          },
+          "BUS6_VA_ANG": {
+            "count": 21,
+            "increment_std": 2.97736223157471,
+            "iqr": 2.110620729241731,
+            "max": 2.557828329377344,
+            "mean": 0.27432966731196085,
+            "median": 0.4651653443921191,
+            "min": -3.8062123811967297,
+            "nan_fraction": 0.0,
+            "std": 1.9243019274791442
+          },
+          "BUS6_VA_MAG": {
+            "count": 21,
+            "increment_std": 2176.3300950151356,
+            "iqr": 2473.9854221455753,
+            "max": 203348.4895822672,
+            "mean": 200696.76272016542,
+            "median": 200508.8777293524,
+            "min": 197906.8522749636,
+            "nan_fraction": 0.0,
+            "std": 1449.8667072586989
+          },
+          "BUS6_VB_ANG": {
+            "count": 21,
+            "increment_std": 2.0735094915754804,
+            "iqr": 2.212119885804185,
+            "max": 2.649263765028877,
+            "mean": 0.24074189667406168,
+            "median": 0.3360440660464974,
+            "min": -2.7144175732370286,
+            "nan_fraction": 0.0,
+            "std": 1.451526995201402
+          },
+          "BUS6_VB_MAG": {
+            "count": 21,
+            "increment_std": 1577.2065074195116,
+            "iqr": 1262.3485107983288,
+            "max": 203352.42450476595,
+            "mean": 200687.17702847134,
+            "median": 200866.92527891515,
+            "min": 198206.98943240603,
+            "nan_fraction": 0.0,
+            "std": 1226.185151098721
+          },
+          "BUS6_VC_ANG": {
+            "count": 21,
+            "increment_std": 2.0429722936020207,
+            "iqr": 1.8026778973652426,
+            "max": 2.8607520048495303,
+            "mean": -0.007839106909495104,
+            "median": -0.0363859772162982,
+            "min": -2.402148696853004,
+            "nan_fraction": 0.0,
+            "std": 1.2583441939420117
+          },
+          "BUS6_VC_MAG": {
+            "count": 21,
+            "increment_std": 1395.957543368651,
+            "iqr": 1635.4127825199976,
+            "max": 203271.2136364762,
+            "mean": 200902.93182992225,
+            "median": 200803.09190276416,
+            "min": 198474.97308785465,
+            "nan_fraction": 0.0,
+            "std": 1082.5813279258628
+          }
+        },
+        "data_present_fraction": 1.0,
+        "event_counts": {
+          "0": 21
+        },
+        "file": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus6_Competition_Data_sim.csv",
+        "rows_sampled": 21
+      }
+    },
+    "pmu_dir": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu"
+  }
+}

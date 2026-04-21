@@ -1,0 +1,111 @@
+{
+  "input_raw_dir": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\RAW0001",
+  "output_dir": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\report\\raw_cyber_quality",
+  "buses": [
+    "Bus10",
+    "Bus19",
+    "Bus2",
+    "Bus22",
+    "Bus29",
+    "Bus39",
+    "Bus5",
+    "Bus6"
+  ],
+  "n_frames": 172117,
+  "event5_metrics": {
+    "tp": 30063,
+    "tn": 142054,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0
+  },
+  "event7_metrics": {
+    "tp": 0,
+    "tn": 154072,
+    "fp": 17968,
+    "fn": 77,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "accuracy": 0.8951585258864609
+  },
+  "cyber_metrics": {
+    "tp": 30063,
+    "tn": 124014,
+    "fp": 17968,
+    "fn": 72,
+    "precision": 0.6259082675771898,
+    "recall": 0.9976107516177203,
+    "f1": 0.7692091190543203,
+    "accuracy": 0.8951875758931425
+  },
+  "event7_bus_localization_accuracy": 0.5974025974025974,
+  "counts": {
+    "true_event5": 30063,
+    "pred_event5": 30063,
+    "true_event7": 77,
+    "pred_event7": 17968,
+    "true_cyber": 30135,
+    "pred_cyber": 48031
+  },
+  "event7_thresholds_by_bus": {
+    "Bus10": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    },
+    "Bus19": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    },
+    "Bus2": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    },
+    "Bus22": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    },
+    "Bus29": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    },
+    "Bus39": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.35714285714285715,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.32857142857142857
+    },
+    "Bus5": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    },
+    "Bus6": {
+      "outlier_rate_q95": 0.0,
+      "jump_rate_q95": 0.42857142857142855,
+      "stuck_flag_q95": 0.0,
+      "composite_q995": 0.39285714285714285
+    }
+  },
+  "artifact_paths": {
+    "json_report": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\report\\raw_cyber_quality\\raw_cyber_quality_report.json",
+    "frame_predictions_csv": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\report\\raw_cyber_quality\\frame_predictions.csv",
+    "timeline_plot": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\report\\raw_cyber_quality\\timeline_event5_event7.png",
+    "event7_score_histogram_plot": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\report\\raw_cyber_quality\\event7_score_histogram.png",
+    "event7_active_bus_count_plot": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\report\\raw_cyber_quality\\event7_active_bus_count.png"
+  }
+}

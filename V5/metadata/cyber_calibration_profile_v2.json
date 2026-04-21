@@ -1,0 +1,30 @@
+{
+  "achieved_bus29_missing_fraction": 0.04155124653739612,
+  "achieved_global_missing_fraction": 0.010041551246537397,
+  "burst_statistics": {
+    "achieved_official_burst_mean": 1.8567708333333333,
+    "achieved_official_inter_burst_mean": 9.81076388888889,
+    "target_bus29_burst_mean": 4.0,
+    "target_bus29_inter_burst_mean": 80.0
+  },
+  "partial_dropout_representation": {
+    "adversarial_stress": 0.030470914127423823,
+    "official_style": 0.0,
+    "research_style": 0.0110803324099723
+  },
+  "pass_flags": {
+    "burst_distribution_pass": true,
+    "global_missing_fraction_pass": true,
+    "overlap_behavior_pass": true,
+    "partial_dropout_coverage_pass": true,
+    "per_bus_missing_fraction_pass": true,
+    "transition_profile_pass": true
+  },
+  "target_official_style_bus29_missing_fraction": 0.042125,
+  "target_official_style_missing_fraction": 0.005265625,
+  "transition_statistics": {
+    "achieved_official_down_transitions_mean": 1.7604166666666667,
+    "achieved_official_up_transitions_mean": 1.75,
+    "target_ref_down_transitions_mean": 0.25
+  }
+}

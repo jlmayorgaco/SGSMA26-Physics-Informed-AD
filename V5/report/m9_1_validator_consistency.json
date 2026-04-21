@@ -1,0 +1,58 @@
+{
+  "aggregates": {
+    "downstream_all_ready": true,
+    "overall_readiness": true
+  },
+  "children": {
+    "downstream_all_ready": [
+      "estimator_training_ready",
+      "identifier_training_ready",
+      "detector_training_ready",
+      "cyber_detector_training_ready",
+      "physical_detector_training_ready",
+      "classifier_training_ready",
+      "localizer_training_ready",
+      "estimator_assisted_localizer_ready"
+    ],
+    "overall_readiness": [
+      "schema_checks_pass",
+      "labels_checks_pass",
+      "realism_v2_pass",
+      "angular_realism_pass",
+      "missing_calibration_pass",
+      "batch_balance_pass",
+      "estimator_scoring_pass",
+      "split_generation_pass",
+      "estimator_training_ready",
+      "identifier_training_ready",
+      "detector_training_ready",
+      "cyber_detector_training_ready",
+      "physical_detector_training_ready",
+      "classifier_training_ready",
+      "localizer_training_ready",
+      "estimator_assisted_localizer_ready"
+    ]
+  },
+  "flags": {
+    "angular_realism_pass": true,
+    "batch_balance_pass": true,
+    "classifier_training_ready": true,
+    "cyber_detector_training_ready": true,
+    "detector_training_ready": true,
+    "estimator_assisted_localizer_ready": true,
+    "estimator_scoring_pass": true,
+    "estimator_training_ready": true,
+    "identifier_training_ready": true,
+    "labels_checks_pass": true,
+    "localizer_training_ready": true,
+    "missing_calibration_pass": true,
+    "physical_detector_training_ready": true,
+    "realism_v2_pass": true,
+    "schema_checks_pass": true,
+    "split_generation_pass": true
+  },
+  "reasons": {
+    "downstream_all_ready": [],
+    "overall_readiness": []
+  }
+}

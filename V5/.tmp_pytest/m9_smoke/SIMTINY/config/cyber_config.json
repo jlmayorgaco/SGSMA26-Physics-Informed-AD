@@ -1,0 +1,20 @@
+{
+  "cyber_events": [
+    {
+      "duration_s": 1.0,
+      "end_time_s": 5.0,
+      "event_id": "C001",
+      "event_label": 5,
+      "event_type": "missing_data",
+      "params": {},
+      "start_time_s": 4.0,
+      "subtype": "full_dropout",
+      "target_channels": [
+        "ALL"
+      ],
+      "target_pmus": [
+        "BUS29"
+      ]
+    }
+  ]
+}

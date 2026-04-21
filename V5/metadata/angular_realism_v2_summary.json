@@ -1,0 +1,107 @@
+{
+  "angle_circular_consistency_pass": true,
+  "angle_distribution_pass": true,
+  "angle_increment_pass": true,
+  "angle_wrap_behavior_pass": true,
+  "bus_outliers": [
+    {
+      "bus": "BUS5",
+      "current_phase_consistency_delta_deg": 119.9494743762063,
+      "mean_derivative_autocorr_delta": 1.3430269390938407,
+      "mean_increment_wasserstein_deg": 4.473809043429893,
+      "mean_resultant_length_delta": 0.96039725828834,
+      "mean_wrap_event_rate_delta": 0.0031194844641464527,
+      "mean_wrapped_error_deg": 88.90891921246953,
+      "outlier_score": 2.3504102549720742,
+      "p95_wrapped_error_deg": 170.71574524432606,
+      "voltage_phase_consistency_delta_deg": 118.90140247193882
+    },
+    {
+      "bus": "BUS29",
+      "current_phase_consistency_delta_deg": 120.09715657777431,
+      "mean_derivative_autocorr_delta": 1.4908078504849795,
+      "mean_increment_wasserstein_deg": 2.034885089230975,
+      "mean_resultant_length_delta": 0.9810268377006928,
+      "mean_wrap_event_rate_delta": 0.0010064159013712416,
+      "mean_wrapped_error_deg": 88.63571115363773,
+      "outlier_score": 0.8576171108051559,
+      "p95_wrapped_error_deg": 170.82902625502027,
+      "voltage_phase_consistency_delta_deg": 119.83095728061014
+    },
+    {
+      "bus": "BUS22",
+      "current_phase_consistency_delta_deg": 120.12789803037425,
+      "mean_derivative_autocorr_delta": 1.4972141188468446,
+      "mean_increment_wasserstein_deg": 2.04152291628423,
+      "mean_resultant_length_delta": 0.9763446252847315,
+      "mean_wrap_event_rate_delta": 0.0009848578111535148,
+      "mean_wrapped_error_deg": 88.39224836116445,
+      "outlier_score": -0.4726496061352831,
+      "p95_wrapped_error_deg": 170.8438148117112,
+      "voltage_phase_consistency_delta_deg": 120.38221923136032
+    },
+    {
+      "bus": "BUS6",
+      "current_phase_consistency_delta_deg": 119.82442577013661,
+      "mean_derivative_autocorr_delta": 1.488216612251095,
+      "mean_increment_wasserstein_deg": 2.041076996441686,
+      "mean_resultant_length_delta": 0.9761405680902713,
+      "mean_wrap_event_rate_delta": 0.0009828009828009828,
+      "mean_wrapped_error_deg": 88.39116586152392,
+      "outlier_score": -0.4785643220073504,
+      "p95_wrapped_error_deg": 170.7782827499927,
+      "voltage_phase_consistency_delta_deg": 120.14928699108282
+    },
+    {
+      "bus": "BUS19",
+      "current_phase_consistency_delta_deg": 120.14680993449154,
+      "mean_derivative_autocorr_delta": 1.4794703337540664,
+      "mean_increment_wasserstein_deg": 2.0413340266943263,
+      "mean_resultant_length_delta": 0.9762519329183924,
+      "mean_wrap_event_rate_delta": 0.0009844942160964802,
+      "mean_wrapped_error_deg": 88.3866463331101,
+      "outlier_score": -0.5032587657213125,
+      "p95_wrapped_error_deg": 170.71460646366825,
+      "voltage_phase_consistency_delta_deg": 120.37456692659705
+    }
+  ],
+  "metric_interpretation": {
+    "circular_consistency": "Agreement in circular spread/mean resultant length and sin/cos embeddings.",
+    "distribution": "Wrapped absolute error in degrees after removing each signal circular mean.",
+    "increment": "Wasserstein distance between wrapped angle increments (degrees per frame proxy).",
+    "wrap_behavior": "Similarity of near-wrap transitions and phase-angle triad consistency."
+  },
+  "metrics_units": {
+    "autocorr_delta": "unitless",
+    "increment_wasserstein": "deg",
+    "mean_resultant_length_delta": "unitless",
+    "phase_consistency_delta": "deg",
+    "sin_cos_embedding_distance": "unitless",
+    "wrapped_error": "deg"
+  },
+  "overall_angular_realism_pass": true,
+  "scenario_count": 24,
+  "summary_metrics": {
+    "mean_circular_corr": 0.0029346466377728254,
+    "mean_circular_variance_delta": 0.9749309221333067,
+    "mean_increment_wasserstein_deg": 2.348590348328868,
+    "mean_phase_consistency_delta_deg": 119.98254110041833,
+    "mean_resultant_length_delta": 0.9749309221333067,
+    "mean_wrap_event_rate_delta": 0.001254275496283827,
+    "mean_wrapped_error_deg": 88.47875176044948,
+    "p50_wrapped_error_deg": 86.88174203405538,
+    "p95_wrapped_error_deg": 170.7814959328957
+  },
+  "thresholds": {
+    "circular_variance_delta_max": 1.2,
+    "derivative_autocorr_delta_max": 2.0,
+    "increment_wasserstein_deg_max": 50.0,
+    "mean_resultant_length_delta_max": 1.2,
+    "mean_wrapped_error_deg_max": 95.0,
+    "p50_wrapped_error_deg_max": 95.0,
+    "p95_wrapped_error_deg_max": 175.0,
+    "phase_consistency_delta_deg_max": 120.0,
+    "sin_cos_embedding_distance_max": 1.2,
+    "wrap_event_rate_delta_max": 0.1
+  }
+}

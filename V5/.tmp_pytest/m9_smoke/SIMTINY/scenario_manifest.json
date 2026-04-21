@@ -1,0 +1,157 @@
+{
+  "base_system": "IEEE39",
+  "calibration_reference": {
+    "fallback_used": false,
+    "reference_pmu_dir": "data\\RAW0001",
+    "reference_source": "RAW0001"
+  },
+  "concurrent_events": [],
+  "cyber_events": [
+    {
+      "duration_s": 1.0,
+      "end_time_s": 5.0,
+      "event_id": "C001",
+      "event_label": 5,
+      "event_type": "missing_data",
+      "params": {},
+      "start_time_s": 4.0,
+      "subtype": "full_dropout",
+      "target_channels": [
+        "ALL"
+      ],
+      "target_pmus": [
+        "BUS29"
+      ]
+    }
+  ],
+  "duration_s": 2.0,
+  "fps": 10.0,
+  "generated_at_utc": "2026-04-20T14:42:17.804405+00:00",
+  "mva_base": 100.0,
+  "noise_model": {
+    "calibrated_from_raw0001": true,
+    "per_channel_empirical_mean_std": true,
+    "profile": "raw0001_empirical",
+    "reference": "data\\RAW0001",
+    "seed": 101
+  },
+  "output_files": {
+    "all_bus_measurements_csv": ".tmp_pytest\\m9_smoke\\SIMTINY\\all_buses\\all_bus_measurements.csv",
+    "all_bus_truth_csv": ".tmp_pytest\\m9_smoke\\SIMTINY\\all_buses\\all_bus_truth.csv",
+    "all_bus_truth_parquet": ".tmp_pytest\\m9_smoke\\SIMTINY\\all_buses\\all_bus_truth.parquet",
+    "config": {
+      "cyber_config": ".tmp_pytest\\m9_smoke\\SIMTINY\\config\\cyber_config.json",
+      "noise_config": ".tmp_pytest\\m9_smoke\\SIMTINY\\config\\noise_config.json",
+      "physical_config": ".tmp_pytest\\m9_smoke\\SIMTINY\\config\\physical_config.json"
+    },
+    "full_state_target_csv": ".tmp_pytest\\m9_smoke\\SIMTINY\\all_buses\\full_state_target.csv",
+    "full_state_target_parquet": ".tmp_pytest\\m9_smoke\\SIMTINY\\all_buses\\full_state_target.parquet",
+    "labels": {
+      "event_frame_labels": ".tmp_pytest\\m9_smoke\\SIMTINY\\labels\\event_frame_labels.csv",
+      "event_intervals": ".tmp_pytest\\m9_smoke\\SIMTINY\\labels\\event_intervals.csv",
+      "localization_targets": ".tmp_pytest\\m9_smoke\\SIMTINY\\labels\\localization_targets.csv"
+    },
+    "metadata": {
+      "bus_index_map": ".tmp_pytest\\m9_smoke\\SIMTINY\\metadata\\bus_index_map.json",
+      "network_summary": ".tmp_pytest\\m9_smoke\\SIMTINY\\metadata\\network_summary.json",
+      "pmu_bus_mapping": ".tmp_pytest\\m9_smoke\\SIMTINY\\metadata\\pmu_bus_mapping.json",
+      "raw_vs_sim_comparison": ".tmp_pytest\\m9_smoke\\SIMTINY\\metadata\\raw_vs_sim_comparison.json",
+      "statistics_reference": ".tmp_pytest\\m9_smoke\\SIMTINY\\metadata\\statistics_reference.json"
+    },
+    "plots": {
+      "all_bus_overview": ".tmp_pytest\\m9_smoke\\SIMTINY\\plots\\all_bus_overview.png",
+      "cyber_event_overview": ".tmp_pytest\\m9_smoke\\SIMTINY\\plots\\cyber_event_overview.png",
+      "data_present_overview": ".tmp_pytest\\m9_smoke\\SIMTINY\\plots\\data_present_overview.png",
+      "pmu_overview": ".tmp_pytest\\m9_smoke\\SIMTINY\\plots\\pmu_overview.png",
+      "raw_vs_sim_stats": ".tmp_pytest\\m9_smoke\\SIMTINY\\plots\\raw_vs_sim_stats.png",
+      "scenario_timeline": ".tmp_pytest\\m9_smoke\\SIMTINY\\plots\\scenario_timeline.png"
+    },
+    "pmu_csvs": {
+      "BUS10": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus10_Competition_Data_sim.csv",
+      "BUS19": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus19_Competition_Data_sim.csv",
+      "BUS2": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus2_Competition_Data_sim.csv",
+      "BUS22": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus22_Competition_Data_sim.csv",
+      "BUS29": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus29_Competition_Data_sim.csv",
+      "BUS39": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus39_Competition_Data_sim.csv",
+      "BUS5": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus5_Competition_Data_sim.csv",
+      "BUS6": ".tmp_pytest\\m9_smoke\\SIMTINY\\pmu\\Bus6_Competition_Data_sim.csv"
+    },
+    "scenario_manifest": ".tmp_pytest\\m9_smoke\\SIMTINY\\scenario_manifest.json"
+  },
+  "physical_events": [],
+  "physical_truth_metadata": {
+    "andes_requested": false,
+    "andes_used": false,
+    "base_mva": 100.0,
+    "bus_kv_ll": {
+      "BUS1": 345.0,
+      "BUS10": 345.0,
+      "BUS11": 345.0,
+      "BUS12": 345.0,
+      "BUS13": 345.0,
+      "BUS14": 345.0,
+      "BUS15": 345.0,
+      "BUS16": 345.0,
+      "BUS17": 345.0,
+      "BUS18": 345.0,
+      "BUS19": 345.0,
+      "BUS2": 345.0,
+      "BUS20": 110.0,
+      "BUS21": 345.0,
+      "BUS22": 345.0,
+      "BUS23": 345.0,
+      "BUS24": 345.0,
+      "BUS25": 345.0,
+      "BUS26": 345.0,
+      "BUS27": 345.0,
+      "BUS28": 345.0,
+      "BUS29": 345.0,
+      "BUS3": 345.0,
+      "BUS30X1": 13.8,
+      "BUS31X1": 13.8,
+      "BUS32X1": 13.8,
+      "BUS33X1": 13.8,
+      "BUS34X1": 13.8,
+      "BUS35X1": 13.8,
+      "BUS36X1": 13.8,
+      "BUS37X1": 13.8,
+      "BUS38X1": 13.8,
+      "BUS39": 345.0,
+      "BUS4": 345.0,
+      "BUS5": 345.0,
+      "BUS6": 345.0,
+      "BUS7": 345.0,
+      "BUS8": 345.0,
+      "BUS9": 345.0
+    },
+    "physical_event_count": 0,
+    "rated_frequency_hz": 60.0,
+    "truth_source": "metadata_synthetic_dynamic"
+  },
+  "pmu_buses": [
+    "BUS39",
+    "BUS29",
+    "BUS10",
+    "BUS22",
+    "BUS19",
+    "BUS2",
+    "BUS5",
+    "BUS6"
+  ],
+  "profiles": {
+    "cyber_profile": "template",
+    "physical_profile": "template"
+  },
+  "rated_frequency_hz": 60.0,
+  "raw_vs_sim_summary": {
+    "heuristic_thresholds": {
+      "mean_delta_max": 0.35,
+      "std_delta_max": 2.5
+    },
+    "mean_normalized_mean_delta": 0.0017152087559412002,
+    "mean_normalized_std_delta": 0.5643454416463392
+  },
+  "scenario_id": "SIMTINY",
+  "scenario_template": "TEMPLATE_EVENT5_MISSING_ONLY",
+  "seed": 101
+}

@@ -1,0 +1,8 @@
+{
+  "mean_cos_distance": 0.9974318719261689,
+  "mean_sin_distance": 0.6084124663122105,
+  "mean_wrap_abs_diff": 88.48736210818511,
+  "pass_angular_realism": true,
+  "rows": 48,
+  "scenario_count": 24
+}
