@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "model_name": "event4_load_change_rule",
+  "model_type": "parameter_tuned_physics_rule",
+  "params": {
+    "min_duration_seconds": 30.0,
+    "min_current_span_pu": 0.15,
+    "min_i_peak_pu": 4.0,
+    "min_didt_pu_per_s": 0.5,
+    "max_didt_pu_per_s": 8.0,
+    "min_voltage_floor_pu": 0.95,
+    "max_voltage_span_pu": 0.03,
+    "max_freq_span_hz": 0.13,
+    "min_rocof_abs": 0.5,
+    "max_rocof_abs": 8.0
+  },
+  "feature_description": {
+    "current": "moderate sustained current step over a long window",
+    "voltage_guard": "voltage remains close to normal; no deep sag",
+    "frequency_guard": "frequency and ROCOF are moderate, unlike generation-change event3"
+  },
+  "training_metrics_raw0001": {
+    "tp_event4_as_event4": 1,
+    "fn_event4_as_non4": 0,
+    "fp_non4_as_event4": 0,
+    "tn_non4_as_non4": 22,
+    "accuracy": 1.0,
+    "precision_event4": 1.0,
+    "recall_event4": 1.0,
+    "specificity_non4": 1.0,
+    "f1_event4": 1.0
+  },
+  "temporal_validation_event0_event3_event0_event4_event0": {
+    "summary_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\simulated\\EVENT0_EVENT3_EVENT0_EVENT4_EVENT0_PROFILED\\detector_eval\\event3_event4_temporal_detection_summary.json"
+  }
+}

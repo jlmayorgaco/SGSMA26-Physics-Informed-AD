@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "model_name": "event2_line_outage_rule",
+  "model_type": "parameter_tuned_physics_rule",
+  "params": {
+    "i_peak_threshold_pu": 6.0,
+    "didt_threshold_pu_per_s": 5.0,
+    "min_voltage_floor_pu": 0.85,
+    "max_voltage_span_pu": 0.052,
+    "min_current_span_pu": 1.0,
+    "min_current_surge_phases": 3,
+    "min_didt_phases": 3,
+    "max_current_phase_spread_pu": 0.75,
+    "min_matching_buses": 1
+  },
+  "feature_description": {
+    "current": "three-phase current peak and current step in p.u.",
+    "derivative": "three-phase current derivative after event0 normalization + rolling mean 5",
+    "voltage_guard": "line outage has no deep three-phase voltage sag; voltage span remains small"
+  },
+  "training_metrics_raw0001": {
+    "tp_event2_as_event2": 1,
+    "fn_event2_as_non2": 0,
+    "fp_non2_as_event2": 0,
+    "tn_non2_as_non2": 22,
+    "accuracy": 1.0,
+    "precision_event2": 1.0,
+    "recall_event2": 1.0,
+    "specificity_non2": 1.0,
+    "f1_event2": 1.0
+  },
+  "temporal_validation_event0_event2_event0": {
+    "summary_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\simulated\\EVENT0_EVENT2_EVENT0_RANDOM_INSERT\\detector_eval\\event2_temporal_detection_summary.json"
+  }
+}

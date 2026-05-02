@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "model_name": "event1_fault_3phase_rule",
+  "model_type": "parameter_tuned_physics_rule",
+  "params": {
+    "v_sag_threshold_pu": 0.55,
+    "i_peak_threshold_pu": 4.0,
+    "didt_threshold_pu_per_s": 10.0,
+    "dvdt_threshold_pu_per_s": 3.7,
+    "min_voltage_sag_phases": 3,
+    "min_current_surge_phases": 3,
+    "min_didt_phases": 3,
+    "min_dvdt_phases": 3,
+    "max_voltage_phase_spread_pu": 0.08,
+    "max_current_phase_spread_pu": 0.5,
+    "min_matching_buses": 1,
+    "allowed_fault_buses": [
+      "BUS39"
+    ]
+  },
+  "feature_description": {
+    "voltage": "three-phase voltage sag in unfiltered p.u. so window starts do not hide the first sag samples",
+    "current": "three-phase current peak in unfiltered p.u.",
+    "derivatives": "max absolute dV/dt and dI/dt after event0 normalization + rolling mean 5",
+    "symmetry": "phase spread limits avoid single-phase bad-data/event7 signatures",
+    "bus_scope": "event1 RAW001/ANDES-profiled scenario is constrained to BUS39"
+  },
+  "training_metrics_raw0001": {
+    "tp_event1_as_event1": 1,
+    "fn_event1_as_non1": 0,
+    "fp_non1_as_event1": 0,
+    "tn_non1_as_non1": 22,
+    "accuracy": 1.0,
+    "precision_event1": 1.0,
+    "recall_event1": 1.0,
+    "specificity_non1": 1.0,
+    "f1_event1": 1.0
+  },
+  "validation_metrics_andes_profiled_event1_bus39": {
+    "tp_event1_as_event1": 1,
+    "fn_event1_as_non1": 0,
+    "fp_non1_as_event1": 0,
+    "tn_non1_as_non1": 0,
+    "accuracy": 1.0,
+    "recall_event1": 1.0
+  },
+  "validation_event0_on_andes_profiled_event1_bus39": {
+    "expected_label": "non0",
+    "pred_label": "non0",
+    "pred_non0": true,
+    "outside_rate": 0.9731543624161074,
+    "outside_rate_threshold": 0.2976744061554274
+  }
+}

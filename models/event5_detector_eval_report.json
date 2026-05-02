@@ -1,0 +1,46 @@
+{
+  "timestamp_gap": {
+    "exact_event5_from_chunk_name": {
+      "tp_event5_as_event5": 0,
+      "fn_event5_as_non5": 4,
+      "fp_non5_as_event5": 0,
+      "tn_non5_as_non5": 19,
+      "accuracy": 0.8260869565217391,
+      "precision_event5": 0.0,
+      "recall_event5": 0.0,
+      "specificity_non5": 1.0
+    },
+    "missing_data_family_event5_or_event6_or_DATA_PRESENT0": {
+      "tp_missing_as_missing": 0,
+      "fn_missing_as_nonmissing": 5,
+      "fp_nonmissing_as_missing": 0,
+      "tn_nonmissing_as_nonmissing": 18,
+      "accuracy": 0.782608695652174,
+      "precision_missing": 0,
+      "recall_missing": 0.0
+    },
+    "predictions_csv": "models/event5_timestamp_gap_predictions.csv"
+  },
+  "nanmask": {
+    "exact_event5_from_chunk_name": {
+      "tp_event5_as_event5": 4,
+      "fn_event5_as_non5": 0,
+      "fp_non5_as_event5": 1,
+      "tn_non5_as_non5": 18,
+      "accuracy": 0.9565217391304348,
+      "precision_event5": 0.8,
+      "recall_event5": 1.0,
+      "specificity_non5": 0.9473684210526315
+    },
+    "missing_data_family_event5_or_event6_or_DATA_PRESENT0": {
+      "tp_missing_as_missing": 5,
+      "fn_missing_as_nonmissing": 0,
+      "fp_nonmissing_as_missing": 0,
+      "tn_nonmissing_as_nonmissing": 18,
+      "accuracy": 1.0,
+      "precision_missing": 1.0,
+      "recall_missing": 1.0
+    },
+    "predictions_csv": "models/event5_nanmask_predictions.csv"
+  }
+}

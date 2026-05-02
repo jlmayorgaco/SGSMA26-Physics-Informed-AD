@@ -1,0 +1,374 @@
+{
+  "model_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\models\\unified_event_detector\\unified_event_detector.pkl",
+  "training_matrix_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\models\\unified_event_detector\\unified_event_detector_training_matrix.csv",
+  "best_model": "random_forest",
+  "n_samples": 23,
+  "n_features": 176,
+  "raw001_target_distribution": {
+    "0": 11,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 4,
+    "6": 1,
+    "7": 3
+  },
+  "model_results": {
+    "random_forest": {
+      "accuracy_train_resubstitution": 1.0,
+      "macro_f1_train_resubstitution": 1.0,
+      "labels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "confusion_rows_true_cols_pred": [
+        [
+          11,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3
+        ]
+      ]
+    },
+    "multinomial_logistic": {
+      "accuracy_train_resubstitution": 1.0,
+      "macro_f1_train_resubstitution": 1.0,
+      "labels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "confusion_rows_true_cols_pred": [
+        [
+          11,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3
+        ]
+      ]
+    }
+  },
+  "top_features": [
+    {
+      "feature": "BUS29_dv_abs_max",
+      "importance": 0.022690476190476185
+    },
+    {
+      "feature": "GLOBAL_dv_abs_max_min",
+      "importance": 0.020886904761904766
+    },
+    {
+      "feature": "GLOBAL_di_abs_max_min",
+      "importance": 0.017568070818070824
+    },
+    {
+      "feature": "missing_bus_count",
+      "importance": 0.01475274122807018
+    },
+    {
+      "feature": "BUS2_v_min",
+      "importance": 0.013336904761904767
+    },
+    {
+      "feature": "GLOBAL_i_span_mean",
+      "importance": 0.012713099400599403
+    },
+    {
+      "feature": "BUS5_i_max",
+      "importance": 0.011005952380952382
+    },
+    {
+      "feature": "GLOBAL_z_min_max",
+      "importance": 0.010996031746031745
+    },
+    {
+      "feature": "GLOBAL_di_abs_max_mean",
+      "importance": 0.010724898182957396
+    },
+    {
+      "feature": "GLOBAL_dv_abs_max_mean",
+      "importance": 0.010652192982456139
+    },
+    {
+      "feature": "BUS29_di_abs_max",
+      "importance": 0.010315476190476191
+    },
+    {
+      "feature": "missing_fraction",
+      "importance": 0.010273809523809525
+    },
+    {
+      "feature": "GLOBAL_rocof_abs_max_max",
+      "importance": 0.00987240537240537
+    },
+    {
+      "feature": "BUS6_i_max",
+      "importance": 0.009664718614718616
+    },
+    {
+      "feature": "BUS10_z_span",
+      "importance": 0.009625000000000002
+    },
+    {
+      "feature": "BUS6_z_span",
+      "importance": 0.009221611721611721
+    },
+    {
+      "feature": "BUS5_dv_abs_max",
+      "importance": 0.009207589285714286
+    },
+    {
+      "feature": "BUS29_z_min",
+      "importance": 0.009204156223893067
+    },
+    {
+      "feature": "BUS5_i_min",
+      "importance": 0.009148809523809524
+    },
+    {
+      "feature": "GLOBAL_i_span_max",
+      "importance": 0.009094922969187675
+    },
+    {
+      "feature": "BUS6_v_max",
+      "importance": 0.008943452380952378
+    },
+    {
+      "feature": "BUS22_freq_span",
+      "importance": 0.008783225108225106
+    },
+    {
+      "feature": "BUS22_rocof_abs_max",
+      "importance": 0.008605952380952383
+    },
+    {
+      "feature": "BUS10_i_max",
+      "importance": 0.008537114845938379
+    },
+    {
+      "feature": "BUS5_rocof_abs_max",
+      "importance": 0.008431929181929181
+    },
+    {
+      "feature": "BUS2_dv_abs_max",
+      "importance": 0.008356516290726817
+    },
+    {
+      "feature": "GLOBAL_freq_span_mean",
+      "importance": 0.008291666666666664
+    },
+    {
+      "feature": "BUS10_z_min",
+      "importance": 0.008097943722943724
+    },
+    {
+      "feature": "BUS10_v_min",
+      "importance": 0.008097619047619051
+    },
+    {
+      "feature": "GLOBAL_rocof_abs_max_min",
+      "importance": 0.007982142857142856
+    },
+    {
+      "feature": "BUS19_i_min",
+      "importance": 0.007982142857142854
+    },
+    {
+      "feature": "BUS6_di_abs_max",
+      "importance": 0.007869505494505493
+    },
+    {
+      "feature": "BUS6_v_min",
+      "importance": 0.007748051948051948
+    },
+    {
+      "feature": "GLOBAL_di_abs_max_max",
+      "importance": 0.0077330169830169835
+    },
+    {
+      "feature": "BUS19_rocof_abs_max",
+      "importance": 0.007666666666666664
+    },
+    {
+      "feature": "BUS22_i_max",
+      "importance": 0.007666666666666664
+    },
+    {
+      "feature": "BUS29_freq_span",
+      "importance": 0.007607142857142856
+    },
+    {
+      "feature": "BUS6_i_span",
+      "importance": 0.007522186147186146
+    },
+    {
+      "feature": "BUS29_z_span",
+      "importance": 0.0073839947089947115
+    },
+    {
+      "feature": "BUS22_i_min",
+      "importance": 0.007339285714285712
+    }
+  ],
+  "validation_warning": "This first unified ML model is trained on RAW001 chunks only. It is physics-feature based, but RAW002 generalization still requires more simulated/profiled scenarios and holdout validation."
+}

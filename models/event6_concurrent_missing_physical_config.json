@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "model_name": "event6_concurrent_missing_physical_rule",
+  "model_type": "composite_rule",
+  "rule": {
+    "missing_data": "DATA_PRESENT == 0 or any measurement NaN in any PMU stream",
+    "physical_event": "any event1/event2/event3/event4 detector is positive",
+    "event6": "missing_data AND physical_event",
+    "event5_only": "missing_data AND NOT physical_event"
+  },
+  "validation": {
+    "note": "RAW0001 has no chunks named event6. The proxy target follows the guideline: missing data plus a physical event label 1-4.",
+    "proxy_event6_metrics": {
+      "tp_event6_as_event6": 1,
+      "fn_event6_as_non6": 0,
+      "fp_non6_as_event6": 0,
+      "tn_non6_as_non6": 22,
+      "accuracy": 1.0,
+      "precision_event6": 1.0,
+      "recall_event6": 1.0,
+      "specificity_non6": 1.0,
+      "f1_event6": 1.0
+    },
+    "predicted_event6_chunks": [
+      "chunk19_event3"
+    ],
+    "proxy_event6_chunks": [
+      "chunk19_event3"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "model_name": "event3_generation_change_rule",
+  "model_type": "parameter_tuned_physics_rule",
+  "params": {
+    "min_duration_seconds": 5.0,
+    "min_freq_span_hz": 0.1,
+    "min_rocof_abs": 5.0,
+    "min_bus2_freq_span_hz": 0.05,
+    "min_bus2_rocof_abs": 5.0,
+    "min_bus2_didt": 10.0,
+    "min_global_didt": 10.0
+  },
+  "feature_description": {
+    "frequency": "sustained/global frequency span and final-initial shift",
+    "rocof": "large ROCOF peak during generation imbalance",
+    "bus2": "BUS2-specific frequency/ROCOF/current derivative evidence",
+    "duration": "generation change persists longer than transient fault/outage windows"
+  },
+  "training_metrics_raw0001": {
+    "tp_event3_as_event3": 2,
+    "fn_event3_as_non3": 0,
+    "fp_non3_as_event3": 0,
+    "tn_non3_as_non3": 21,
+    "accuracy": 1.0,
+    "precision_event3": 1.0,
+    "recall_event3": 1.0,
+    "specificity_non3": 1.0,
+    "f1_event3": 1.0
+  },
+  "temporal_validation_event0_event3_event0_event4_event0": {
+    "summary_path": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\simulated\\EVENT0_EVENT3_EVENT0_EVENT4_EVENT0_PROFILED\\detector_eval\\event3_event4_temporal_detection_summary.json"
+  }
+}
