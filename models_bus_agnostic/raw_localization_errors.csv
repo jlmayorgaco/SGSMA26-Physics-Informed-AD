@@ -1,0 +1,3 @@
+chunk_name,true_event,pred_event,true_location,pred_location,electrical_distance
+chunk14_event2,2,2,LINE23-24,LINE22-35,0.0038352737043957
+chunk22_event4,4,4,BUS7,BUS12,0.034728265669348
