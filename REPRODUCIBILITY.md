@@ -14,6 +14,13 @@ Run inference on any folder containing `Bus*.csv` PMU files:
 python main.py --input-dir <RAW_FOLDER> --output <RAW_FOLDER>\predictions.csv
 ```
 
+When running `main.py` from the extracted submission ZIP and the RAW folder is outside that extracted folder, pass an absolute input path:
+
+```powershell
+$raw = (Resolve-Path .\data\RAW0001).Path
+python .\submission_check\main.py --input-dir $raw --output .\submission_check\predictions.csv
+```
+
 The output CSV schema is:
 
 ```text

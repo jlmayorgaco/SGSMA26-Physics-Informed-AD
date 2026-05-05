@@ -148,8 +148,6 @@ Classifier macro-F1:      1.0000
 Localizer Top-1 exact:    0.6667
 ```
 
-Important note: an alternative RAW guardrail/ranker experiment reached RAW localization Top-1 `0.8333`, but it was not selected as the final general model because its SIM event3 localization performance was weak. The final runtime prioritizes the validated SIM+RAW ML bundle rather than a RAW-specific override.
-
 ## Guideline Metrics
 
 The SGSMA guide asks for detection, classification, localization, and efficiency/model-complexity reporting. The currently available metrics are below.
@@ -283,6 +281,7 @@ Observed local runtime checks:
 ```text
 SIM00642 extracted zip test: route=ml_windowed, model=sgms_extra_trees_windowed_v2
 RAW0001 extracted zip test: generated timestamp-aligned output successfully
+RAW0001 timing: 823.67 s inference for 89.65 min of PMU data, about 9.19 s compute per PMU-data minute
 ```
 
 ## Validation Commands

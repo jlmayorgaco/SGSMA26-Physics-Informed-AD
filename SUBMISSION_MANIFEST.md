@@ -16,8 +16,7 @@
 ## Documentation
 
 - `README.md`
-- `Final.md`
-- `report.md`
+- `MODEL.md`
 - `REPRODUCIBILITY.md`
 - `SUBMISSION_MANIFEST.md`
 

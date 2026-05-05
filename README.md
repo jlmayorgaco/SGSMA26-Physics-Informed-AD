@@ -16,10 +16,9 @@ src/models/hybrid_submission.py Final windowed ML runtime with physics fallback 
 src/models/bus_agnostic.py      Runtime bus-agnostic physics model
 src/features/pmu_discovery.py   Dynamic PMU bus discovery utilities
 models/                         Validated ExtraTrees detector/classifier/localizer bundle
-models_bus_agnostic/            Final metrics and runtime config
+models_bus_agnostic/            Physics fallback config and legacy RAW metric tables
 figures/                        IEEE-ready report figures
-Final.md                        Final method and artifact summary
-report.md                       Full technical report notes
+MODEL.md                        Final model details, metrics, and efficiency notes
 sgsma_2026_final_submission.zip Minimal reviewer package
 ```
 
@@ -99,7 +98,8 @@ The compact submission archive can be tested directly:
 
 ```powershell
 Expand-Archive .\sgsma_2026_final_submission.zip -DestinationPath .\submission_check -Force
-python .\submission_check\main.py --input-dir data\RAW0001 --output .\submission_check\predictions.csv
+$raw = (Resolve-Path .\data\RAW0001).Path
+python .\submission_check\main.py --input-dir $raw --output .\submission_check\predictions.csv
 ```
 
 Expected output columns:
@@ -120,25 +120,23 @@ The full historical test suite includes legacy migration/regression tests that m
 
 ## Report Metrics and Figures
 
-Final metrics required by `guidelines.pdf` are stored in:
+Final selected-model metrics are stored in:
 
 ```text
-models_bus_agnostic/guidelines_metrics.json
-models_bus_agnostic/raw_detection_confusion_matrix.csv
-models_bus_agnostic/raw_event_confusion_matrix.csv
-models_bus_agnostic/raw_event_per_class_metrics.csv
-models_bus_agnostic/raw_localization_errors.csv
+models/final_metrics.json
 ```
 
 IEEE-ready figures are in `figures/` as both `.pdf` and `.png`.
 
-Current RAW0001 local validation summary:
+Current selected-model validation summary:
 
 ```text
-Detection abnormal F1: 1.0000
-Event classification weighted F1: 1.0000
-Event classification macro F1 over observed RAW0001 classes: 1.0000
-Localization Top-1: 0.8333
+SIM detector accuracy:        0.9693
+SIM classifier macro-F1:      0.9598
+SIM localization Top-1:       0.8524
+RAW0001 detector accuracy:    1.0000
+RAW0001 classifier macro-F1:  1.0000
+RAW0001 localization Top-1:   0.6667
 ```
 
 ## Bus-Agnostic Design
