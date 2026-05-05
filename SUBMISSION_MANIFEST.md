@@ -32,6 +32,7 @@ TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 ## Notes
 
 - PMU buses are discovered from `Bus*.csv` filenames at runtime.
-- The final router uses the validated ExtraTrees/hybrid ML bundle for SIM/chunk-style inputs and the bus-agnostic physics runtime for long RAW streams.
+- The final runtime applies the validated ExtraTrees/hybrid ML bundle in 30 s windows for all inputs.
+- The bus-agnostic physics runtime is retained only as a missing-bundle fallback.
 - The final path does not hardcode the RAW0001 PMU placement.
 - The compact archive intentionally excludes local training workbench outputs and raw validation data.

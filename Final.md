@@ -20,7 +20,7 @@ The required output schema from `guidelines.pdf` is:
 TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 ```
 
-The reviewer entrypoint is now a hybrid router. SIM/chunk-style inputs use the validated ExtraTrees/hybrid ML bundle in `models/`; long RAW streams use the bus-agnostic physics runtime in `models_bus_agnostic/`. PMU buses are inferred from `Bus*.csv` filenames and feature columns at runtime.
+The reviewer entrypoint now applies the validated ExtraTrees/hybrid ML bundle in `models/` over fixed 30 s windows for all inputs. The bus-agnostic physics runtime in `models_bus_agnostic/` is retained only as a fallback if the ML bundle is unavailable. PMU buses are inferred from `Bus*.csv` filenames and feature columns at runtime.
 
 ## Design Principle
 
@@ -35,9 +35,9 @@ This is implemented in `src/features/pmu_discovery.py`, `src/models/bus_agnostic
 
 The final architecture has three layers:
 
-1. Runtime hybrid inference
-   - Routes short SIM/chunk inputs to the validated ExtraTrees detector/classifier/localizer bundle.
-   - Routes long RAW streams to the physics/topology runtime for timestamp-aligned predictions.
+1. Runtime ML inference
+   - Applies the validated ExtraTrees detector/classifier/localizer bundle in fixed 30 s windows.
+   - Broadcasts each window prediction to the timestamp-aligned output rows in that window.
    - Reads arbitrary `Bus*.csv` files.
    - Infers observed PMU buses dynamically.
    - Extracts robust per-PMU and global features.
@@ -239,8 +239,8 @@ RAW0001 is used only for local reporting and promotion checks. The final entrypo
 
 Reviewer-facing runtime path:
 
-- Active ML bundle: ExtraTrees detector/classifier/localizer in `models/` for SIM/chunk-style inputs.
-- Physics fallback: `models_bus_agnostic` for long RAW streams.
+- Active ML bundle: ExtraTrees detector/classifier/localizer in `models/`.
+- Physics fallback: `models_bus_agnostic`, used only if the ML bundle is unavailable.
 - Required runtime dependencies: pandas, numpy, scipy, scikit-learn, joblib, matplotlib.
 - Windowing: per-timestamp robust features plus short rolling/dynamic features for training/evaluation pipelines; runtime prediction preserves original timestamp alignment.
 - Hardware used for validation: Windows 11, Intel64/AMD64 CPU, 22 logical CPUs, CPU-only.

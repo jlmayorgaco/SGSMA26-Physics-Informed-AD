@@ -16,7 +16,7 @@ The generated prediction file follows the `guidelines.pdf` schema:
 TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 ```
 
-The final runtime path is a hybrid router. SIM/chunk-style inputs use the validated ExtraTrees/hybrid ML bundle; long RAW streams use the bus-agnostic physics runtime. The code infers PMU buses from filenames and columns, then uses them as topology coordinates for feature computation.
+The final runtime path applies the validated ExtraTrees/hybrid ML bundle in fixed 30 s windows for all inputs. The bus-agnostic physics runtime is retained only as a fallback if the ML bundle is unavailable. The code infers PMU buses from filenames and columns, then uses them as topology coordinates for feature computation.
 
 ## 2. Bus-Agnostic Contract
 
@@ -279,7 +279,7 @@ Most relevant localization features:
 
 ## 6. Models Used
 
-### 6.1 Runtime Hybrid Submission Model
+### 6.1 Runtime Windowed ML Submission Model
 
 Files:
 
@@ -289,8 +289,8 @@ Files:
 
 Type:
 
-- ExtraTrees/hybrid ML for SIM/chunk-style inputs.
-- Rule-calibrated, physics-informed fallback for long RAW streams.
+- ExtraTrees/hybrid ML applied in fixed 30 s windows.
+- Rule-calibrated, physics-informed fallback only when the ML bundle is unavailable.
 - Uses robust PMU and global features.
 - Reads arbitrary PMU bus placement from input files.
 
@@ -298,7 +298,7 @@ Purpose:
 
 - Reviewer-facing entrypoint.
 - Produces valid SGSMA prediction CSV.
-- Uses the strongest validated ML route where appropriate while preserving RAW timestamp alignment.
+- Uses the validated ML route consistently while preserving timestamp-aligned CSV output.
 
 ### 6.2 Legacy ExtraTrees Detector and Classifier
 

@@ -67,10 +67,10 @@ def parse_args() -> argparse.Namespace:
         help="Validated ML model bundle. Defaults to models when present.",
     )
     parser.add_argument(
-        "--ml-max-duration-s",
+        "--ml-window-seconds",
         type=float,
-        default=120.0,
-        help="Use the ML scenario/chunk model for inputs up to this duration; longer RAW streams use the physics runtime.",
+        default=30.0,
+        help="Window length used by the validated ML model for all inputs.",
     )
     return parser.parse_args()
 
@@ -88,7 +88,7 @@ def main() -> None:
         topology_dir=topology_dir,
         physics_model_dir=model_dir,
         ml_model_dir=ml_model_dir,
-        ml_max_duration_s=args.ml_max_duration_s,
+        ml_window_seconds=args.ml_window_seconds,
     )
     print(json.dumps(diagnostics, indent=2))
 

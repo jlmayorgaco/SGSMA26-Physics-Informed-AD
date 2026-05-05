@@ -1,4 +1,4 @@
-"""Production submission router for the strongest available SGSMA models."""
+"""Production submission runtime for the validated SGSMA ML bundle."""
 
 from __future__ import annotations
 
@@ -112,13 +112,127 @@ def _broadcast_prediction(
     return predictions, diagnostics
 
 
+def _window_bounds(frames: dict[int, pd.DataFrame], window_seconds: float) -> list[tuple[float, float]]:
+    starts = []
+    ends = []
+    for frame in frames.values():
+        ts = pd.to_numeric(frame["TIMESTAMP"], errors="coerce")
+        starts.append(float(ts.min()))
+        ends.append(float(ts.max()))
+    start = min(starts)
+    end = max(ends)
+    if end <= start:
+        return [(start, end)]
+    bounds = []
+    cursor = start
+    while cursor <= end:
+        nxt = min(cursor + float(window_seconds), end)
+        bounds.append((cursor, nxt))
+        if nxt >= end:
+            break
+        cursor = nxt
+    return bounds
+
+
+def _slice_frames(frames: dict[int, pd.DataFrame], start: float, end: float, include_end: bool) -> dict[int, pd.DataFrame]:
+    out: dict[int, pd.DataFrame] = {}
+    for bus, frame in frames.items():
+        ts = pd.to_numeric(frame["TIMESTAMP"], errors="coerce")
+        mask = (ts >= start) & ((ts <= end) if include_end else (ts < end))
+        segment = frame.loc[mask].copy()
+        if not segment.empty:
+            out[bus] = segment
+    return out
+
+
+def _run_ml_windows(
+    frames: dict[int, pd.DataFrame],
+    model: SGSMAFinalModel,
+    output_csv: Path,
+    input_dir: Path,
+    window_seconds: float,
+    started_at: float,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    prediction_parts = []
+    window_summaries = []
+    bounds = _window_bounds(frames, window_seconds)
+    for idx, (start, end) in enumerate(bounds):
+        include_end = idx == len(bounds) - 1
+        segment_frames = _slice_frames(frames, start, end, include_end=include_end)
+        if not segment_frames:
+            continue
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
+            base_features, dynamic_features = _build_feature_rows(segment_frames)
+            pred = model.predict_from_features(base_features, dynamic_features).iloc[0]
+            topk = model.predict_location_topk(base_features, dynamic_features, k=3)[0]
+        event = int(pred["pred_event"])
+        location = str(pred["pred_location"])
+        for bus, frame in sorted(segment_frames.items()):
+            prediction_parts.append(
+                pd.DataFrame(
+                    {
+                        "TIMESTAMP": pd.to_numeric(frame["TIMESTAMP"], errors="coerce").to_numpy(dtype=float),
+                        "Bus": int(bus),
+                        "Predicted_Event": event,
+                        "Predicted_Location": location,
+                    }
+                )
+            )
+        window_summaries.append(
+            {
+                "window_index": idx,
+                "start_time_s": float(start),
+                "end_time_s": float(end),
+                "predicted_event": event,
+                "predicted_location": location,
+                "top3_location": topk,
+            }
+        )
+
+    if prediction_parts:
+        predictions = pd.concat(prediction_parts, ignore_index=True).sort_values(["TIMESTAMP", "Bus"], kind="mergesort")
+    else:
+        predictions = pd.DataFrame(columns=OFFICIAL_COLUMNS)
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    predictions[OFFICIAL_COLUMNS].to_csv(output_csv, index=False)
+    diagnostics = {
+        "input_dir": str(input_dir.resolve()),
+        "output_csv": str(output_csv.resolve()),
+        "buses_detected": sorted(int(bus) for bus in frames),
+        "model": "sgms_extra_trees_windowed_v2",
+        "route": "ml_windowed",
+        "window_seconds": float(window_seconds),
+        "n_windows": int(len(window_summaries)),
+        "inference_seconds": float(time.perf_counter() - started_at),
+        "window_predictions": window_summaries,
+        "summary": {
+            "n_rows": int(len(predictions)),
+            "n_timestamps": int(predictions["TIMESTAMP"].nunique()) if not predictions.empty else 0,
+            "event_counts": {
+                str(k): int(v) for k, v in predictions["Predicted_Event"].value_counts().sort_index().items()
+            }
+            if not predictions.empty
+            else {},
+            "location_counts_top10": {
+                str(k): int(v) for k, v in predictions["Predicted_Location"].value_counts().head(10).items()
+            }
+            if not predictions.empty
+            else {},
+        },
+        "schema": {"output_columns": OFFICIAL_COLUMNS},
+    }
+    (output_csv.parent / "prediction_diagnostics.json").write_text(json.dumps(diagnostics, indent=2), encoding="utf-8")
+    return predictions, diagnostics
+
+
 def run_hybrid_submission_prediction(
     input_dir: Path,
     output_csv: Path | None = None,
     topology_dir: Path | None = None,
     physics_model_dir: Path | None = None,
     ml_model_dir: Path | None = None,
-    ml_max_duration_s: float = 120.0,
+    ml_window_seconds: float = 30.0,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     input_dir = Path(input_dir)
     output_csv = Path(output_csv) if output_csv is not None else input_dir / "predictions.csv"
@@ -126,27 +240,13 @@ def run_hybrid_submission_prediction(
 
     t0 = time.perf_counter()
     frames = _load_frames(input_dir)
-    duration_s = _duration_seconds(frames)
     has_ml_bundle = (ml_model_dir / "final_model_config.json").exists()
 
-    if has_ml_bundle and duration_s <= float(ml_max_duration_s):
+    if has_ml_bundle:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
             model = SGSMAFinalModel(ml_model_dir)
-            base_features, dynamic_features = _build_feature_rows(frames)
-            pred = model.predict_from_features(base_features, dynamic_features).iloc[0]
-            topk = model.predict_location_topk(base_features, dynamic_features, k=3)[0]
-        diagnostics = {
-            "input_dir": str(input_dir.resolve()),
-            "output_csv": str(output_csv.resolve()),
-            "buses_detected": sorted(int(bus) for bus in frames),
-            "model": "sgms_extra_trees_hybrid_v2",
-            "route": "ml_chunk",
-            "duration_s": float(duration_s),
-            "inference_seconds": float(time.perf_counter() - t0),
-            "top3_location": topk,
-        }
-        return _broadcast_prediction(frames, int(pred["pred_event"]), str(pred["pred_location"]), output_csv, diagnostics)
+        return _run_ml_windows(frames, model, output_csv, input_dir, ml_window_seconds, t0)
 
     predictions, diagnostics = run_bus_agnostic_prediction(
         input_dir=input_dir,
@@ -154,8 +254,8 @@ def run_hybrid_submission_prediction(
         topology_dir=topology_dir if topology_dir is not None else Path(__file__).resolve().parents[2] / "data" / "topology" / "ieee39",
         model_dir=physics_model_dir,
     )
-    diagnostics["route"] = "physics_long_raw"
-    diagnostics["duration_s"] = float(duration_s)
+    diagnostics["route"] = "physics_fallback_missing_ml_bundle"
+    diagnostics["duration_s"] = float(_duration_seconds(frames))
     diagnostics["inference_seconds"] = float(time.perf_counter() - t0)
     (output_csv.parent / "prediction_diagnostics.json").write_text(json.dumps(diagnostics, indent=2), encoding="utf-8")
     return predictions, diagnostics

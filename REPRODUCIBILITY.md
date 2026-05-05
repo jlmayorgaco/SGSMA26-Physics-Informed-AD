@@ -22,10 +22,11 @@ TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 
 The command also writes `prediction_diagnostics.json` next to the output CSV.
 
-The final entrypoint routes automatically:
+The final entrypoint applies the same ML runtime to all inputs:
 
-- SIM/chunk-style inputs up to 120 seconds use the validated ExtraTrees/hybrid ML bundle in `models/`.
-- Longer RAW streams use the bus-agnostic physics runtime.
+- Inputs are split into 30 s windows.
+- Each window is scored with the validated ExtraTrees/hybrid ML bundle in `models/`.
+- The bus-agnostic physics runtime is used only if the ML bundle is unavailable.
 
 ## Local Validation
 
