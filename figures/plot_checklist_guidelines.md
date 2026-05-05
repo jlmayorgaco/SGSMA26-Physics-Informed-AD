@@ -7,5 +7,6 @@ Explicit or strongly implied plots/tables requested by the guide:
 - Detection metrics including false alarms: covered by `fig04_raw001_task_summary`, `fig06_efficiency_summary`, and `models_bus_agnostic/guidelines_metrics.json`.
 - Localization metrics: covered by `fig05_localization_diagnostics` and `fig11_localizer_promotion_curve`.
 - Model complexity/runtime: covered by `fig06_efficiency_summary` and `guidelines_metrics.json`.
-- Training/validation curves: no neural epoch training curve exists for the final reviewer-facing physics model; the closest validation curve is `fig11_localizer_promotion_curve`, and RAW-vs-SIM validation comparison is `fig08_raw_sim_metric_lines`.
+- Training/validation curves: covered by `fig12_localizer_training_validation_curve` and `fig13_training_validation_curves`. The final reviewer-facing model is a zero-trainable-parameter physics/ranker pipeline rather than a neural epoch-trained model, so the report uses feature-ablation validation curves and loss proxies instead of fabricated epoch-loss curves.
 - RAW and simulation comparison: covered by `fig08_raw_sim_metric_lines`, `fig09_raw_sim_event_distribution_lines`, and `fig10_raw_sim_waveform_overlay`.
+- Guidelines coverage summary: covered by `fig14_guidelines_plot_coverage`.
