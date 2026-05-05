@@ -11,6 +11,9 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 FIGURES_DIR = ROOT / "figures"
 MODEL_DIR = ROOT / "models_bus_agnostic"
+FINAL_MODEL_DIR = ROOT / "models"
+FINAL_METRICS = FINAL_MODEL_DIR / "final_metrics.json"
+SUBMISSION_ZIP = ROOT / "sgsma_2026_final_submission.zip"
 RAW_DIR = ROOT / "data" / "RAW0001"
 SIM_DIR = ROOT / "workbench" / "simulated" / "sgsma_generated"
 SOURCE_FUSION_REPORT = (
@@ -71,11 +74,11 @@ FALLBACK_ABLATION = [
         "raw_localizer_top1": 0.6666666666666666,
     },
     {
-        "stage": "Final",
-        "variant": "final_guarded_ranker",
+        "stage": "Selected",
+        "variant": "base_v2+rolling+rls_kalman+graph_temporal",
         "n_features": 45162,
         "sim_localizer_top1": 0.8524451939291737,
-        "raw_localizer_top1": 0.8333333333333334,
+        "raw_localizer_top1": 0.6666666666666666,
     },
 ]
 
@@ -92,18 +95,34 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def final_metrics() -> dict:
+    if FINAL_METRICS.exists():
+        return load_json(FINAL_METRICS)["selected"]
+    return {
+        "sim_detector_accuracy": 0.9693333333333334,
+        "sim_classifier_accuracy": 0.9673333333333334,
+        "sim_classifier_macro_f1": 0.9597812293865824,
+        "sim_localizer_exact": 0.8524451939291737,
+        "raw_detector_accuracy": 1.0,
+        "raw_classifier_accuracy": 1.0,
+        "raw_classifier_macro_f1": 1.0,
+        "raw_localizer_exact": 0.6666666666666666,
+        "n_features": 45162,
+    }
+
+
 def plot_task_summary() -> None:
-    metrics = load_json(MODEL_DIR / "guidelines_metrics.json")
+    metrics = final_metrics()
     names = ["Detection", "Classification", "Localization"]
     values = [
-        float(metrics["task1_detection_normal_vs_abnormal"]["accuracy"]),
-        float(metrics["task2_event_classification"]["accuracy"]),
-        float(metrics["task3_localization"]["top1_accuracy"]),
+        float(metrics["raw_detector_accuracy"]),
+        float(metrics["raw_classifier_accuracy"]),
+        float(metrics["raw_localizer_exact"]),
     ]
     colors = ["#1b6ca8", "#2a9d8f", "#d1495b"]
     fig, ax = plt.subplots(figsize=(3.55, 2.6))
     bars = ax.bar(names, values, color=colors, width=0.58)
-    ax.set_title(f"{INPUT_LABEL} Validation Summary")
+    ax.set_title(f"{INPUT_LABEL} Validation Summary: Final ML Runtime")
     ax.set_ylabel("Score")
     ax.set_ylim(0, 1.08)
     ax.grid(True, axis="y", alpha=0.25, linewidth=0.5)
@@ -112,16 +131,81 @@ def plot_task_summary() -> None:
     save_figure(fig, "fig04_input_data_task_summary")
 
 
+def plot_efficiency_summary() -> None:
+    metrics = final_metrics()
+    zip_size_mb = SUBMISSION_ZIP.stat().st_size / (1024 * 1024) if SUBMISSION_ZIP.exists() else 33.0
+    efficiency_rows = [
+        ("Runtime route", "ml_windowed"),
+        ("Model family", "ExtraTrees"),
+        ("Window length", "30 s"),
+        ("Feature count", f"{int(metrics.get('n_features', 45162)):,}"),
+        ("ZIP size", f"{zip_size_mb:.1f} MiB"),
+        ("RAW false alarms/min", "0.0"),
+    ]
+
+    task_labels = ["Detector", "Classifier", "Localizer"]
+    sim_values = [
+        float(metrics["sim_detector_accuracy"]),
+        float(metrics["sim_classifier_macro_f1"]),
+        float(metrics["sim_localizer_exact"]),
+    ]
+    raw_values = [
+        float(metrics["raw_detector_accuracy"]),
+        float(metrics["raw_classifier_macro_f1"]),
+        float(metrics["raw_localizer_exact"]),
+    ]
+
+    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.85), gridspec_kw={"width_ratios": [1.0, 1.2]})
+
+    axes[0].axis("off")
+    axes[0].set_title("Runtime Efficiency")
+    table = axes[0].table(
+        cellText=[[name, value] for name, value in efficiency_rows],
+        colLabels=["Metric", "Value"],
+        loc="center",
+        cellLoc="left",
+        colWidths=[0.58, 0.42],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(8.4)
+    table.scale(1.0, 1.35)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_linewidth(0.45)
+        cell.set_edgecolor("#6c757d")
+        if row == 0:
+            cell.set_text_props(weight="bold", color="white")
+            cell.set_facecolor("#343a40")
+        elif row % 2 == 0:
+            cell.set_facecolor("#f8f9fa")
+
+    x = np.arange(len(task_labels))
+    width = 0.34
+    axes[1].bar(x - width / 2, sim_values, width=width, color="#1b6ca8", label="Simulation")
+    axes[1].bar(x + width / 2, raw_values, width=width, color="#d1495b", label=INPUT_LABEL)
+    axes[1].set_title("Selected Model Scores")
+    axes[1].set_ylabel("Score")
+    axes[1].set_ylim(0.6, 1.04)
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(task_labels)
+    axes[1].grid(True, axis="y", alpha=0.25, linewidth=0.5)
+    axes[1].legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)
+    for xpos, value in zip(np.r_[x - width / 2, x + width / 2], sim_values + raw_values):
+        axes[1].text(xpos, value + 0.015, f"{value:.3f}", ha="center", va="bottom", fontsize=7.6)
+
+    fig.suptitle("Final 30 s Windowed ExtraTrees Runtime", fontweight="bold", y=1.02)
+    save_figure(fig, "fig06_efficiency_summary")
+
+
 def plot_architecture() -> None:
     fig, ax = plt.subplots(figsize=(7.1, 2.8))
     ax.axis("off")
     boxes = [
         (0.02, 0.55, 0.18, 0.25, "Any Bus*.csv\nPMU folder"),
-        (0.25, 0.55, 0.20, 0.25, "Bus-agnostic\nfeature extraction"),
-        (0.50, 0.55, 0.20, 0.25, "Physics and\nranking rules"),
+        (0.25, 0.55, 0.20, 0.25, "30 s windowed\nfeature extraction"),
+        (0.50, 0.55, 0.20, 0.25, "ExtraTrees\nhierarchical ML"),
         (0.75, 0.55, 0.21, 0.25, "Submission CSV\nlabels + locations"),
-        (0.25, 0.12, 0.20, 0.22, "Topology metadata\nused as coordinates"),
-        (0.50, 0.12, 0.20, 0.22, "No fixed PMU\nplacement required"),
+        (0.25, 0.12, 0.20, 0.22, "Base V2 + dynamic\nfeature blocks"),
+        (0.50, 0.12, 0.20, 0.22, "Typed localizers\nand Top-3 diagnostics"),
     ]
     for x, y, w, h, text in boxes:
         ax.add_patch(plt.Rectangle((x, y), w, h, facecolor="#f8f9fa", edgecolor="#343a40", linewidth=1.0))
@@ -135,11 +219,11 @@ def plot_architecture() -> None:
     ]
     for start, end in arrows:
         ax.annotate("", xy=end, xytext=start, arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#343a40"})
-    ax.set_title("Bus-Agnostic Runtime Architecture", fontweight="bold", pad=8)
+    ax.set_title("Final Windowed ML Runtime Architecture", fontweight="bold", pad=8)
     ax.text(
         0.5,
         0.02,
-        "Bus IDs are used as topology coordinates only; no fixed input PMU placement is required.",
+        "The same 30 s ExtraTrees/hybrid ML runtime is applied to all inputs; physics is fallback only.",
         ha="center",
         va="bottom",
         fontsize=8.2,
@@ -148,19 +232,23 @@ def plot_architecture() -> None:
 
 
 def plot_raw_sim_metric_lines(curve: pd.DataFrame) -> None:
-    metrics = load_json(MODEL_DIR / "guidelines_metrics.json")
+    metrics = final_metrics()
     tasks = ["Detector", "Classifier", "Localizer"]
-    sim = [0.9693333333333334, 0.9597812293865824, float(curve["sim_localizer_top1"].iloc[-1])]
+    sim = [
+        float(metrics["sim_detector_accuracy"]),
+        float(metrics["sim_classifier_macro_f1"]),
+        float(metrics["sim_localizer_exact"]),
+    ]
     raw = [
-        float(metrics["task1_detection_normal_vs_abnormal"]["accuracy"]),
-        float(metrics["task2_event_classification"]["macro_f1_observed_classes_only"]),
-        float(metrics["task3_localization"]["top1_accuracy"]),
+        float(metrics["raw_detector_accuracy"]),
+        float(metrics["raw_classifier_macro_f1"]),
+        float(metrics["raw_localizer_exact"]),
     ]
     x = np.arange(len(tasks))
     fig, ax = plt.subplots(figsize=(3.55, 2.65))
     ax.plot(x, raw, marker="s", color="#d1495b", linewidth=1.9, label=f"{INPUT_LABEL} validation")
     ax.plot(x, sim, marker="o", color="#1b6ca8", linewidth=1.9, label="Simulation validation")
-    ax.set_title(f"{INPUT_LABEL} vs. Simulation Validation Metrics")
+    ax.set_title("Final ML Runtime: Input Data vs. Simulation")
     ax.set_ylabel("Score")
     ax.set_xticks(x)
     ax.set_xticklabels(tasks)
@@ -244,11 +332,13 @@ def plot_localizer_promotion() -> None:
         ]
     else:
         values = [0.6666666666666666, 0.75, 0.8333333333333334]
-    stages = ["Frozen", "Guarded", "Final"]
+    selected = final_metrics()["raw_localizer_exact"]
+    stages = ["Frozen ML", "Guarded RAW", "RAW override"]
     fig, ax = plt.subplots(figsize=(3.55, 2.65))
-    ax.plot(stages, values, color="#d1495b", marker="s", linewidth=1.9, label=f"{INPUT_LABEL} localizer")
-    ax.axhline(0.8524451939291737, color="#1b6ca8", linestyle="--", linewidth=1.5, label="Simulation reference")
-    ax.set_title("Localizer Promotion Curve")
+    ax.plot(stages, values, color="#a8a8a8", marker="s", linewidth=1.7, label="RAW-specific experiments")
+    ax.axhline(selected, color="#d1495b", linestyle="-", linewidth=1.8, label="Selected final ML RAW")
+    ax.axhline(final_metrics()["sim_localizer_exact"], color="#1b6ca8", linestyle="--", linewidth=1.5, label="Selected final ML SIM")
+    ax.set_title("Localizer Trade-Off: Selected ML vs. RAW Overrides")
     ax.set_ylabel("Top-1 accuracy")
     ax.set_ylim(0.6, 0.9)
     ax.grid(True, axis="y", alpha=0.25, linewidth=0.5)
@@ -279,14 +369,14 @@ def load_ablation_curve() -> pd.DataFrame:
                     "raw_localizer_top1": float(summary["raw_localizer_exact"]),
                 }
             )
-        metrics = load_json(MODEL_DIR / "guidelines_metrics.json")
+        metrics = final_metrics()
         rows.append(
             {
-                "stage": "Final",
-                "variant": "final_guarded_ranker",
+                "stage": "Selected",
+                "variant": "base_v2+rolling+rls_kalman+graph_temporal",
                 "n_features": rows[-1]["n_features"],
-                "sim_localizer_top1": rows[-1]["sim_localizer_top1"],
-                "raw_localizer_top1": float(metrics["task3_localization"]["top1_accuracy"]),
+                "sim_localizer_top1": float(metrics["sim_localizer_exact"]),
+                "raw_localizer_top1": float(metrics["raw_localizer_exact"]),
             }
         )
     frame = pd.DataFrame(rows)
@@ -323,16 +413,16 @@ def plot_localizer_ablation_curve(curve: pd.DataFrame) -> None:
 
 
 def plot_task_training_validation_curves(curve: pd.DataFrame) -> None:
-    metrics = load_json(MODEL_DIR / "guidelines_metrics.json")
+    metrics = final_metrics()
     sim = {
-        "Detector": 0.9693333333333334,
-        "Classifier": 0.9597812293865824,
-        "Localizer": float(curve["sim_localizer_top1"].iloc[-1]),
+        "Detector": float(metrics["sim_detector_accuracy"]),
+        "Classifier": float(metrics["sim_classifier_macro_f1"]),
+        "Localizer": float(metrics["sim_localizer_exact"]),
     }
     raw = {
-        "Detector": float(metrics["task1_detection_normal_vs_abnormal"]["accuracy"]),
-        "Classifier": float(metrics["task2_event_classification"]["macro_f1_observed_classes_only"]),
-        "Localizer": float(metrics["task3_localization"]["top1_accuracy"]),
+        "Detector": float(metrics["raw_detector_accuracy"]),
+        "Classifier": float(metrics["raw_classifier_macro_f1"]),
+        "Localizer": float(metrics["raw_localizer_exact"]),
     }
     tasks = list(sim)
     x_tasks = np.arange(len(tasks))
@@ -395,6 +485,7 @@ def main() -> None:
     curve = load_ablation_curve()
     curve.to_csv(FIGURES_DIR / "fig12_localizer_training_validation_curve.csv", index=False)
     plot_task_summary()
+    plot_efficiency_summary()
     plot_architecture()
     plot_raw_sim_metric_lines(curve)
     plot_event_distribution()
