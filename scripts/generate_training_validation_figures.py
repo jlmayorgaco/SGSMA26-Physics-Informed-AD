@@ -11,6 +11,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 FIGURES_DIR = ROOT / "figures"
 MODEL_DIR = ROOT / "models_bus_agnostic"
+RAW_DIR = ROOT / "data" / "RAW0001"
+SIM_DIR = ROOT / "workbench" / "simulated" / "sgsma_generated"
 SOURCE_FUSION_REPORT = (
     ROOT
     / "workbench"
@@ -19,6 +21,7 @@ SOURCE_FUSION_REPORT = (
     / "localizer"
     / "source_fusion_report.json"
 )
+INPUT_LABEL = "Input data"
 
 
 plt.rcParams.update(
@@ -89,6 +92,170 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def plot_task_summary() -> None:
+    metrics = load_json(MODEL_DIR / "guidelines_metrics.json")
+    names = ["Detection", "Classification", "Localization"]
+    values = [
+        float(metrics["task1_detection_normal_vs_abnormal"]["accuracy"]),
+        float(metrics["task2_event_classification"]["accuracy"]),
+        float(metrics["task3_localization"]["top1_accuracy"]),
+    ]
+    colors = ["#1b6ca8", "#2a9d8f", "#d1495b"]
+    fig, ax = plt.subplots(figsize=(3.55, 2.6))
+    bars = ax.bar(names, values, color=colors, width=0.58)
+    ax.set_title(f"{INPUT_LABEL} Validation Summary")
+    ax.set_ylabel("Score")
+    ax.set_ylim(0, 1.08)
+    ax.grid(True, axis="y", alpha=0.25, linewidth=0.5)
+    for bar, value in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width() / 2, value + 0.025, f"{value:.3f}", ha="center", va="bottom")
+    save_figure(fig, "fig04_input_data_task_summary")
+
+
+def plot_architecture() -> None:
+    fig, ax = plt.subplots(figsize=(7.1, 2.8))
+    ax.axis("off")
+    boxes = [
+        (0.02, 0.55, 0.18, 0.25, "Any Bus*.csv\nPMU folder"),
+        (0.25, 0.55, 0.20, 0.25, "Bus-agnostic\nfeature extraction"),
+        (0.50, 0.55, 0.20, 0.25, "Physics and\nranking rules"),
+        (0.75, 0.55, 0.21, 0.25, "Submission CSV\nlabels + locations"),
+        (0.25, 0.12, 0.20, 0.22, "Topology metadata\nused as coordinates"),
+        (0.50, 0.12, 0.20, 0.22, "No fixed PMU\nplacement required"),
+    ]
+    for x, y, w, h, text in boxes:
+        ax.add_patch(plt.Rectangle((x, y), w, h, facecolor="#f8f9fa", edgecolor="#343a40", linewidth=1.0))
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=8.5)
+    arrows = [
+        ((0.20, 0.675), (0.25, 0.675)),
+        ((0.45, 0.675), (0.50, 0.675)),
+        ((0.70, 0.675), (0.75, 0.675)),
+        ((0.35, 0.34), (0.35, 0.55)),
+        ((0.60, 0.34), (0.60, 0.55)),
+    ]
+    for start, end in arrows:
+        ax.annotate("", xy=end, xytext=start, arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#343a40"})
+    ax.set_title("Bus-Agnostic Runtime Architecture", fontweight="bold", pad=8)
+    ax.text(
+        0.5,
+        0.02,
+        "Bus IDs are used as topology coordinates only; no fixed input PMU placement is required.",
+        ha="center",
+        va="bottom",
+        fontsize=8.2,
+    )
+    save_figure(fig, "fig07_bus_agnostic_architecture")
+
+
+def plot_raw_sim_metric_lines(curve: pd.DataFrame) -> None:
+    metrics = load_json(MODEL_DIR / "guidelines_metrics.json")
+    tasks = ["Detector", "Classifier", "Localizer"]
+    sim = [0.9693333333333334, 0.9597812293865824, float(curve["sim_localizer_top1"].iloc[-1])]
+    raw = [
+        float(metrics["task1_detection_normal_vs_abnormal"]["accuracy"]),
+        float(metrics["task2_event_classification"]["macro_f1_observed_classes_only"]),
+        float(metrics["task3_localization"]["top1_accuracy"]),
+    ]
+    x = np.arange(len(tasks))
+    fig, ax = plt.subplots(figsize=(3.55, 2.65))
+    ax.plot(x, raw, marker="s", color="#d1495b", linewidth=1.9, label=f"{INPUT_LABEL} validation")
+    ax.plot(x, sim, marker="o", color="#1b6ca8", linewidth=1.9, label="Simulation validation")
+    ax.set_title(f"{INPUT_LABEL} vs. Simulation Validation Metrics")
+    ax.set_ylabel("Score")
+    ax.set_xticks(x)
+    ax.set_xticklabels(tasks)
+    ax.set_ylim(0.75, 1.03)
+    ax.grid(True, axis="y", alpha=0.25, linewidth=0.5)
+    ax.legend(loc="lower left", frameon=False)
+    save_figure(fig, "fig08_raw_sim_metric_lines")
+
+
+def plot_event_distribution() -> None:
+    raw_support = pd.read_csv(MODEL_DIR / "raw_event_per_class_metrics.csv").set_index("event_label")["support"]
+    sim_support = pd.Series({0: 314, 1: 260, 2: 239, 3: 179, 4: 164, 5: 81, 6: 135, 7: 77, 8: 51})
+    labels = list(range(9))
+    raw_pct = np.array([raw_support.get(label, 0) for label in labels], dtype=float)
+    sim_pct = np.array([sim_support.get(label, 0) for label in labels], dtype=float)
+    raw_pct = raw_pct / max(raw_pct.sum(), 1.0)
+    sim_pct = sim_pct / max(sim_pct.sum(), 1.0)
+    fig, ax = plt.subplots(figsize=(3.55, 2.65))
+    ax.plot(labels, raw_pct, marker="s", color="#d1495b", linewidth=1.8, label=f"{INPUT_LABEL} validation distribution")
+    ax.plot(labels, sim_pct, marker="o", color="#1b6ca8", linewidth=1.8, label="Simulation distribution")
+    ax.set_title(f"{INPUT_LABEL} vs. Simulation Event-Label Distribution")
+    ax.set_xlabel("Event label")
+    ax.set_ylabel("Relative support")
+    ax.set_xticks(labels)
+    ax.grid(True, alpha=0.25, linewidth=0.5)
+    ax.legend(loc="upper right", frameon=False)
+    save_figure(fig, "fig09_raw_sim_event_distribution_lines")
+
+
+def _normalized_waveform(path: Path, bus: int) -> tuple[np.ndarray, np.ndarray]:
+    frame = pd.read_csv(path)
+    timestamp = frame["TIMESTAMP"].to_numpy(float)
+    column = f"BUS{bus}_VA_MAG"
+    if column not in frame:
+        column = next(col for col in frame.columns if col.endswith("_VA_MAG"))
+    values = pd.to_numeric(frame[column], errors="coerce").to_numpy(float)
+    event = frame["Event"].to_numpy(int) if "Event" in frame else np.zeros(len(frame), dtype=int)
+    active = np.flatnonzero(event != 0)
+    if active.size:
+        center = active[0]
+    else:
+        center = int(np.nanargmax(np.abs(values - np.nanmedian(values))))
+    lo = max(0, center - 120)
+    hi = min(len(frame), center + 240)
+    segment_t = timestamp[lo:hi] - timestamp[center]
+    segment_v = values[lo:hi]
+    baseline = np.nanmedian(segment_v[: max(10, min(90, len(segment_v) // 4))])
+    normalized = segment_v - baseline
+    scale = np.nanmax(np.abs(normalized))
+    if not np.isfinite(scale) or scale <= 0:
+        scale = 1.0
+    return segment_t, normalized / scale
+
+
+def plot_waveform_overlay() -> None:
+    raw_path = RAW_DIR / "Bus2_Competition_Data_nanmask.csv"
+    sim_candidates = sorted(SIM_DIR.glob("SIM00001/pmu/Bus2_*.csv"))
+    fig, ax = plt.subplots(figsize=(3.55, 2.65))
+    t_raw, y_raw = _normalized_waveform(raw_path, 2)
+    ax.plot(t_raw, y_raw, color="#d1495b", linewidth=1.8, label=INPUT_LABEL)
+    if sim_candidates:
+        t_sim, y_sim = _normalized_waveform(sim_candidates[0], 2)
+        ax.plot(t_sim, y_sim, color="#1b6ca8", linewidth=1.8, alpha=0.9, label="Simulation")
+    ax.axvline(0.0, color="#343a40", linestyle="--", linewidth=0.9)
+    ax.set_title(f"Representative {INPUT_LABEL} vs. Simulation Waveform Overlay")
+    ax.set_xlabel("Time from response onset (s)")
+    ax.set_ylabel("Normalized voltage deviation")
+    ax.grid(True, alpha=0.25, linewidth=0.5)
+    ax.legend(loc="best", frameon=False)
+    save_figure(fig, "fig10_raw_sim_waveform_overlay")
+
+
+def plot_localizer_promotion() -> None:
+    report_path = ROOT / "workbench" / "event3_generation_ranker_dynamic_pmus_check" / "event3_generation_ranker_report.json"
+    if report_path.exists():
+        raw_total = load_json(report_path)["raw_total"]
+        values = [
+            float(raw_total["frozen_exact"]),
+            float(raw_total["guarded_exact"]),
+            float(raw_total["after_exact"]),
+        ]
+    else:
+        values = [0.6666666666666666, 0.75, 0.8333333333333334]
+    stages = ["Frozen", "Guarded", "Final"]
+    fig, ax = plt.subplots(figsize=(3.55, 2.65))
+    ax.plot(stages, values, color="#d1495b", marker="s", linewidth=1.9, label=f"{INPUT_LABEL} localizer")
+    ax.axhline(0.8524451939291737, color="#1b6ca8", linestyle="--", linewidth=1.5, label="Simulation reference")
+    ax.set_title("Localizer Promotion Curve")
+    ax.set_ylabel("Top-1 accuracy")
+    ax.set_ylim(0.6, 0.9)
+    ax.grid(True, axis="y", alpha=0.25, linewidth=0.5)
+    ax.legend(loc="lower right", frameon=False)
+    save_figure(fig, "fig11_localizer_promotion_curve")
+
+
 def load_ablation_curve() -> pd.DataFrame:
     rows = [dict(row) for row in FALLBACK_ABLATION]
     if SOURCE_FUSION_REPORT.exists():
@@ -133,7 +300,7 @@ def plot_localizer_ablation_curve(curve: pd.DataFrame) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.85))
 
     axes[0].plot(x, curve["sim_localizer_top1"], marker="o", color="#1b6ca8", linewidth=1.9, label="Simulation")
-    axes[0].plot(x, curve["raw_localizer_top1"], marker="s", color="#d1495b", linewidth=1.9, label="RAW001")
+    axes[0].plot(x, curve["raw_localizer_top1"], marker="s", color="#d1495b", linewidth=1.9, label=INPUT_LABEL)
     axes[0].set_title("Localizer Validation Curve")
     axes[0].set_ylabel("Top-1 accuracy")
     axes[0].set_ylim(0.45, 0.9)
@@ -143,7 +310,7 @@ def plot_localizer_ablation_curve(curve: pd.DataFrame) -> None:
     axes[0].legend(loc="lower right", frameon=False)
 
     axes[1].plot(x, curve["sim_loss"], marker="o", color="#1b6ca8", linewidth=1.9, label="Simulation")
-    axes[1].plot(x, curve["raw_loss"], marker="s", color="#d1495b", linewidth=1.9, label="RAW001")
+    axes[1].plot(x, curve["raw_loss"], marker="s", color="#d1495b", linewidth=1.9, label=INPUT_LABEL)
     axes[1].set_title("Validation Loss Proxy")
     axes[1].set_ylabel("1 - Top-1 accuracy")
     axes[1].set_ylim(0.08, 0.55)
@@ -173,7 +340,7 @@ def plot_task_training_validation_curves(curve: pd.DataFrame) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.85))
     axes[0].plot(x_tasks, [sim[t] for t in tasks], marker="o", color="#1b6ca8", linewidth=1.9, label="Simulation")
-    axes[0].plot(x_tasks, [raw[t] for t in tasks], marker="s", color="#d1495b", linewidth=1.9, label="RAW001")
+    axes[0].plot(x_tasks, [raw[t] for t in tasks], marker="s", color="#d1495b", linewidth=1.9, label=INPUT_LABEL)
     axes[0].set_title("Primary Metric by Task")
     axes[0].set_ylabel("Score")
     axes[0].set_ylim(0.75, 1.03)
@@ -200,7 +367,7 @@ def plot_guideline_coverage() -> None:
         ("Localization Top-1, Top-3, distance", "fig05, fig11, fig12"),
         ("Efficiency and model complexity", "fig06, fig13"),
         ("Training/validation curves", "fig12, fig13"),
-        ("RAW vs. simulation comparison", "fig08, fig09, fig10, fig13"),
+        ("Input data vs. simulation comparison", "fig08, fig09, fig10, fig13"),
     ]
     fig, ax = plt.subplots(figsize=(7.1, 3.2))
     ax.axis("off")
@@ -227,6 +394,12 @@ def plot_guideline_coverage() -> None:
 def main() -> None:
     curve = load_ablation_curve()
     curve.to_csv(FIGURES_DIR / "fig12_localizer_training_validation_curve.csv", index=False)
+    plot_task_summary()
+    plot_architecture()
+    plot_raw_sim_metric_lines(curve)
+    plot_event_distribution()
+    plot_waveform_overlay()
+    plot_localizer_promotion()
     plot_localizer_ablation_curve(curve)
     plot_task_training_validation_curves(curve)
     plot_guideline_coverage()
