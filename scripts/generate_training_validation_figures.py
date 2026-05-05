@@ -451,10 +451,9 @@ def plot_task_training_validation_curves(curve: pd.DataFrame) -> None:
 
 def plot_guideline_coverage() -> None:
     rows = [
-        ("Detection precision/recall/F1, FP/min", "fig04, fig06"),
-        ("Event macro/weighted/per-class F1", "fig02, fig03"),
-        ("Full confusion matrices", "fig01, fig02"),
-        ("Localization Top-1, Top-3, distance", "fig05, fig11, fig12"),
+        ("Detection accuracy and FP/min", "fig04, fig06"),
+        ("Event classification accuracy/macro-F1", "fig04, fig08, fig13"),
+        ("Localization Top-1 accuracy", "fig08, fig11, fig12, fig13"),
         ("Efficiency and model complexity", "fig06, fig13"),
         ("Training/validation curves", "fig12, fig13"),
         ("Input data vs. simulation comparison", "fig08, fig09, fig10, fig13"),
