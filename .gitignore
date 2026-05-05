@@ -1,20 +1,35 @@
-﻿__pycache__/
+__pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
 .coverage
 htmlcov/
+
 .venv/
 venv/
 .env
 
+# Local/generated outputs
 output/
+workbench/
+release/
+plots/
 *.log
 *.tmp
 
+# Large local model/training artifacts not used by the reviewer entrypoint
+models/
+models_submission_v2/
+deepseek/
+report/
+
+# Generated simulator outputs
+ieee39_full_out.*
+project_context_report.txt
+scan_project.sh
+
+# Competition/reference files kept locally only
+guidelines.pdf
+
 .DS_Store
 Thumbs.db
-
-
-output/*
-data/*

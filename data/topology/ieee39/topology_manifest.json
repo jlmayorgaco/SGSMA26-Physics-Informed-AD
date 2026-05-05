@@ -1,0 +1,25 @@
+{
+  "schema_version": "sgsma-topology-v1",
+  "source_raw": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\metadata\\IEEE_39_Bus_Power_System.raw",
+  "backend": "native_psse_raw_parser",
+  "note": "Zbus is computed as pinv(Ybus). Effective impedance distance is Zii + Zjj - Zij - Zji.",
+  "n_buses": 39,
+  "n_branches": 46,
+  "observed_pmus": [
+    39,
+    29,
+    10,
+    22,
+    19,
+    2,
+    5,
+    6
+  ],
+  "outputs": {
+    "ybus_full_complex": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\topology\\ieee39\\ybus_full_complex.csv",
+    "zbus_full_complex": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\topology\\ieee39\\zbus_full_complex.csv",
+    "zbus_effective_distance_full": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\topology\\ieee39\\zbus_effective_distance_full.csv",
+    "zbus_effective_distance_observed_pmus": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\topology\\ieee39\\zbus_effective_distance_observed_pmus.csv",
+    "branches_physical": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\topology\\ieee39\\branches_physical.csv"
+  }
+}
