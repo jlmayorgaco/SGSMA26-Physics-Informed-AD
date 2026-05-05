@@ -103,6 +103,7 @@ def get_chunk_metadata(
     labels_present = set(event_df_slice.values.flatten())
     per_bus_labels = {bus: int(event_df_slice[bus].max()) for bus in event_df_slice.columns}
     affected = [bus for bus, evt in per_bus_labels.items() if evt != 0]
+    duration_s = round(float(end_t - start_t), 10)
 
     chunk_meta: dict[str, Any] = {
         "chunk_order": order_idx,
@@ -112,10 +113,10 @@ def get_chunk_metadata(
         "chunk_type": "event" if dominant_label != 0 else "normal",
         "start_time_s": float(start_t),
         "end_time_s": float(end_t),
-        "duration_s": float(end_t - start_t),
+        "duration_s": duration_s,
         "start_time_min": float(start_t / 60.0),
         "end_time_min": float(end_t / 60.0),
-        "duration_min": float((end_t - start_t) / 60.0),
+        "duration_min": float(duration_s / 60.0),
         "source_event_instance_id": None,
         "category": None,
         "impact_scope": None,

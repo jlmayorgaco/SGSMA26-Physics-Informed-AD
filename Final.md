@@ -47,7 +47,7 @@ The final architecture has three layers:
    - Scores candidates by compatibility between observed PMU severity and expected electrical diffusion.
 
 3. Validation and promotion layer
-   - RAW001 is used only as a local validation benchmark.
+   - RAW0001 is used only as a local validation benchmark.
    - Candidate improvements are promoted only if they are general, bus-agnostic, and do not rely on chunk IDs or fixed bus IDs.
    - P15/P16 were promoted for RAW analysis; P14/P17 were kept as experiments because they did not improve final Top-1.
 
@@ -154,7 +154,7 @@ Task: normal vs abnormal.
 
 Inputs: order-invariant global PMU features, robust signal deviations, missing-data features, and physical thresholds.
 
-Current RAW001 result:
+Current RAW0001 result:
 
 ```text
 Abnormal precision: 1.0000
@@ -169,7 +169,7 @@ Task: classify labels 0-8.
 
 Inputs: global feature table and event-specific signal families.
 
-Current RAW001 result:
+Current RAW0001 result:
 
 ```text
 Accuracy:    1.0000
@@ -177,7 +177,7 @@ Macro-F1:    1.0000
 Weighted-F1: 1.0000
 ```
 
-RAW001 confusion matrix, labels 0-8:
+RAW0001 confusion matrix, labels 0-8:
 
 ```text
 [[9,0,0,0,0,0,0,0,0],
@@ -195,14 +195,14 @@ RAW001 confusion matrix, labels 0-8:
 
 Task: predict bus, line, or PMU location.
 
-Final RAW001 result after agnostic guardrail/ranker validation:
+Final RAW0001 result after agnostic guardrail/ranker validation:
 
 ```text
 Top-1 exact:              0.8333 = 10/12
 Mean electrical distance: 0.003214
 ```
 
-RAW001 localization progression:
+RAW0001 localization progression:
 
 ```text
 Frozen baseline:      66.67% = 8/12
@@ -210,7 +210,7 @@ P15 topology guard:   75.00% = 9/12
 P15 + P16 ranker:     83.33% = 10/12
 ```
 
-Remaining RAW001 localization misses:
+Remaining RAW0001 localization misses:
 
 ```text
 chunk14_event2: true LINE23-24, predicted LINE22-35
@@ -231,7 +231,7 @@ workbench/features/sgsma_generated
 
 The training strategy used group/scenario-aware splits to avoid leakage across windows from the same simulated event. Placement-augmented experiments randomly sampled observed PMU subsets from available bus streams to test RAW0002-style PMU changes.
 
-RAW001 is used only for local reporting and promotion checks. The final entrypoint does not hardcode RAW001 PMU placement.
+RAW0001 is used only for local reporting and promotion checks. The final entrypoint does not hardcode RAW0001 PMU placement.
 
 ## Efficiency
 
@@ -259,7 +259,7 @@ Required by `guidelines.pdf`:
 - Classification macro-F1, weighted-F1, per-class/confusion matrix: reported above.
 - Localization Top-1 and electrical distance: reported above.
 - Efficiency/model size: reported above.
-- Leakage prevention: scenario/group-aware split and RAW001 kept as validation only.
+- Leakage prevention: scenario/group-aware split and RAW0001 kept as validation only.
 - Technical report source: `report/ieee_method_report`.
 
 ## Current Final Artifacts

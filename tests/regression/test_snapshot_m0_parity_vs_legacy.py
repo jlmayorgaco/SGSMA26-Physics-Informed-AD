@@ -35,7 +35,12 @@ def _run_legacy_m0(input_dir: Path, out_dir: Path) -> None:
     if root_str not in sys.path:
         sys.path.insert(0, root_str)
 
-    m0 = importlib.import_module("m0_chunks")
+    try:
+        m0 = importlib.import_module("m0_chunks")
+    except ModuleNotFoundError as exc:
+        if exc.name == "m0_chunks":
+            pytest.skip("legacy m0_chunks.py is not present in this checkout")
+        raise
     with ExitStack() as stack:
         stack.enter_context(_temporary_attr(m0, "INPUT_DIR", str(input_dir)))
         stack.enter_context(_temporary_attr(m0, "OUTPUT_DIR", str(out_dir)))

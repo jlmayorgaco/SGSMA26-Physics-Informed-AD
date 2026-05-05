@@ -34,13 +34,13 @@ Forbidden use of bus IDs:
 - Fixed model features like `is_BUS29`.
 - Rules like `if strongest_pmu == BUS39`.
 - Assuming the observed PMUs are always `(2, 5, 6, 10, 19, 22, 29, 39)`.
-- RAW001 chunk-specific corrections.
+- RAW0001 chunk-specific corrections.
 
 Implemented support:
 
 - `src/features/pmu_discovery.py`: PMU bus discovery from filenames and feature columns.
 - `src/models/bus_agnostic.py`: reviewer-facing runtime prediction.
-- `src/data_factory/dynamic_feature_extractor_v3.py`: dynamic feature extraction from observed frames, not fixed RAW001 PMUs.
+- `src/data_factory/dynamic_feature_extractor_v3.py`: dynamic feature extraction from observed frames, not fixed RAW0001 PMUs.
 - `src/models/localizer/hybrid.py`: topology residual ranker infers observed PMUs from each row.
 
 ## 3. Data and Training Assets
@@ -61,7 +61,7 @@ The 5000 generated scenarios are preserved under the `sgsma_generated` folders. 
 Validation strategy:
 
 - Simulated scenario training uses scenario/group-aware splits to avoid leakage.
-- RAW001 is used as local validation and reporting only.
+- RAW0001 is used as local validation and reporting only.
 - Candidate localizer improvements are promoted only if they are bus-agnostic and improve or preserve RAW/SIM guardrails.
 
 ## 4. Preprocessing
@@ -294,7 +294,7 @@ Purpose:
 
 - Reviewer-facing entrypoint.
 - Produces valid SGSMA prediction CSV.
-- Avoids fixed RAW001 PMU assumptions.
+- Avoids fixed RAW0001 PMU assumptions.
 
 ### 6.2 Legacy ExtraTrees Detector and Classifier
 
@@ -306,12 +306,12 @@ Model family:
 Purpose:
 
 - Reproducible training and validation baseline.
-- Strong RAW001 detector/classifier behavior.
+- Strong RAW0001 detector/classifier behavior.
 
 Performance:
 
-- RAW001 detector: 100%.
-- RAW001 classifier: 100% over observed classes.
+- RAW0001 detector: 100%.
+- RAW0001 classifier: 100% over observed classes.
 - SIM detector: 96.93%.
 - SIM classifier accuracy: 96.73%.
 - SIM classifier macro-F1: 95.98%.
@@ -341,7 +341,7 @@ Promotion decision:
 - P16 event3/event6 ranker promoted for RAW reporting.
 - P14 event2 line ranker and P17 event4 load ranker were not promoted because they did not improve final RAW Top-1 in a general way.
 
-## 7. Final RAW001 Metrics Required by Guidelines
+## 7. Final RAW0001 Metrics Required by Guidelines
 
 Metrics are saved in:
 
@@ -385,7 +385,7 @@ Labels: `0..8`.
 ```text
 Accuracy = 1.0000
 Weighted-F1 = 1.0000
-Macro-F1 over observed RAW001 classes = 1.0000
+Macro-F1 over observed RAW0001 classes = 1.0000
 Macro-F1 over forced labels 0..8 with absent event8 zero_division=0 = 0.8889
 ```
 
@@ -437,7 +437,7 @@ chunk22_event4: true BUS7, predicted BUS12
 Top-3 note:
 
 - Top-3 was evaluated in candidate-ranker experiments.
-- The promoted final RAW001 prediction artifact is Top-1 only, so the final report stores Top-3 as not applicable for the promoted artifact.
+- The promoted final RAW0001 prediction artifact is Top-1 only, so the final report stores Top-3 as not applicable for the promoted artifact.
 
 ### 7.4 Efficiency and Model Complexity
 
