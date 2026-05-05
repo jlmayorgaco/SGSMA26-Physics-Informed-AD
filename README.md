@@ -65,9 +65,23 @@ pip install -e ".[dev]"
 ## Run Inference
 
 Use the provided RAW folder or any future RAW folder with PMU files named like `Bus2_*.csv`.
+In this repository the checked-in local validation folder is `data\RAW0001` with four zeros.
+The runner also accepts common aliases such as `data\RAW001` if that path is used on another machine and resolves to an existing RAW folder.
 
 ```powershell
 python main.py --input-dir data\RAW0001 --output data\RAW0001\predictions.csv
+```
+
+If your clone has the files under `data\RAW001`, use:
+
+```powershell
+python main.py --input-dir data\RAW001 --output data\RAW001\predictions.csv
+```
+
+If you are unsure where the files are, run:
+
+```powershell
+Get-ChildItem -Recurse data -Filter "Bus*.csv" | Select-Object -First 10 FullName
 ```
 
 For another machine or hidden test set:

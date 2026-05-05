@@ -34,11 +34,18 @@ def bus_from_filename(path: Path) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def discover_bus_csvs(input_dir: Path, patterns: tuple[str, ...] = ("Bus*.csv", "bus*.csv")) -> dict[int, Path]:
+def discover_bus_csvs(input_dir: Path, patterns: tuple[str, ...] = ("Bus*.csv", "bus*.csv", "*Bus*.csv", "*bus*.csv")) -> dict[int, Path]:
     found: dict[int, Path] = {}
+    base = Path(input_dir)
     for pattern in patterns:
-        for path in sorted(Path(input_dir).glob(pattern)):
+        for path in sorted(base.glob(pattern)):
             bus = bus_from_filename(path)
             if bus is not None and bus not in found:
                 found[bus] = path
+    if not found:
+        for pattern in patterns:
+            for path in sorted(base.rglob(pattern)):
+                bus = bus_from_filename(path)
+                if bus is not None and bus not in found:
+                    found[bus] = path
     return dict(sorted(found.items()))

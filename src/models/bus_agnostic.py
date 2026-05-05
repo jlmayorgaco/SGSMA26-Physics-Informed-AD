@@ -204,6 +204,17 @@ def _load_lines(topology_dir: Path = DEFAULT_TOPOLOGY_DIR) -> list[tuple[int, in
 
 def load_pmu_frames(input_dir: Path) -> dict[int, pd.DataFrame]:
     csvs = discover_pmu_csvs(input_dir)
+    if not csvs:
+        existing = []
+        if Path(input_dir).exists():
+            existing = [path.name for path in sorted(Path(input_dir).iterdir())[:20]]
+        raise ValueError(
+            "No Bus*.csv PMU files were found. "
+            f"Checked input directory: {Path(input_dir).resolve()}. "
+            "Pass the folder that contains files such as Bus2_Competition_Data_nanmask.csv "
+            "or a parent folder containing RAW0001/RAW001. "
+            f"First entries found: {existing}"
+        )
     frames: dict[int, pd.DataFrame] = {}
     for bus, path in csvs.items():
         frame = pd.read_csv(path)

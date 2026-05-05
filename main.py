@@ -11,6 +11,23 @@ from src.models.bus_agnostic import run_bus_agnostic_prediction
 DEFAULT_BUS_AGNOSTIC_MODEL_DIR = Path(__file__).resolve().parent / "models_bus_agnostic"
 
 
+def _normalize_raw_dir(path: Path) -> Path:
+    if path.exists():
+        return path
+    name = path.name.lower()
+    if name in {"raw001", "raw0001"}:
+        candidates = [
+            path.parent / "RAW0001",
+            path.parent / "RAW001",
+            path.parent / "raw0001",
+            path.parent / "raw001",
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+    return path
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -47,7 +64,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    input_dir = resolve_path(args.input_dir)
+    input_dir = _normalize_raw_dir(resolve_path(args.input_dir))
     topology_dir = resolve_path(args.topology_dir)
     model_dir = resolve_path(args.model_dir)
     output = None if args.output is None else resolve_path(args.output)
