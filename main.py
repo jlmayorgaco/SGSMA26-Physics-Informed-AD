@@ -5,10 +5,11 @@ import json
 from pathlib import Path
 
 from src.helpers.paths import DEFAULT_RAW_DIR, DEFAULT_TOPOLOGY_DIR, resolve_path
-from src.models.bus_agnostic import run_bus_agnostic_prediction
+from src.models.hybrid_submission import run_hybrid_submission_prediction
 
 
 DEFAULT_BUS_AGNOSTIC_MODEL_DIR = Path(__file__).resolve().parent / "models_bus_agnostic"
+DEFAULT_ML_MODEL_DIR = Path(__file__).resolve().parent / "models"
 
 
 def _normalize_raw_dir(path: Path) -> Path:
@@ -57,7 +58,19 @@ def parse_args() -> argparse.Namespace:
         "--model-dir",
         type=Path,
         default=DEFAULT_BUS_AGNOSTIC_MODEL_DIR,
-        help="Bus-agnostic model/config directory. Defaults to models_bus_agnostic.",
+        help="Fallback bus-agnostic physics model/config directory. Defaults to models_bus_agnostic.",
+    )
+    parser.add_argument(
+        "--ml-model-dir",
+        type=Path,
+        default=DEFAULT_ML_MODEL_DIR,
+        help="Validated ML model bundle. Defaults to models when present.",
+    )
+    parser.add_argument(
+        "--ml-max-duration-s",
+        type=float,
+        default=120.0,
+        help="Use the ML scenario/chunk model for inputs up to this duration; longer RAW streams use the physics runtime.",
     )
     return parser.parse_args()
 
@@ -68,11 +81,14 @@ def main() -> None:
     topology_dir = resolve_path(args.topology_dir)
     model_dir = resolve_path(args.model_dir)
     output = None if args.output is None else resolve_path(args.output)
-    _, diagnostics = run_bus_agnostic_prediction(
+    ml_model_dir = resolve_path(args.ml_model_dir)
+    _, diagnostics = run_hybrid_submission_prediction(
         input_dir=input_dir,
         output_csv=output,
         topology_dir=topology_dir,
-        model_dir=model_dir,
+        physics_model_dir=model_dir,
+        ml_model_dir=ml_model_dir,
+        ml_max_duration_s=args.ml_max_duration_s,
     )
     print(json.dumps(diagnostics, indent=2))
 

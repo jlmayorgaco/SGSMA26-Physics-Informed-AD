@@ -12,8 +12,10 @@ TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 
 ```text
 main.py                         Reviewer-facing inference entrypoint
+src/models/hybrid_submission.py Final router: ML for SIM/chunks, physics fallback for long RAW
 src/models/bus_agnostic.py      Runtime bus-agnostic physics model
 src/features/pmu_discovery.py   Dynamic PMU bus discovery utilities
+models/                         Validated ExtraTrees detector/classifier/localizer bundle
 models_bus_agnostic/            Final metrics and runtime config
 figures/                        IEEE-ready report figures
 Final.md                        Final method and artifact summary
@@ -22,6 +24,7 @@ sgsma_2026_final_submission.zip Minimal reviewer package
 ```
 
 Large local training artifacts and exploratory outputs are intentionally not part of the committed reviewer path.
+The compact submission archive includes the `models/` runtime bundle even though that directory is ignored in normal development.
 
 ## Quick Start
 
@@ -85,6 +88,11 @@ python main.py --input-dir C:\path\to\RAW0002 --output C:\path\to\RAW0002\predic
 
 The command also writes `prediction_diagnostics.json` next to the output CSV.
 
+Runtime routing:
+
+- short SIM/chunk-style folders use the validated ExtraTrees/hybrid ML bundle in `models/`;
+- long RAW streams use the bus-agnostic physics runtime to preserve timestamp-aligned predictions.
+
 ## Validate the Reviewer Package
 
 The compact submission archive can be tested directly:
@@ -135,7 +143,7 @@ Localization Top-1: 0.8333
 
 ## Bus-Agnostic Design
 
-The system may use bus IDs as coordinates in the current network instance, but it does not treat a fixed bus such as BUS29 or BUS39 as intrinsically special. PMU buses are inferred from input filenames/columns and used only to compute topology-relative quantities such as:
+The system may use bus IDs as coordinates in the current network instance, but it does not treat a fixed bus such as BUS29 or BUS39 as intrinsically special. In the final router, ML models are used for the validated SIM/chunk regime and physics/topology rules are used for long RAW streams. PMU buses are inferred from input filenames/columns and used only to compute topology-relative quantities such as:
 
 - candidate-to-PMU electrical distance,
 - Zbus diffusion compatibility,

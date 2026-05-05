@@ -16,7 +16,7 @@ The generated prediction file follows the `guidelines.pdf` schema:
 TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 ```
 
-The final runtime path does not assume the RAW0001 PMU placement. If RAW0002 provides a different set of 8 PMU buses, the code infers those buses from filenames and columns, then uses them only as topology coordinates for feature computation.
+The final runtime path is a hybrid router. SIM/chunk-style inputs use the validated ExtraTrees/hybrid ML bundle; long RAW streams use the bus-agnostic physics runtime. The code infers PMU buses from filenames and columns, then uses them as topology coordinates for feature computation.
 
 ## 2. Bus-Agnostic Contract
 
@@ -279,14 +279,18 @@ Most relevant localization features:
 
 ## 6. Models Used
 
-### 6.1 Runtime Bus-Agnostic Physics Model
+### 6.1 Runtime Hybrid Submission Model
 
-File: `src/models/bus_agnostic.py`
+Files:
+
+- `src/models/hybrid_submission.py`
+- `src/data_factory/final_model.py`
+- `src/models/bus_agnostic.py`
 
 Type:
 
-- Rule-calibrated, physics-informed model.
-- No trainable neural parameters.
+- ExtraTrees/hybrid ML for SIM/chunk-style inputs.
+- Rule-calibrated, physics-informed fallback for long RAW streams.
 - Uses robust PMU and global features.
 - Reads arbitrary PMU bus placement from input files.
 
@@ -294,7 +298,7 @@ Purpose:
 
 - Reviewer-facing entrypoint.
 - Produces valid SGSMA prediction CSV.
-- Avoids fixed RAW0001 PMU assumptions.
+- Uses the strongest validated ML route where appropriate while preserving RAW timestamp alignment.
 
 ### 6.2 Legacy ExtraTrees Detector and Classifier
 

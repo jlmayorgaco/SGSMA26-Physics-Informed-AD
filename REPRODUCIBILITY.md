@@ -22,6 +22,11 @@ TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 
 The command also writes `prediction_diagnostics.json` next to the output CSV.
 
+The final entrypoint routes automatically:
+
+- SIM/chunk-style inputs up to 120 seconds use the validated ExtraTrees/hybrid ML bundle in `models/`.
+- Longer RAW streams use the bus-agnostic physics runtime.
+
 ## Local Validation
 
 From the repository root, the included local validation data can be checked with:
