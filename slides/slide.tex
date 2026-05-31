@@ -592,6 +592,7 @@ Graph-temporal features use $1/d_{ij}^{\mathrm{eff}}$ weights.
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Case representation before feature extraction}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -628,6 +629,7 @@ The window becomes one row of engineered features. Models never see the raw tens
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 
@@ -740,6 +742,7 @@ We convert each PMU window into a physics-aware signature, classify the event wi
 
 % -------------------------------------------------------------------
 \fi
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Window predictions to timestamp rows}
 \small
 \centering
@@ -764,6 +767,7 @@ We convert each PMU window into a physics-aware signature, classify the event wi
 The official CSV is timestamp-aligned even though the decision is made at the window level.
 \end{block}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \section{Windowing and Baseline}
@@ -1077,6 +1081,7 @@ Global aggregation & system-wide maxima and counts\\
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Feature grid and segment statistics}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -1109,6 +1114,7 @@ Statistics turn a curve into onset size, late offset, variability, and outlier a
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 \iffalse
 \begin{frame}{Feature naming convention}
@@ -1867,6 +1873,7 @@ They discount smooth ramps but react to switching, faults, and sudden sensor err
 
 % -------------------------------------------------------------------
 \fi
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Adaptive innovation filter}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -1912,6 +1919,7 @@ P_t=(1-K_t)P_t^-
 Useful for Event 1, Event 2, and Event 8 localization; Events 3--4 use it when the change is gradual but persistent.
 \end{exampleblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \iffalse
@@ -2083,6 +2091,7 @@ Graph equations create columns; ExtraTrees learns the thresholds and pair combin
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Graph-temporal localization illustration}
 \scriptsize
 \begin{columns}[T,totalwidth=\textwidth]
@@ -2134,6 +2143,7 @@ Event 2 localizes the line whose candidates match current redistribution and gra
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \iffalse
@@ -2178,6 +2188,7 @@ Event 2 benefits from graph differences, time-to-peak differences, and current-a
 
 % -------------------------------------------------------------------
 \fi
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Selected feature variant}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -2206,6 +2217,7 @@ n_{\mathrm{features}} = 45{,}162
 RAW0001 Top-1 localization = 0.6667, tied with the best deployable variants; SIM Top-1 localization = 0.8524.
 \end{exampleblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \section{Hierarchical ML Method}
@@ -2360,6 +2372,7 @@ p_m(c\mid x)=\frac{n_{\mathrm{leaf},c}}{n_{\mathrm{leaf}}},
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Where ExtraTrees models are used and trained}
 \scriptsize
 \centering
@@ -2415,6 +2428,7 @@ RAW PMU files $\rightarrow$ features $\rightarrow$ ExtraTrees scores $\rightarro
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \begin{frame}{Hierarchical event routing}
@@ -2771,6 +2785,7 @@ The model does not rank every possible label together. It first chooses a type, 
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Three origin spaces}
 \small
 \centering
@@ -2807,6 +2822,7 @@ The model does not rank every possible label together. It first chooses a type, 
 \code{pred\_location} is typed. A label such as \code{5} can mean bus 5 in BUS mode, while PMU mode means the PMU/source indexed by 5.
 \end{block}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \begin{frame}{Final localizer models}
@@ -2863,6 +2879,7 @@ The event route selects the localizer type \(\tau\), then the ExtraTrees model r
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Localizer target spaces and error sources}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -2892,6 +2909,7 @@ Classification is easier than localization; localization must infer an unobserve
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 \iffalse
 \begin{frame}{Localizer feature evidence}
@@ -3174,6 +3192,7 @@ Some experimental methods had higher RAW0001 numbers, but were not valid for uns
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{DeepSeek experiments in context}
 \small
 \begin{block}{DeepSeek role}
@@ -3186,6 +3205,7 @@ Higher RAW0001 numbers came from variants that used RAW labels for training, ove
 The final submitted method was SGMS: physics-informed features + hierarchical ExtraTrees + typed dynamic localizers.
 \end{exampleblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \section{Ablation and Reimplementation}
@@ -3193,6 +3213,7 @@ The final submitted method was SGMS: physics-informed features + hierarchical Ex
 
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Implementation map and execution order}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -3228,6 +3249,7 @@ Equations, event recipes, thresholds, and validation commands are used as audit 
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \begin{frame}{Ablation evidence}
@@ -3359,6 +3381,7 @@ The selected model kept perfect RAW0001 detection/classification and tied the to
 
 % -------------------------------------------------------------------
 \fi
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Feature mapping: robust abnormality}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -3870,6 +3893,7 @@ The submitted route lets ExtraTrees combine weak physical cues instead of forcin
 Build a working baseline early. Add dynamic features only after the event classifier and typed localizers produce valid CSV output.
 \end{alertblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \begin{frame}{Adapting to a new RAW dataset}
@@ -3980,6 +4004,7 @@ Grow $M$ independent trees with different random features and cuts. Each leaf st
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
 \begin{frame}{Build order from zero}
 \small
 \begin{enumerate}
@@ -4036,6 +4061,7 @@ physical evidence that does not match a cleaner event class; BUS localizer\\
 The forest receives the full vector; this is the first hand-rebuild subset to implement and inspect.
 \end{alertblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \begin{frame}{ExtraTrees route versus a neural network}
