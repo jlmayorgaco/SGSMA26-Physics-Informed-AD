@@ -1,0 +1,14 @@
+# LaTeX build artifacts (deck is built with two pdflatex passes)
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+# scratch render folders used during review
+_*/
+slide_clean.*
