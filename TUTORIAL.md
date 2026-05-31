@@ -31,11 +31,16 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Installs: `numpy`, `pandas`, `scipy`, `scikit-learn>=1.3`, `joblib`, `matplotlib`,
+Installs: `numpy`, `pandas`, `scipy`, `scikit-learn==1.7.2`, `joblib`, `matplotlib`,
 `openpyxl`.
 
-> If loading the model later prints a scikit-learn *version* warning, install the same
-> minor it was trained with, e.g. `pip install "scikit-learn==1.3.*"`.
+> ⚠️ **scikit-learn must be exactly `1.7.2`** — the model bundle was pickled with that
+> version. `requirements.txt` pins it. If you ever see
+> `'SimpleImputer' object has no attribute '_fit_dtype'` (or a similar
+> `InconsistentVersionWarning`), you are on the wrong version — fix it with:
+> ```bash
+> pip install "scikit-learn==1.7.2"
+> ```
 
 ---
 
@@ -142,8 +147,9 @@ label as the **max non-zero** across the per-bus `Event` columns before scoring.
 - **arm64 wheels:** `numpy`, `scipy`, `pandas`, `scikit-learn` all ship native Apple-Silicon
   wheels — `pip install -r requirements.txt` just works. If pip tries to build from source,
   run `pip install --upgrade pip` first.
-- **scikit-learn version on `joblib.load`:** if you see an `InconsistentVersionWarning` or a
-  load error, pin the training minor: `pip install "scikit-learn==1.3.*"` and reinstall.
+- **scikit-learn version on `joblib.load`:** the bundle needs **exactly `scikit-learn==1.7.2`**.
+  A different version throws `'SimpleImputer' object has no attribute '_fit_dtype'` (or an
+  `InconsistentVersionWarning`). Fix: `pip install "scikit-learn==1.7.2"`.
 - **Run from the repo root** (so `src/`, `models/`, `data/` resolve).
 - **No internet at the venue?** Pre-install everything beforehand; the venv must be self-contained.
 

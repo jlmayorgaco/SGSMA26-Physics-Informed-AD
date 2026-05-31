@@ -3,5 +3,5 @@ matplotlib>=3.7
 numpy>=1.24
 openpyxl>=3.1
 pandas>=2.0
-scikit-learn>=1.3
+scikit-learn==1.7.2  # pinned: the model bundle was pickled with 1.7.2; other versions break joblib.load (e.g. SimpleImputer _fit_dtype)
 scipy>=1.10
