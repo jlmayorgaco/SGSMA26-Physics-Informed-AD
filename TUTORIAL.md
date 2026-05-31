@@ -135,6 +135,34 @@ label as the **max non-zero** across the per-bus `Event` columns before scoring.
 
 ---
 
+## 7. Apple Silicon (M1/M2/M3) and troubleshooting
+
+- **Python:** macOS may ship an old `python3`. Use 3.10+ (Homebrew: `brew install python@3.12`).
+  Check with `python3 --version`.
+- **arm64 wheels:** `numpy`, `scipy`, `pandas`, `scikit-learn` all ship native Apple-Silicon
+  wheels — `pip install -r requirements.txt` just works. If pip tries to build from source,
+  run `pip install --upgrade pip` first.
+- **scikit-learn version on `joblib.load`:** if you see an `InconsistentVersionWarning` or a
+  load error, pin the training minor: `pip install "scikit-learn==1.3.*"` and reinstall.
+- **Run from the repo root** (so `src/`, `models/`, `data/` resolve).
+- **No internet at the venue?** Pre-install everything beforehand; the venv must be self-contained.
+
+## 8. Pre-flight checklist (do this BEFORE the on-site)
+
+Run the full pipeline once on the known-good `RAW0001` and confirm it matches the contract:
+
+```bash
+source .venv/bin/activate
+python main.py --input-dir data/RAW0001 --output data/RAW0001/predictions.csv
+python3 -c "import json; d=json.load(open('data/RAW0001/prediction_diagnostics.json')); assert d.get('route')=='ml_windowed', d.get('route'); print('route OK:', d['route'], d['model'])"
+```
+
+You should see `route OK: ml_windowed sgms_extra_trees_windowed_v2`. If so, the Mac is ready:
+on the day, you only swap `--input-dir` to the new RAW folder. Keep the `.venv` and the restored
+`models/` in place so nothing needs reinstalling under time pressure (the on-site round is 90 min).
+
+---
+
 ## Event label convention (0–8)
 
 ```
