@@ -3903,21 +3903,21 @@ Build a working baseline early. Add dynamic features only after the event classi
 \begin{column}{0.52\textwidth}
 \centering
 \begin{tikzpicture}[
-  box/.style={rounded corners=5pt,draw=Blue,fill=SoftBlue,thick,text width=2.05cm,minimum height=0.70cm,align=center,font=\scriptsize},
-  warn/.style={rounded corners=5pt,draw=Red,fill=SoftRed,thick,text width=2.05cm,minimum height=0.70cm,align=center,font=\scriptsize},
+  box/.style={rounded corners=5pt,draw=Blue,fill=SoftBlue,thick,text width=1.8cm,minimum height=0.70cm,align=center,font=\scriptsize},
+  warn/.style={rounded corners=5pt,draw=Red,fill=SoftRed,thick,text width=1.8cm,minimum height=0.70cm,align=center,font=\scriptsize},
   arrow/.style={-{Latex[length=2mm]},thick,draw=Muted}
 ]
 \node[box] (cols) at (0,1.6) {check columns\\and units};
-\node[box] (pmu) at (2.25,1.6) {discover PMUs\\from filenames};
-\node[box] (base) at (4.5,1.6) {recompute baseline\\per window};
-\node[box] (feat) at (1.12,0.3) {freeze feature order\\after training};
-\node[box] (valid) at (3.38,0.3) {validate by event\\and location type};
-\node[warn] (leak) at (2.25,-1.0) {no test-label leakage};
-\draw[arrow] (cols) -- (pmu);
-\draw[arrow] (pmu) -- (base);
+\node[box] (pmu) at (2.5,1.6) {discover PMUs\\from filenames};
+\node[box] (base) at (5.0,1.6) {recompute baseline\\per window};
+\node[box] (feat) at (1.25,0.3) {freeze feature order\\after training};
+\node[box] (valid) at (3.75,0.3) {validate by event\\and location type};
+\node[warn] (leak) at (2.5,-1.0) {no test-label leakage};
+\draw[arrow] (cols.east) -- (pmu.west);
+\draw[arrow] (pmu.east) -- (base.west);
 \draw[arrow] (base) -- (valid);
 \draw[arrow] (cols) -- (feat);
-\draw[arrow] (feat) -- (valid);
+\draw[arrow] (feat.east) -- (valid.west);
 \draw[arrow] (valid) -- (leak);
 \end{tikzpicture}
 \end{column}
