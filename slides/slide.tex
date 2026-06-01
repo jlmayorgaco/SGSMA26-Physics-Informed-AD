@@ -204,12 +204,12 @@
 \end{block}
 \end{column}
 \begin{column}{0.48\textwidth}
-\begin{exampleblock}{Reimplementation target}
-The method can be rebuilt from PMU windows, feature definitions, ExtraTrees models, and typed localization routes.
+\begin{exampleblock}{Input and output}
+Eight PMU streams go in. For each 30-second window the model returns the event type and where it happened, written at timestamp resolution as the challenge CSV.
 \end{exampleblock}
-\begin{alertblock}{Submission boundary}
-The submitted route is SGMS: physics-informed features, hierarchical ExtraTrees, and typed dynamic localizers. RAW-label-tuned and oracle branches are excluded from inference.
-\end{alertblock}
+\begin{block}{Why this design}
+Physics-aware features and tree ensembles run on a laptop CPU, stay readable, and never look at the hidden test labels.
+\end{block}
 \end{column}
 \end{columns}
 \end{frame}
@@ -635,6 +635,7 @@ The window becomes one row of engineered features. Models never see the raw tens
 % -------------------------------------------------------------------
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Runtime route and end-to-end method}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -676,6 +677,7 @@ Each window becomes one physics-aware feature row. The output is expanded back t
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 \iffalse
 \begin{frame}{Final runtime route}
@@ -1254,6 +1256,7 @@ Write the extractor as nested loops: for each PMU, for each signal, for each seg
 
 % -------------------------------------------------------------------
 \fi
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Temporal deltas and derivative features}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -1290,6 +1293,7 @@ d_x(t)=\frac{x(t)-x(t-\Delta t)}{\Delta t},\qquad
 Large voltage/current derivatives flag abrupt transients used by the fault and line-outage guards.
 \end{alertblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \iffalse
@@ -1343,12 +1347,12 @@ The final rule engine uses voltage and current derivative thresholds to guard fa
 \end{tikzpicture}}
 \end{column}
 \begin{column}{0.46\textwidth}
-\begin{block}{Peak and persistence}
-\code{max\_abs\_robust\_z} catches the spike. Sustained features say whether the abnormal value stays high for several samples.
+\begin{block}{What it measures}
+The robust z-score is how far a signal sits from its own pre-event normal, measured in robust units (median and MAD). Scale and noise drop out, so one threshold works across buses and channels.
 \end{block}
-\begin{alertblock}{Classifier use}
-\code{sustained\_abs\_robust\_z\_5} and \code{sustained\_abs\_robust\_z\_15} separate short bursts, persistent physical deviations, and isolated bad-data spikes.
-\end{alertblock}
+\begin{block}{Why the shape matters}
+A real event pushes z high and holds it there (top). A bad sample spikes for one frame and falls back (bottom). We give the model both the peak and how long z stays high, so it tells events from sensor glitches.
+\end{block}
 \end{column}
 \end{columns}
 \end{frame}
@@ -1564,6 +1568,7 @@ The count is large, but the implementation is loop-based: signal family, segment
 % -------------------------------------------------------------------
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Dynamic features: signals and three views}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -1600,6 +1605,7 @@ Full magnitude/angle families are used where feasible; the reduced set controls 
 These modules add time-scale, residual, and spatial-propagation evidence after the base statistics.
 \end{alertblock}
 \end{frame}
+\fi % >>> end slide cut
 
 \iffalse
 \begin{frame}{Dynamic feature blocks}
@@ -1681,39 +1687,30 @@ All dynamic blocks start after baseline subtraction, which keeps buses and RAW/S
 
 % -------------------------------------------------------------------
 \fi
-\begin{frame}{Rolling multi-scale features and equations}
+\begin{frame}{Rolling features: summarize a sliding window}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
-\begin{column}{0.45\textwidth}
-\begin{block}{Rolling windows}
-\[
-w \in \{5,15,30,60,120\}
-\]
-\end{block}
-\begin{block}{Features}
-\begin{itemize}
-  \item \code{mean\_abs\_max}
-  \item \code{std\_max}, \code{std\_mean}
-  \item \code{slope\_max\_abs}
-  \item \code{energy}
-  \item \code{time\_to\_abs\_peak}
-\end{itemize}
-\end{block}
+\begin{column}{0.52\textwidth}
+\centering
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[x=0.30cm,y=0.82cm]
+  \draw[->,thick] (0,0) -- (25,0) node[right]{\scriptsize time};
+  \draw[->,thick] (0,-1.3) -- (0,1.95) node[above]{\scriptsize centered signal};
+  \draw[Blue,thick] plot coordinates {(0,0.0)(2,0.25)(4,0.1)(6,1.25)(8,-0.7)(10,0.25)(12,0.1)(14,-0.15)(16,0.45)(18,0.55)(20,0.48)(22,0.45)(24,0.42)};
+  \fill[Orange!15] (5,-1.05) rectangle (11,1.55);
+  \draw[Orange,thick] (5,-1.05) rectangle (11,1.55);
+  \node[Orange] at (8,1.78) {\scriptsize one window};
+  \draw[Orange,-{Latex[length=1.8mm]},thick] (11.3,-0.75) -- (14.0,-0.75);
+  \node[Orange] at (17.4,-0.75) {\scriptsize slides along};
+\end{tikzpicture}}\\[1.5mm]
+{\footnotesize We use window lengths $w=5,15,30,60,120$ samples.}
 \end{column}
-\begin{column}{0.51\textwidth}
-\begin{block}{Equations}
-\[
-\mu_w(t)=w^{-1}\sum_{\tau\in W_w(t)}\tilde{x}(\tau)
-\]
-\[
-\sigma_w(t)=\mathrm{std}_{\tau\in W_w(t)}\tilde{x}(\tau)
-\]
-\[
-E_x=T^{-1}\sum_t|\tilde{x}(t)|^2
-\]
+\begin{column}{0.44\textwidth}
+\begin{block}{Idea}
+Slide a window over the centered signal and summarize what is inside: mean level, spread, slope, energy, and when the peak arrives.
 \end{block}
-\begin{exampleblock}{Interpretation}
-Short windows capture abrupt switching/fault onset. Long windows capture sustained load/generation shifts. Time-to-peak captures delay.
+\begin{exampleblock}{Why several lengths}
+Short windows catch fast switching and fault onset. Long windows catch slow load or generation drift. Time-to-peak shows how late the change shows up.
 \end{exampleblock}
 \end{column}
 \end{columns}
@@ -1766,60 +1763,34 @@ E_x=\frac{1}{T}\sum_t|\tilde{x}(t)|^2
 
 % -------------------------------------------------------------------
 \fi
-\begin{frame}{RLS level and linear-trend residuals}
+\begin{frame}{RLS residual: tracking the normal level online}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
-\begin{column}{0.52\textwidth}
-\begin{block}{Model}
-\[
-y_t=\theta_t+e_t
-\]
-\[
-K_t=\frac{P_{t-1}}{\lambda+P_{t-1}}
-\]
-\[
-\theta_t=\theta_{t-1}+K_t(y_t-\theta_{t-1})
-\]
-\[
-P_t=\frac{P_{t-1}-K_tP_{t-1}}{\lambda}
-\]
+\begin{column}{0.50\textwidth}
+\begin{block}{What it does}
+RLS keeps a running estimate of each signal's normal level and slope and updates it every sample. A forgetting factor $\lambda$ sets how fast it adapts: we run a fast tracker ($\lambda{=}0.92$) and a slow one ($\lambda{=}0.985$).
 \end{block}
-\begin{exampleblock}{Forgetting factors}
+\begin{exampleblock}{The residual is the surprise}
 \[
-\lambda\in\{0.92,\ 0.985\}
+r_t=\bigl|\,y_t-\hat{y}_t\,\bigr|
 \]
-\[
-\phi_t=[1,\ t-t_0]^T,\quad
-\hat{y}_t=\phi_t^T\theta_{t-1}
-\]
+Small while the signal behaves, large the instant it breaks from its recent trend. We keep its peak, mean, p95, and late-minus-pre shift.
 \end{exampleblock}
 \end{column}
-\begin{column}{0.44\textwidth}
-\begin{alertblock}{Features produced}
-\[
-r_t=|y_t-\theta_{t-1}|
-\]
-\[
-\Delta\theta_t=|\theta_t-\theta_{t-1}|
-\]
-For each sequence:
-\[
-\max,\quad \mathrm{mean},\quad p95,
-\]
-\[
-\mathrm{median}_{late}-\mathrm{median}_{pre}
-\]
-\end{alertblock}
+\begin{column}{0.46\textwidth}
 \centering
-\resizebox{\linewidth}{!}{%
+\resizebox{0.95\linewidth}{!}{%
 \begin{tikzpicture}[x=0.30cm,y=0.70cm]
   \draw[->,thick] (0,0) -- (24,0) node[right]{\scriptsize $t$};
   \draw[->,thick] (0,-0.8) -- (0,2.5) node[above]{\scriptsize signal};
   \draw[Blue,very thick] plot coordinates {(0,0.1)(4,0.15)(7,0.2)(9,1.8)(11,1.9)(15,1.85)(20,1.82)(23,1.8)};
   \draw[Orange,very thick,dashed] plot coordinates {(0,0.0)(4,0.08)(8,0.12)(10,0.65)(12,1.05)(15,1.45)(20,1.72)(23,1.78)};
   \node[Blue] at (9.8,2.2) {\scriptsize observation};
-  \node[Orange] at (18,1.25) {\scriptsize adaptive level};
-\end{tikzpicture}}
+  \node[Orange] at (18,1.25) {\scriptsize tracked level};
+\end{tikzpicture}}\\[1mm]
+\begin{block}{Why it helps}
+A sharp residual spike marks an abrupt event (fault, outage). A slow level change with small residuals marks a ramp (generation, load). Static window statistics miss that timing.
+\end{block}
 \end{column}
 \end{columns}
 \end{frame}
@@ -2045,47 +2016,50 @@ It improved some synthetic validation behavior but reduced RAW0001 localization.
 
 % -------------------------------------------------------------------
 \fi
-\begin{frame}{Graph-temporal features and decision form}
+\begin{frame}{Graph-temporal features: how an event spreads across PMUs}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
-\begin{column}{0.52\textwidth}
-\begin{block}{For signal $s$ and observed buses $\mathcal{B}$}
-\[
-\mathrm{spread}_s(t)=
-\max_{b\in\mathcal{B}}\tilde{x}_{b,s}(t)
--
-\min_{b\in\mathcal{B}}\tilde{x}_{b,s}(t)
-\]
-\[
-\Delta_{ab,s}^{max}=\max_t|\tilde{x}_{a,s}(t)-\tilde{x}_{b,s}(t)|
-\]
-\[
-\rho_{ab,s}=\mathrm{corr}(\tilde{x}_{a,s},\tilde{x}_{b,s})
-\]
-\[
-\Delta t^{peak}_{ab,s}=
-\left|t^{peak}_{a,s}-t^{peak}_{b,s}\right|
-\]
-\end{block}
+\begin{column}{0.54\textwidth}
+\centering
+\resizebox{0.88\linewidth}{!}{%
+\begin{tikzpicture}[
+  pmu/.style={circle,draw=Blue,fill=SoftBlue,very thick,minimum size=0.62cm,font=\scriptsize\bfseries},
+  bus/.style={circle,draw=Line,fill=white,minimum size=0.42cm,font=\tiny},
+  event/.style={star,star points=5,draw=Red,fill=SoftRed,very thick,minimum size=0.65cm},
+  line/.style={draw=Muted,thick},
+  pulse/.style={draw=Red!70,dashed,thick}
+]
+\node[pmu] (b2) at (0,1.7) {2};
+\node[bus] (b3) at (1.0,1.25) {3};
+\node[bus] (b4) at (2.0,0.85) {4};
+\node[pmu] (b5) at (3.05,0.85) {5};
+\node[pmu] (b6) at (4.1,0.6) {6};
+\node[pmu] (b10) at (4.6,-0.55) {10};
+\node[bus] (b14) at (2.15,-0.25) {14};
+\node[bus] (b15) at (1.15,-0.75) {15};
+\node[bus] (b16) at (0.1,-1.0) {16};
+\node[pmu] (b19) at (-0.85,-1.45) {19};
+\node[pmu] (b22) at (1.45,-1.8) {22};
+\node[pmu] (b29) at (-1.55,0.35) {29};
+\node[pmu] (b39) at (-1.05,2.35) {39};
+\foreach \a/\b in {b39/b2,b2/b3,b3/b4,b4/b5,b5/b6,b6/b10,b4/b14,b14/b15,b15/b16,b16/b19,b16/b22,b2/b29} {
+  \draw[line] (\a) -- (\b);
+}
+\node[event] (ev) at (2.1,0.3) {};
+\node[Red] at (2.82,0.22) {\scriptsize event};
+\draw[pulse] (ev) circle (0.85);
+\draw[pulse] (ev) circle (1.55);
+\draw[Red,very thick,-{Latex[length=2mm]}] (ev) -- (b5);
+\draw[Orange,very thick,-{Latex[length=2mm]}] (ev) -- (b6);
+\draw[Cyan,very thick,-{Latex[length=2mm]}] (ev) -- (b2);
+\end{tikzpicture}}
 \end{column}
-\begin{column}{0.44\textwidth}
-\begin{alertblock}{Electrical weighting}
-\[
-w_{ab}=\frac{1}{\max(d^{eff}_{ab},10^{-5})}
-\]
-\[
-G_s^{max}=\max_{a<b}
-w_{ab}\Delta_{ab,s}^{max}
-\]
-\end{alertblock}
-\begin{exampleblock}{Decision form}
-\[
-x_{\mathrm{loc}}=[x_{\mathrm{base}},x_{\mathrm{dyn}},G]
-\]
-\[
-\hat{\ell}=\arg\max_{\ell}p_{\mathrm{ET}}(\ell\mid x_{\mathrm{loc}})
-\]
-Graph equations create columns; ExtraTrees learns the thresholds and pair combinations.
+\begin{column}{0.42\textwidth}
+\begin{block}{What we read}
+PMUs sit on different buses. A real event reaches them with a pattern: how much they disagree, which pair differs most, whether they move together, and the timing offset between buses.
+\end{block}
+\begin{exampleblock}{Closer buses count more}
+Each PMU pair is weighted by $1/\text{distance}$, so electrically near buses dominate the score. ExtraTrees turns these into the localization vote.
 \end{exampleblock}
 \end{column}
 \end{columns}
@@ -2286,19 +2260,10 @@ Each model = \code{SimpleImputer(median)} $+$ \code{ExtraTreesClassifier}.\\[0.3
 \bottomrule
 \end{tabular}
 \vspace{-0.5mm}
-\begin{columns}[T,totalwidth=\textwidth]
-\begin{column}{0.49\textwidth}
-\begin{block}{Four feature families (physics meaning)}
+\begin{block}{Four feature families, in plain terms}
 \scriptsize
-Base statistics $+$ derivatives $\rightarrow$ \emph{abruptness}; robust z $\rightarrow$ \emph{anomaly vs noise}; RLS/Kalman innovation $\rightarrow$ \emph{break vs ramp}; graph-temporal $\rightarrow$ \emph{spatial propagation}.
+Window statistics and derivatives measure \emph{abruptness}. Robust z separates \emph{anomaly from noise}. The RLS residual tells a \emph{break from a ramp}. Graph-temporal features show \emph{how the event spreads} across PMUs.
 \end{block}
-\end{column}
-\begin{column}{0.49\textwidth}
-\begin{alertblock}{One-line answer if asked}
-``V-channels detect faults, I-channels detect outages, Freq/ROCOF/PQ detect gen/load, data-quality detects 5/6/7, and graph-temporal features localize.''
-\end{alertblock}
-\end{column}
-\end{columns}
 \end{frame}
 
 % -------------------------------------------------------------------
@@ -2370,6 +2335,68 @@ p_m(c\mid x)=\frac{n_{\mathrm{leaf},c}}{n_{\mathrm{leaf}}},
 \vspace{-1mm}
 \centering
 {\footnotesize One tree follows a threshold path; ExtraTrees averages many randomized trees, so the submitted decision is a probability vote, not one manual rule.}
+\end{frame}
+
+\begin{frame}{How the ExtraTrees forest is trained}
+\scriptsize
+\begin{columns}[T,totalwidth=\textwidth]
+\begin{column}{0.52\textwidth}
+\begin{block}{Growing one tree (greedy split, random cuts)}
+Training rows are labeled windows $(x,y)$: $x\in\mathbb{R}^{\approx 45\mathrm{k}}$ features, $y$ the event class. At every node:
+\begin{enumerate}
+\setlength{\itemsep}{0pt}
+  \item draw $K$ random features (not all $45$k);
+  \item pick \emph{one random} threshold for each;
+  \item keep the cut with the best impurity drop;
+  \item recurse until leaves are pure or \code{min\_samples\_leaf}.
+\end{enumerate}
+\end{block}
+\begin{alertblock}{The ``Extra'' part}
+Thresholds are \emph{random}, not optimized per feature, and each tree sees the \emph{full} set (no bootstrap). This makes trees fast and diverse, which lowers variance.
+\end{alertblock}
+\end{column}
+\begin{column}{0.44\textwidth}
+\begin{exampleblock}{Split score: Gini impurity}
+\[
+G=1-\sum_c p_c^2,\qquad
+\Delta G = G_{\mathrm{node}}-\!\!\sum_{\mathrm{child}}\tfrac{n}{N}\,G_{\mathrm{child}}
+\]
+Keep the random cut with the largest $\Delta G$.
+\end{exampleblock}
+\begin{block}{From tree to forest}
+Grow $M$ independent trees with different random features and cuts. Each leaf stores class frequencies; the forest averages the leaf probabilities. Tuned controls are \code{n\_estimators}, \code{max\_features}, and \code{min\_samples\_leaf}: CPU-only, no scaling, \code{NaN} via median imputer.
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% -------------------------------------------------------------------
+\begin{frame}{Why a learned forest, not hand-written if/else}
+\scriptsize
+\begin{columns}[T,totalwidth=\textwidth]
+\begin{column}{0.49\textwidth}
+\begin{alertblock}{Why if/else on our own features fails}
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+  \item $\approx 45{,}000$ features, 9 event classes, 3 localizer types: hand-tuning thresholds is infeasible and brittle.
+  \item One cutoff per feature misses \emph{interactions}: high robust-$z$ \emph{and} sustained \emph{and} low missing $\Rightarrow$ fault; high $z$ alone $\Rightarrow$ bad data.
+  \item Hand-picked cutoffs overfit RAW0001 noise and scale, and break on a hidden RAW with different PMUs.
+\end{itemize}
+\end{alertblock}
+\end{column}
+\begin{column}{0.49\textwidth}
+\begin{exampleblock}{What the forest does instead}
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+  \item Learns thresholds \emph{and} feature combinations from labeled windows; finds the few discriminative ones among 45k.
+  \item Emits calibrated probabilities $\rightarrow$ feed the physics gates (bad-data, missing) and the confidence checks.
+  \item Tolerates correlated/redundant features and \code{NaN}, needs no scaling, and is deterministic, tiny, and fast.
+\end{itemize}
+\end{exampleblock}
+\end{column}
+\end{columns}
+\vspace{-1mm}
+\callout{The forest finds threshold combinations across thousands of features that nobody could set by hand, and averages many trees so no single cutoff decides the call.}
 \end{frame}
 
 % -------------------------------------------------------------------
@@ -2461,6 +2488,7 @@ Missing and bad-data evidence is routed before the physical classifier so commun
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Physics rule guards and tree decision}
 \scriptsize
 \begin{columns}[T,totalwidth=\textwidth]
@@ -2496,6 +2524,7 @@ ExtraTrees estimates class probabilities from the full engineered vector. Rule g
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 \iffalse
 \begin{frame}{Hierarchical event logic}
@@ -2826,6 +2855,7 @@ The model does not rank every possible label together. It first chooses a type, 
 \fi % >>> end slide cut
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Final localizer models}
 \small
 \begin{block}{Model lookup used at inference}
@@ -2847,8 +2877,10 @@ Each entry is a median-imputed ExtraTrees pipeline trained on the localizer feat
 \code{use\_hybrid\_top1 = false}. The final submitted Top-1 location uses the validated typed ML localizers, not the hybrid/oracle branch.
 \end{alertblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Localizer evidence and inference equation}
 \small
 \begin{columns}[T,totalwidth=\textwidth]
@@ -2878,6 +2910,7 @@ The event route selects the localizer type \(\tau\), then the ExtraTrees model r
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
@@ -3165,6 +3198,7 @@ Detection and classification transferred perfectly on RAW0001; localization rema
 \end{frame}
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Variant selection evidence}
 \small
 \begin{block}{Selected variant}
@@ -3191,6 +3225,7 @@ Some experimental methods had higher RAW0001 numbers, but were not valid for uns
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
@@ -3209,8 +3244,8 @@ The final submitted method was SGMS: physics-informed features + hierarchical Ex
 \fi % >>> end slide cut
 
 % -------------------------------------------------------------------
-\section{Ablation and Reimplementation}
-\sectionframe{}{Ablation and\\Reimplementation}{What each component contributes}
+\section{Ablation}
+\sectionframe{}{Ablation}{What each component contributes, and why we measure it}
 
 
 % -------------------------------------------------------------------
@@ -3260,7 +3295,7 @@ Equations, event recipes, thresholds, and validation commands are used as audit 
 \centering
 \begin{tikzpicture}[x=0.82cm,y=0.035cm]
   \draw[->,thick] (0,0) -- (5.7,0);
-  \draw[->,thick] (0,0) -- (0,80) node[above]{\scriptsize Top-1};
+  \draw[->,thick] (0,0) -- (0,80) node[above]{\scriptsize RAW0001 Top-1 (\%)};
   \foreach \y in {20,40,60} {\draw[Muted!40] (0,\y) -- (5.2,\y); \node[left] at (0,\y) {\scriptsize \y};}
   \fill[Blue!65] (0.45,0) rectangle (1.05,58);
   \fill[Cyan!65] (1.45,0) rectangle (2.05,64);
@@ -3273,12 +3308,12 @@ Equations, event recipes, thresholds, and validation commands are used as audit 
 \end{tikzpicture}
 \end{column}
 \begin{column}{0.44\textwidth}
-\begin{block}{Selection evidence}
-The selected variant tied the best deployable RAW0001 localization result while keeping SIM validation strong.
+\begin{block}{What ablation is}
+We add one feature family at a time and re-measure localization. Each bar is the score with that group added.
 \end{block}
-\begin{alertblock}{Rejected variants}
-RAW-label-trained, oracle, or leakage-dependent variants were not deployable on a new hidden RAW dataset.
-\end{alertblock}
+\begin{exampleblock}{Why it matters}
+Every group earns its place: rolling, then the RLS residual, then graph features each lift the score, and the full set is best. Nothing is there just for show.
+\end{exampleblock}
 \end{column}
 \end{columns}
 \end{frame}
@@ -3897,6 +3932,7 @@ Build a working baseline early. Add dynamic features only after the event classi
 \fi % >>> end slide cut
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{Adapting to a new RAW dataset}
 \scriptsize
 \begin{columns}[T,totalwidth=\textwidth]
@@ -3935,74 +3971,16 @@ Retrain or recalibrate only with training labels. Hidden-test labels must not af
 \end{column}
 \end{columns}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \section{Reimplementation Sequence}
 \sectionframe{}{Reimplementation\\Sequence}{Rebuilding the method from zero}
+\fi % >>> end slide cut
 
 
 % -------------------------------------------------------------------
-\begin{frame}{How the ExtraTrees forest is trained}
-\scriptsize
-\begin{columns}[T,totalwidth=\textwidth]
-\begin{column}{0.52\textwidth}
-\begin{block}{Growing one tree (greedy split, random cuts)}
-Training rows are labeled windows $(x,y)$: $x\in\mathbb{R}^{\approx 45\mathrm{k}}$ features, $y$ the event class. At every node:
-\begin{enumerate}
-\setlength{\itemsep}{0pt}
-  \item draw $K$ random features (not all $45$k);
-  \item pick \emph{one random} threshold for each;
-  \item keep the cut with the best impurity drop;
-  \item recurse until leaves are pure or \code{min\_samples\_leaf}.
-\end{enumerate}
-\end{block}
-\begin{alertblock}{The ``Extra'' part}
-Thresholds are \emph{random}, not optimized per feature, and each tree sees the \emph{full} set (no bootstrap). This makes trees fast and diverse, which lowers variance.
-\end{alertblock}
-\end{column}
-\begin{column}{0.44\textwidth}
-\begin{exampleblock}{Split score: Gini impurity}
-\[
-G=1-\sum_c p_c^2,\qquad
-\Delta G = G_{\mathrm{node}}-\!\!\sum_{\mathrm{child}}\tfrac{n}{N}\,G_{\mathrm{child}}
-\]
-Keep the random cut with the largest $\Delta G$.
-\end{exampleblock}
-\begin{block}{From tree to forest}
-Grow $M$ independent trees with different random features and cuts. Each leaf stores class frequencies; the forest averages the leaf probabilities. Tuned controls are \code{n\_estimators}, \code{max\_features}, and \code{min\_samples\_leaf}: CPU-only, no scaling, \code{NaN} via median imputer.
-\end{block}
-\end{column}
-\end{columns}
-\end{frame}
-
-% -------------------------------------------------------------------
-\begin{frame}{Why a learned forest, not hand-written if/else}
-\scriptsize
-\begin{columns}[T,totalwidth=\textwidth]
-\begin{column}{0.49\textwidth}
-\begin{alertblock}{Why if/else on our own features fails}
-\begin{itemize}
-\setlength{\itemsep}{0pt}
-  \item $\approx 45{,}000$ features, 9 event classes, 3 localizer types: hand-tuning thresholds is infeasible and brittle.
-  \item One cutoff per feature misses \emph{interactions}: high robust-$z$ \emph{and} sustained \emph{and} low missing $\Rightarrow$ fault; high $z$ alone $\Rightarrow$ bad data.
-  \item Hand-picked cutoffs overfit RAW0001 noise and scale, and break on a hidden RAW with different PMUs.
-\end{itemize}
-\end{alertblock}
-\end{column}
-\begin{column}{0.49\textwidth}
-\begin{exampleblock}{What the forest does instead}
-\begin{itemize}
-\setlength{\itemsep}{0pt}
-  \item Learns thresholds \emph{and} feature combinations from labeled windows; finds the few discriminative ones among 45k.
-  \item Emits calibrated probabilities $\rightarrow$ feed the physics gates (bad-data, missing) and the confidence checks.
-  \item Tolerates correlated/redundant features and \code{NaN}, needs no scaling, and is deterministic, tiny, and fast.
-\end{itemize}
-\end{exampleblock}
-\end{column}
-\end{columns}
-\vspace{-1mm}
-\callout{\textbf{Key idea:} a forest averages learned randomized threshold cascades, finding feature combinations that would be brittle to tune by hand.}
-\end{frame}
 
 % -------------------------------------------------------------------
 \iffalse % <<< CUT to reach 50 slides (reversible: remove this \iffalse and matching \fi)
@@ -4065,6 +4043,7 @@ The forest receives the full vector; this is the first hand-rebuild subset to im
 \fi % >>> end slide cut
 
 % -------------------------------------------------------------------
+\iffalse % <<< CUT (reimplementation/internal/filler; reversible)
 \begin{frame}{ExtraTrees route versus a neural network}
 \scriptsize
 \centering
@@ -4097,12 +4076,13 @@ Professional next step when larger labeled RAW/SIM datasets and topology metadat
 The final method chose reliability and auditability over end-to-end representation learning.
 \end{alertblock}
 \end{frame}
+\fi % >>> end slide cut
 
 % -------------------------------------------------------------------
 \begin{frame}{Closing}
 \small
 \begin{block}{Submitted method}
-The final submission transforms raw PMU windows into physically meaningful feature vectors, then uses hierarchical ExtraTrees models and typed dynamic localizers to produce event and location predictions.
+We turn each PMU window into physics-aware features, classify the event with hierarchical ExtraTrees, and localize it with a typed localizer.
 \end{block}
 \begin{columns}[T,totalwidth=\textwidth]
 \begin{column}{0.32\textwidth}
@@ -4147,8 +4127,8 @@ Typed localizers keep BUS, LINE, and PMU targets separate. Each model ranks vali
 \end{column}
 \end{columns}
 \vspace{2mm}
-\begin{alertblock}{Final takeaway}
-The submitted system is reproducible because every output comes from a feature row, a routing rule, or an ExtraTrees probability vote.
+\begin{alertblock}{Reproducible by design}
+Every output traces back to a feature row, a routing rule, or a tree vote, so any prediction can be explained and rebuilt.
 \end{alertblock}
 \end{frame}
 
