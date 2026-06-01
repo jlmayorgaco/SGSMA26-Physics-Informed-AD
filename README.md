@@ -92,6 +92,26 @@ Runtime model:
 - the validated ExtraTrees/hybrid ML bundle in `models/` is applied in fixed 30 s windows for all inputs;
 - the physics runtime is only a fallback if the ML bundle is unavailable.
 
+## Competition Day XLSX Packaging
+
+When the two live test workbooks arrive, generate the organizer-ready submission folder with:
+
+```powershell
+python scripts\prepare_competition_day_submission.py `
+  --test1 C:\path\to\Test1.xlsx `
+  --test2 C:\path\to\Test2.xlsx
+```
+
+This creates `output\competition_day\J_Mayorga_SGSMA2026\` with:
+
+```text
+J_Mayorga_Results_Test1.xlsx
+J_Mayorga_Results_Test2.xlsx
+```
+
+The workbook adapter preserves each bus sheet, fills the `label` column, and adds the `Evaluation Metrics` sheet required by the live-test email. See `COMPETITION_DAY.md` for the short runbook.
+Diagnostics are written outside the upload folder under `output\competition_day\_diagnostics\`.
+
 ## Validate the Reviewer Package
 
 The compact submission archive can be tested directly:
