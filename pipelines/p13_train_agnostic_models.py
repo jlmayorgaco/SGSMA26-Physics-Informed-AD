@@ -64,7 +64,7 @@ def _model(n_estimators: int, random_state: int, class_weight: str | None = "bal
                     random_state=int(random_state),
                     max_features="sqrt",
                     class_weight=class_weight,
-                    n_jobs=-1,
+                    n_jobs=1,
                 ),
             ),
         ]

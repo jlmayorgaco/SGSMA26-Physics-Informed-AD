@@ -1,0 +1,4 @@
+method,feature_set,sim_detection_accuracy,sim_event_accuracy,sim_event_macro_f1,sim_localization_top1,raw_detection_accuracy,raw_event_accuracy,raw_event_macro_f1_observed,raw_localization_top1,sim_localization_correct,sim_localization_support,raw_localization_correct,raw_localization_support
+Dynamic-only Random Forest,dynamic V3 only,0.948,0.8346666666666667,0.7619399658185289,0.4628099173553719,0.5714285714285714,0.0,0.0,0.08333333333333333,560,1210,1,12
+Dynamic-only Extra Trees,dynamic V3 only,0.9373333333333334,0.8333333333333334,0.7632971271658398,0.45867768595041325,0.5714285714285714,0.0,0.0,0.0,555,1210,0,12
+PI-HED full hierarchy,base V2 + rolling + RLS/Kalman + graph-temporal,0.9693333333333334,0.9673333333333334,0.9597812293865824,0.8524451939291737,1.0,1.0,1.0,0.6666666666666666,1011,1186,8,12
