@@ -48,7 +48,7 @@ def run(root: Path) -> dict[str, object]:
         "## G. Downstream registry\n\n"
         "E02/E03 and all later phases remain blocked or pending; no downstream execution was performed.\n\n"
         "## H. Gate\n\n"
-        f"G0 = **{status}**\n",
+        f"G0 = {status}\n",
         encoding="utf-8",
     )
     return {"status": status, "ybus": ybus_summary, "parity": parity_summary}
