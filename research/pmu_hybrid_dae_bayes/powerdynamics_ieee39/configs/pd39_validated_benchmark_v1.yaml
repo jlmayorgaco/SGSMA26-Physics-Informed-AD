@@ -1,0 +1,29 @@
+benchmark_id: pd39_validated_benchmark_v1
+sampling_hz: 30.0
+julia: 1.11.9
+juliaup: 1.22.3
+powerdynamics: 5.0.0
+networkdynamics: 1.3.0
+modelingtoolkitsbase: 1.69.2
+solver:
+  method: Rodas5P
+  abstol: 1.0e-9
+  reltol: 1.0e-9
+  equilibrium_residual: 4.658651692977883e-13
+gates:
+  PD-G0: PASS
+  PD-G1-SYNTHETIC: PASS
+  dynamic_equilibrium: PASS
+  small_signal: PASS
+  nonlinear_linear_convergence: PASS
+  PD-E03: PASS
+pmu:
+  observed_buses: [2, 5, 6, 10, 19, 22, 29, 39]
+  terminals: [[39, 1], [29, 26], [10, 11], [22, 21], [19, 16], [2, 1], [5, 4], [6, 5]]
+  channels: [re_v, im_v, re_i_terminal, im_i_terminal]
+  noise_sigma: 1.0e-3
+provenance:
+  csv_hash_manifest: output/manifests/provenance_hashes.csv
+  machine_controller_map: output/results/pd_machine_controller_map.csv
+  original_csv_dir: output/provenance/powerdynamics_original
+  primary_status: NUMERICALLY_VALID_PEDAGOGICAL
