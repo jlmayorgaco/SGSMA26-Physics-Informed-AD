@@ -146,7 +146,7 @@ def compare(andes: AndesStaticSolution, pandapower: PandapowerStaticSolution, to
 def run(root: Path) -> dict[str, Any]:
     """Execute static parity and save only auditable machine-readable outputs."""
     root = root.resolve()
-    repository_root = root.parents[2]
+    repository_root = root.parents[1]
     results = root / "output" / "results" / "e01_static_parity"
     manifests = root / "output" / "manifests"
     reports = root / "output" / "reports"

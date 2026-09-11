@@ -182,7 +182,7 @@ def markdown_report(audit: dict[str, Any]) -> str:
 
 def run(root: Path) -> dict[str, Any]:
     root = root.resolve()
-    repository_root = root.parents[2]
+    repository_root = root.parents[1]
     reports = root / "output" / "reports"
     manifests = root / "output" / "manifests"
     reports.mkdir(parents=True, exist_ok=True)
