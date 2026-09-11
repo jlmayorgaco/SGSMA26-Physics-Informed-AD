@@ -1,0 +1,7 @@
+"""Study-wide immutable physical conventions."""
+
+PMU_BUSES: tuple[int, ...] = (2, 5, 6, 10, 19, 22, 29, 39)
+BUS_COUNT = 39
+SYSTEM_BASE_MVA = 100.0
+NOMINAL_FREQUENCY_HZ = 60.0
+CONTROLLED_SYNTHETIC_TERMINAL_MAP = "CONTROLLED_SYNTHETIC_TERMINAL_MAP"

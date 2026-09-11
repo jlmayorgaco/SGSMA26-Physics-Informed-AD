@@ -1,0 +1,28 @@
+study_id: pmu_hybrid_dae_bayes_v1
+network:
+  name: ieee39
+  system_base_mva: 100.0
+  nominal_frequency_hz: 60.0
+  primary_dynamic_source:
+    backend: andes
+    bundled_case: ieee39/ieee39_full.xlsx
+    expected_models:
+      GENROU: 10
+      TGOV1N: 10
+      IEEEX1: 10
+      IEEEST: 10
+      BusFreq: 10
+  independent_ac_crosscheck:
+    backend: pandapower
+    case: pandapower.networks.case39
+  parity:
+    reference_angle: common_slack_angle_alignment
+    voltage_magnitude_tolerance_pu: 1.0e-5
+    voltage_angle_tolerance_deg: 1.0e-3
+    injection_tolerance_mva: 1.0e-2
+    branch_flow_tolerance_mva: 1.0e-2
+    gate: FAIL_ON_UNEXPLAINED_MISMATCH
+data_policy:
+  external_holdout_directory: data/external_holdout
+  external_holdout_access: frozen_only
+  estimator_truth_access: post_hoc_evaluation_only

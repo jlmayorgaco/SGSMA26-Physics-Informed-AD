@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pmu-hybrid-dae-bayes"
+version = "0.1.0"
+description = "Leakage-safe IEEE-39 sparse-PMU Hybrid-DAE validation campaign"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+simulation = [
+  "andes>=1.9.3",
+  "pandapower>=3.0",
+  "openpyxl>=3.1",
+  "pyarrow>=14.0",
+]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

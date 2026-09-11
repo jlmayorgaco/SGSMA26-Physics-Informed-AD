@@ -1,0 +1,17 @@
+pmu_buses: [2, 5, 6, 10, 19, 22, 29, 39]
+representation:
+  fields: [V_RE, V_IM, I_TERMINAL_RE, I_TERMINAL_IM, F_HZ, ROCOF_HZ_S, DATA_PRESENT]
+  sequence_model: positive_sequence
+  phase_export: balanced_compatibility_only
+terminal_current:
+  status: CONTROLLED_SYNTHETIC_TERMINAL_MAP
+  authority: no_competition_terminal_metadata_available_to_campaign
+  selection_rule: lowest_canonical_incident_edge
+  direction: current_leaving_named_pmu_bus_into_selected_branch
+  polarity: 1
+  calibration: none
+frequency_operator:
+  status: causal_phase_slope_baseline
+  window_frames: 5
+  sample_rate_hz: 30.0
+  ideal_derivative_comparison: required_ablation
