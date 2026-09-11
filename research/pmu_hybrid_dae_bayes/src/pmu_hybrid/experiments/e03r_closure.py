@@ -77,7 +77,11 @@ def _run_case(kind: str, epsilon: float, static: Any) -> tuple[np.ndarray, np.nd
 
 
 def _interpolate_causal(times: np.ndarray, values: np.ndarray, grid: np.ndarray) -> np.ndarray:
-    return np.column_stack([np.interp(grid, times, values[:, col]) for col in range(values.shape[1])])
+    # Zero-order hold from the latest completed internal TDS sample.  This is
+    # causal (unlike centered interpolation or np.interp between future points).
+    indices = np.searchsorted(times, grid, side="right") - 1
+    indices = np.clip(indices, 0, len(times) - 1)
+    return values[indices]
 
 
 def _linear_response(A: np.ndarray, C: np.ndarray, dx0: np.ndarray, B: np.ndarray, event_index: int, steps: int, dt: float, epsilon: float) -> np.ndarray:

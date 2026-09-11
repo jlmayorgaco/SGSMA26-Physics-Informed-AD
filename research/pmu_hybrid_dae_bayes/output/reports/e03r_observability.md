@@ -6,9 +6,9 @@ The supported ANDES event API executes governor-reference and high-impedance shu
 
 | case                       |        min |        max |
 |:---------------------------|-----------:|-----------:|
-| GOVERNOR_REFERENCE_STEP    | 14.7996    | 14.8004    |
-| INITIAL_STATE_PERTURBATION |  1.4965    |  1.4966    |
-| SMALL_SHUNT_LOAD_STEP      |  0.0438983 |  0.0439086 |
+| GOVERNOR_REFERENCE_STEP    | 13.7512    | 13.752     |
+| INITIAL_STATE_PERTURBATION |  1.50886   |  1.50896   |
+| SMALL_SHUNT_LOAD_STEP      |  0.0419301 |  0.0419423 |
 
 The normalized mismatch does not approach a numerical floor for the tested cases, so the input mapping is not yet validated as a true independent linearization.
 
