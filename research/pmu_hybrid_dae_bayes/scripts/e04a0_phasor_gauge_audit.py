@@ -53,7 +53,7 @@ def main():
     C = _read_matrix(RES / "e04_C_pmu.csv")
     Ct = _read_matrix(RES / "e04_C_hidden.csv")
     Ad = expm(A / 30.0)
-    y0 = pd.read_csv(RES / "e04_pd_y0.csv")["pmu"].to_numpy(float)
+    y0 = pd.read_csv(RES / "e04_y0_pmu.csv").iloc[:, 0].to_numpy(float)
     h0 = pd.read_csv(RES / "e04_pd_hidden0.csv")["hidden"].to_numpy(float)
     ds = pd.read_csv(RES / "e04_pd_dataset.csv")
     g = ds[(ds.split == "TEST") & (ds.traj == "TEST_1")].sort_values("frame").reset_index(drop=True)
