@@ -82,8 +82,10 @@ def main():
             r=spearmanr(theory[x],theory[y]); theory[f'spearman_{x}_vs_{y}']=float(r.statistic)
     theory.to_csv(RES/'e04a1_e03_vs_e04.csv',index=False)
     # PMU-loss diagnostic on first 20 TEST trajectories; rebuild C by deleting PMU pairs.
-    important=[39,2,29,5,6,10,19,22]; loss=[]
-    for bus_id in [None,39,2]:
+    important=[39,29,19,22,2,6,10,5]; loss=[]
+    # E03 structural row-pair norm identifies bus 39 as most informative and
+    # bus 5 as least informative among the eight observed PMUs.
+    for bus_id in [None,39,5]:
         keep=np.ones(32,dtype=bool)
         if bus_id is not None:
             j=OBS.index(bus_id); keep[2*j:2*j+2]=False; keep[16+2*j:16+2*j+2]=False

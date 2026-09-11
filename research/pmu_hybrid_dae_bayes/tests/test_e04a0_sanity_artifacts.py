@@ -28,3 +28,19 @@ def test_e04a0_sanity_gate_artifact_has_zero_equilibrium_errors():
     checks = json.loads((RES / "e04a0_sanity_checks.json").read_text(encoding="utf-8"))
     assert max(checks[k] for k in ["equilibrium_max_complex_error_B0", "equilibrium_max_complex_error_B1", "equilibrium_max_complex_error_B2"]) < 1e-12
     assert checks["B1_noiseless_exact"] and checks["B2_linear_kalman_sanity"]
+
+
+def test_regenerated_export_contract_and_test1_regression_exist():
+    contract = json.loads((RES / "e04a1_export_contract.json").read_text(encoding="utf-8"))
+    assert contract["A_d_shape"] == [114, 114]
+    assert contract["C_pmu_shape"] == [32, 114]
+    assert contract["L_hidden_shape"] == [62, 114]
+    reg = pd.read_csv(RES / "e04a1_test1_regression.csv")
+    assert set(reg.method) == {"B0_NOMINAL", "B1_SNAPSHOT_WLS", "B2_KALMAN"}
+    assert bool(reg.loc[reg.method == "B0_NOMINAL", "pass"].iloc[0])
+
+
+def test_cached_rts_oracle_agreement_artifact():
+    oracle = pd.read_csv(RES / "e04a1_b3_oracle.csv")
+    assert len(oracle) == 3
+    assert oracle["pass"].all()
