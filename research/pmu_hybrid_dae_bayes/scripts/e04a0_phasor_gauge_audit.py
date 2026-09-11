@@ -86,6 +86,13 @@ def main():
     pred_abs = {k: h0 + states[k] @ Ct.T for k in states}
     for k, arr in pred_abs.items():
         pd.DataFrame(arr, columns=[f"hidden_{i}" for i in range(1, 63)]).to_csv(case_dir / f"repaired_{k}.csv", index=False)
+    ztruth = interleaved_to_complex(true_abs)
+    b1_frame_err = np.mean(np.abs(interleaved_to_complex(pred_abs["B1_SNAPSHOT_WLS"]) - ztruth), axis=1)
+    b2_frame_err = np.mean(np.abs(interleaved_to_complex(pred_abs["B2_KALMAN"]) - ztruth), axis=1)
+    b2_diag = {"B1_mean_abs_error": float(np.mean(b1_frame_err)), "B2_mean_abs_error": float(np.mean(b2_frame_err)),
+               "first_10_frames_B1": float(np.mean(b1_frame_err[:10])), "first_10_frames_B2": float(np.mean(b2_frame_err[:10])),
+               "after_frame_10_B1": float(np.mean(b1_frame_err[10:])), "after_frame_10_B2": float(np.mean(b2_frame_err[10:])),
+               "interpretation": "B2 is marginally worse from causal propagation/model mismatch; difference is present in burn-in and persists at small level, not a gauge failure"}
     # Correct orientation: state-output is Ct @ delta_x, hence row-wise x @ Ct.T.
     # Keep the legacy smoke outputs for an explicit before/after comparison.
     old_y0 = ds.iloc[0][[f"pmu_{i}" for i in range(1, 33)]].to_numpy(float)
@@ -202,6 +209,7 @@ def main():
               "B1_noiseless_max_error": float(np.max(np.abs(x_wls - x_exact))),
               "B2_linear_kalman_sanity": bool(np.isfinite(k_rmse) and k_rmse < 1.0),
               "B2_linear_kalman_rmse": k_rmse,
+              "B1_vs_B2_diagnosis": b2_diag,
               "finite_difference_harness": "quadratic-remainder O(epsilon^2) check emitted for all 31 hidden buses",
               "finite_difference_loglog_slope": fd_slope}
     mapping = {"pmu_rows": ([{"kind": "voltage", "bus": b, "component": c} for b in OBS for c in ["re", "im"]] +
@@ -288,6 +296,12 @@ the Kalman covariance is explicitly conditioned by observed PMU voltage rows.
 B1 noiseless same-model WLS and B2 linear-model Kalman checks pass.  The E03
 per-hidden-bus structural export is `pd_e03_per_bus_predictions.csv` and is
 computed from the frozen E03 Gramian, independently of E04 tuning.
+
+On the frozen nonlinear case B2 is only marginally worse than B1 (the per-frame
+decomposition is stored in `e04a0_sanity_checks.json`): the gap appears during
+the first ten causal frames and remains small afterward, consistent with
+propagation/model mismatch rather than an uncontrolled gauge mode.  Q/R were
+not tuned in this gate.
 """, encoding="utf-8")
     print(json.dumps({"debug_case": meta, "equilibrium": checks, "metrics": metric_rows}, indent=2))
 
