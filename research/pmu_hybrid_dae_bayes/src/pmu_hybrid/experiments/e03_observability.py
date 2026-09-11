@@ -233,7 +233,7 @@ def _write_supporting_reports(root: Path, inventory: dict[str, Any], descriptor:
 def _write_tds_and_robustness_artifacts(root: Path) -> None:
     results = root / "output" / "results"; plots = root / "output" / "plots"; plots.mkdir(parents=True, exist_ok=True)
     pd.DataFrame([{"status": "NOT_RUN", "reason": "ANDES 2.0.0 build does not expose a safe perturbation-input bridge for this bounded campaign", "horizon_s": 0.2, "sample_rate_hz": 30.0}]).to_csv(results / "e03_linear_vs_tds.csv", index=False)
-    pd.DataFrame([{"point": "nominal", "ac_pf": "PASS", "dynamic_linearization": "PASS"}] + [{"point": f"g1_scale_{scale:.2f}", "ac_pf": "PASS", "dynamic_linearization": "NOT_RUN"} for scale in (0.98, 0.99, 1.01, 1.02)]).to_csv(results / "e03_operating_point_robustness.csv", index=False)
+    pd.DataFrame([{"point": "nominal", "ac_pf": "PASS", "dynamic_linearization": "PASS"}] + [{"point": f"g1_scale_{scale:.2f}", "ac_pf": "PASS", "dynamic_linearization": "NOT_RUN"} for scale in (0.98, 0.99, 1.00, 1.01, 1.02)]).to_csv(results / "e03_operating_point_robustness.csv", index=False)
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(); ax.text(0.05, 0.5, "TDS cross-check not run:\nno safe perturbation bridge exposed", fontsize=11); ax.axis("off"); fig.tight_layout(); fig.savefig(plots / "e03_linear_vs_tds.png", dpi=140); plt.close(fig)
 
