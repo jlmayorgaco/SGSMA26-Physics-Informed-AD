@@ -42,6 +42,7 @@ From the repository root in PowerShell:
 
 ```powershell
 $env:PYTHONPATH = 'research/pmu_hybrid_dae_bayes/src'
+python -m pmu_hybrid.experiments.smoke --root research/pmu_hybrid_dae_bayes
 python -m pmu_hybrid.experiments.e00_environment --root research/pmu_hybrid_dae_bayes
 python -m pmu_hybrid.experiments.e01_static_parity --root research/pmu_hybrid_dae_bayes
 python -m pmu_hybrid.experiments.e02_measurement_audit --root research/pmu_hybrid_dae_bayes
