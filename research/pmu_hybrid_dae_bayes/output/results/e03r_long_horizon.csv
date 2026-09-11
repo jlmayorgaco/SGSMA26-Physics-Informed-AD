@@ -1,0 +1,4 @@
+configuration,horizon_frames,rank_tol_1e-8,functional_residual_global,smallest_singular_value
+VI_ONLY,90,121,3.665932604391545e-05,0.0
+VI_ONLY,120,128,2.7619803193500805e-05,0.0
+VI_ONLY,180,132,2.1374870971894693e-05,0.0

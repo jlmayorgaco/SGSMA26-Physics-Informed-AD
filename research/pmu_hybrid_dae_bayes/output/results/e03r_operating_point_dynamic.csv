@@ -1,0 +1,7 @@
+status,point,spectral_abscissa,rank_60_tol_1e-8,functional_residual_60,worst_buses,reason
+STATIC_ONLY,nominal,0.03712754177603644,,,34;20;33,dynamic relinearization not available for translated redispatch point
+STATIC_ONLY,0.98,0.03712754177603644,,,34;20;33,dynamic relinearization not available for translated redispatch point
+STATIC_ONLY,0.99,0.03712754177603644,,,34;20;33,dynamic relinearization not available for translated redispatch point
+STATIC_ONLY,1.00,0.03712754177603644,,,34;20;33,dynamic relinearization not available for translated redispatch point
+STATIC_ONLY,1.01,0.03712754177603644,,,34;20;33,dynamic relinearization not available for translated redispatch point
+STATIC_ONLY,1.02,0.03712754177603644,,,34;20;33,dynamic relinearization not available for translated redispatch point
