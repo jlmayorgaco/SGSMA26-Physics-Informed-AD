@@ -1,0 +1,20 @@
+sampling_hz: 30.0
+measurement:
+  channels_per_pmu: [re_v, im_v, re_i_terminal, im_i_terminal]
+  sigma: 0.001
+  units: [pu, pu, pu, pu]
+process:
+  q_scale_nominal: 1.0e-6
+  q_scale_grid: [0.1, 1.0, 10.0]
+  units: reduced-state^2/frame
+prior:
+  mode: REALISTIC_PRIOR
+  mean: nominal_equilibrium
+  covariance_scale: 1.0
+oracle_ablation:
+  enabled: true
+  excluded_from_primary_scores: true
+  mode: TRUE_INITIAL_STATE
+selection:
+  split: DEV_ONLY
+  frozen_before_test: true
