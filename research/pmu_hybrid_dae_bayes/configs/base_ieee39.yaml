@@ -15,6 +15,10 @@ network:
   independent_ac_crosscheck:
     backend: pandapower
     case: pandapower.networks.case39
+  canonical_conversion:
+    authority: andes bundled ieee39_full.xlsx static inputs
+    target: independently solved pandapower pi-model translation
+    direct_shipped_case_status: expected operating-point cross-check only
   parity:
     reference_angle: common_slack_angle_alignment
     voltage_magnitude_tolerance_pu: 1.0e-5
