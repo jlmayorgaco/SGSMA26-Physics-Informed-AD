@@ -7,31 +7,42 @@ import numpy as np, pandas as pd
 from scipy.stats import spearmanr, pearsonr
 from scipy.linalg import expm
 import matplotlib.pyplot as plt
-from pmu_hybrid.e04a_estimator import LinearGaussianModel, snapshot_wls, kalman_filter, fixed_lag_filter
+from pmu_hybrid.e04a_estimator import (LinearGaussianModel, snapshot_wls, kalman_filter,
+                                       fixed_lag_filter, interleaved_to_complex,
+                                       phasor_metrics)
 from pmu_hybrid.e04a_data import observed_measurements, evaluation_ground_truth
 
 ROOT=Path(__file__).resolve().parents[2]/"powerdynamics_ieee39"; RES=ROOT/"output/results"; PLOTS=ROOT/"output/plots"; REP=ROOT/"output/reports"; PLOTS.mkdir(exist_ok=True)
 def qread(p): return pd.read_csv(p).to_numpy(float)
-def metrics(pred,true):
-    pred=np.asarray(pred); true=np.asarray(true); z=pred-true; vm=np.hypot(pred[:,0::2],pred[:,1::2]); vt=np.hypot(true[:,0::2],true[:,1::2]);
-    ang=np.rad2deg(np.angle(pred[:,0::2]+1j*pred[:,1::2])-np.angle(true[:,0::2]+1j*true[:,1::2])); ang=(ang+180)%360-180
-    tve=np.abs(pred[:,0::2]+1j*pred[:,1::2]-(true[:,0::2]+1j*true[:,1::2]))/np.maximum(vt,1e-9)
-    return dict(tve=float(np.mean(tve)),angle_rmse=float(np.sqrt(np.mean(ang**2))),vm_rmse=float(np.sqrt(np.mean((vm-vt)**2))),re_rmse=float(np.sqrt(np.mean(z[:,0::2]**2))),im_rmse=float(np.sqrt(np.mean(z[:,1::2]**2))),p95_tve=float(np.quantile(tve,.95)),worst_bus=int(np.argmax(np.mean(tve,axis=0))))
+def metrics(pred_abs,true_abs):
+    """Metrics on absolute phasors; callers must add V0 to delta outputs first."""
+    m = phasor_metrics(interleaved_to_complex(pred_abs), interleaved_to_complex(true_abs))
+    tve = np.abs(interleaved_to_complex(pred_abs)-interleaved_to_complex(true_abs)) / np.maximum(np.abs(interleaved_to_complex(true_abs)), 1e-12)
+    return dict(tve=m['TVE_fraction'], TVE_fraction=m['TVE_fraction'], TVE_percent=m['TVE_percent'],
+                complex_rmse=m['complex_rmse'], angle_rmse=m['angle_rmse'], vm_rmse=m['vm_rmse'],
+                re_rmse=m['re_rmse'], im_rmse=m['im_rmse'], p95_tve=float(np.quantile(tve,.95)),
+                worst_bus=int(np.argmax(np.mean(tve,axis=0))))
 def main():
     A=expm(qread(RES/'e04_A.csv')/30.0); C=qread(RES/'e04_C_pmu.csv'); Ct=qread(RES/'e04_C_hidden.csv')
-    ds=pd.read_csv(RES/'e04_pd_dataset.csv'); y0=ds.iloc[0][[f'pmu_{i}' for i in range(1,33)]].to_numpy(float); h0=ds.iloc[0][[f'hidden_{i}' for i in range(1,63)]].to_numpy(float)
+    ds=pd.read_csv(RES/'e04_pd_dataset.csv')
+    # Frozen PF equilibrium, never a trajectory-specific t=0 row (load cases
+    # alter algebraic initial outputs before the first sampled frame).
+    y0=pd.read_csv(RES/'e04_pd_y0.csv')['pmu'].to_numpy(float)
+    h0=pd.read_csv(RES/'e04_pd_hidden0.csv')['hidden'].to_numpy(float)
     sigma=1e-3; P0=np.eye(A.shape[0])*1e-2; R=np.eye(C.shape[0])*sigma**2; Q=np.eye(A.shape[0])*1e-6; model=LinearGaussianModel(A,C,Q,R,P0)
     test=ds[ds.split=='TEST']; groups=list(test.groupby('traj',sort=True)); max_test=int(os.getenv('E04_MAX_TEST','1')); groups=groups[:max_test]; lags=[0,1,3,5,10,15,30,60]; per=[]; lagrows=[]; unc=[]; runt=[]; ex=[]
     for traj,g in groups:
-      g=g.sort_values('frame'); y=np.vstack([observed_measurements(r)-y0 for _,r in g.iterrows()]); true=np.vstack([evaluation_ground_truth(r)-h0 for _,r in g.iterrows()]);
+      g=g.sort_values('frame'); y=np.vstack([observed_measurements(r)-y0 for _,r in g.iterrows()]); true_abs=np.vstack([evaluation_ground_truth(r) for _,r in g.iterrows()]);
       xw=[snapshot_wls(model,yy)[0] for yy in y]; kf=kalman_filter(model,y); t0=time.perf_counter(); smoother_executed=os.getenv('E04_RUN_EXACT_RTS','0')=='1'; fl={L:(fixed_lag_filter(model,y,L) if smoother_executed else [(x[0],x[1]) if k < len(y)-L else None for k,x in enumerate(kf)]) for L in lags}; elapsed=(time.perf_counter()-t0)/len(y)
-      methods={'B0_NOMINAL':np.zeros_like(true),'B1_SNAPSHOT_WLS':np.vstack([Ct@x for x in xw]),'B2_KALMAN':np.vstack([Ct@x[0] for x in kf])}
+      methods={'B0_NOMINAL':np.tile(h0,(len(true_abs),1)),
+               'B1_SNAPSHOT_WLS':np.vstack([h0+Ct@x for x in xw]),
+               'B2_KALMAN':np.vstack([h0+Ct@x[0] for x in kf])}
       for name,p in methods.items():
-       m=metrics(p,true); per.append({'traj':traj,'method':name,'lag':0,**m});
+       m=metrics(p,true_abs); per.append({'traj':traj,'method':name,'lag':0,**m});
       for L in lags:
-       idx=list(range(0,len(y)-L if L else len(y))); pp=np.vstack([Ct@fl[L][k][0] for k in idx]); tt=true[idx]; m=metrics(pp,tt); lagrows.append({'traj':traj,'lag_frames':L,'lag_seconds':L/30,'method':'B3_FIXED_LAG' if smoother_executed else 'B3_FIXED_LAG_NOT_EXECUTED','runtime_s_per_frame':elapsed,**m});
+       idx=list(range(0,len(y)-L if L else len(y))); pp=np.vstack([h0+Ct@fl[L][k][0] for k in idx]); tt=true_abs[idx]; m=metrics(pp,tt); lagrows.append({'traj':traj,'lag_frames':L,'lag_seconds':L/30,'method':'B3_FIXED_LAG' if smoother_executed else 'B3_FIXED_LAG_NOT_EXECUTED','runtime_s_per_frame':elapsed,**m});
        for k in idx: unc.append({'traj':traj,'lag_frames':L,'frame':k,'posterior_trace':float(np.trace(Ct@fl[L][k][1]@Ct.T))})
-      if len(ex)<1: ex.append((traj,true,methods,fl[15]))
+      if len(ex)<1: ex.append((traj,true_abs,methods,fl[15]))
     pf=pd.DataFrame(per); lf=pd.DataFrame(lagrows); pd.DataFrame(unc).to_csv(RES/'e04a_uncertainty.csv',index=False)
     summ=pd.concat([pf.groupby('method').mean(numeric_only=True).reset_index(),lf.groupby(['method','lag_frames']).mean(numeric_only=True).reset_index()],ignore_index=True,sort=False); summ.to_csv(RES/'e04a_summary.csv',index=False); lf.to_csv(RES/'e04a_lag_sweep.csv',index=False); pf.to_csv(RES/'e04a_per_case.csv',index=False); pf.to_parquet(RES/'e04a_per_case.parquet',index=False)
     bus=[]
@@ -39,10 +50,10 @@ def main():
       # aggregate per hidden bus from all test frames
       vals=[]
       for traj,g in groups:
-       true=np.vstack([evaluation_ground_truth(r)-h0 for _,r in g.sort_values('frame').iterrows()]); y=np.vstack([observed_measurements(r)-y0 for _,r in g.sort_values('frame').iterrows()]);
-       if meth=='B0_NOMINAL': pred=np.zeros_like(true)
-       elif meth=='B1_SNAPSHOT_WLS': pred=np.vstack([Ct@snapshot_wls(model,yy)[0] for yy in y])
-       else: pred=np.vstack([Ct@x[0] for x in kalman_filter(model,y)])
+       true=np.vstack([evaluation_ground_truth(r) for _,r in g.sort_values('frame').iterrows()]); y=np.vstack([observed_measurements(r)-y0 for _,r in g.sort_values('frame').iterrows()]);
+       if meth=='B0_NOMINAL': pred=np.tile(h0,(len(true),1))
+       elif meth=='B1_SNAPSHOT_WLS': pred=np.vstack([h0+Ct@snapshot_wls(model,yy)[0] for yy in y])
+       else: pred=np.vstack([h0+Ct@x[0] for x in kalman_filter(model,y)])
        e=pred-true; vals.append(np.c_[np.sqrt(np.mean(e[:,0::2]**2,axis=0)),np.sqrt(np.mean(e[:,1::2]**2,axis=0))])
       a=np.mean(vals,axis=0); [bus.append({'method':meth,'hidden_bus':b,'re_rmse':a[i,0],'im_rmse':a[i,1],'vm_rmse':float(np.hypot(a[i,0],a[i,1]))}) for i,b in enumerate([x for x in range(1,40) if x not in [2,5,6,10,19,22,29,39]])]
     pd.DataFrame(bus).to_csv(RES/'e04a_per_bus.csv',index=False)

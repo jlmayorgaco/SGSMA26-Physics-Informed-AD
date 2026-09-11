@@ -7,6 +7,62 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 
+
+def interleaved_to_complex(values):
+    """Convert [real_1, imag_1, ...] channels to complex phasors."""
+    a = np.asarray(values, dtype=float)
+    if a.shape[-1] % 2:
+        raise ValueError("interleaved phasor channels must have even width")
+    return a[..., 0::2] + 1j * a[..., 1::2]
+
+
+def complex_to_interleaved(values):
+    """Convert complex phasors to [real_1, imag_1, ...] channels."""
+    z = np.asarray(values)
+    out = np.empty(z.shape[:-1] + (2 * z.shape[-1],), dtype=float)
+    out[..., 0::2] = z.real
+    out[..., 1::2] = z.imag
+    return out
+
+
+def wrapped_angle_error(angle_hat, angle_true):
+    """Shortest signed angular error in radians, including the +/-pi seam."""
+    return np.arctan2(np.sin(np.asarray(angle_hat) - np.asarray(angle_true)),
+                      np.cos(np.asarray(angle_hat) - np.asarray(angle_true)))
+
+
+def best_global_rotation(v_true_observed, v_hat_observed, weights=None):
+    """Return the per-frame rotation that maps estimate into truth coordinates.
+
+    Only the supplied observed PMU phasors are used.  The convention follows
+    arg(sum w V_true conj(V_hat)); the returned complex number has unit modulus.
+    """
+    vt = np.asarray(v_true_observed, dtype=complex)
+    vh = np.asarray(v_hat_observed, dtype=complex)
+    if vt.shape != vh.shape:
+        raise ValueError("true and estimated observed phasors must have equal shape")
+    w = 1.0 if weights is None else np.asarray(weights)
+    score = np.sum(w * vt * np.conj(vh), axis=-1)
+    return np.exp(1j * np.angle(score))
+
+
+def phasor_metrics(v_hat_abs, v_true_abs):
+    """Coordinate-correct phasor metrics on absolute complex voltages."""
+    vh = np.asarray(v_hat_abs, dtype=complex)
+    vt = np.asarray(v_true_abs, dtype=complex)
+    err = vh - vt
+    dtheta = wrapped_angle_error(np.angle(vh), np.angle(vt))
+    tve = np.abs(err) / np.maximum(np.abs(vt), 1e-12)
+    return {
+        "complex_rmse": float(np.sqrt(np.mean(np.abs(err) ** 2))),
+        "re_rmse": float(np.sqrt(np.mean(err.real ** 2))),
+        "im_rmse": float(np.sqrt(np.mean(err.imag ** 2))),
+        "vm_rmse": float(np.sqrt(np.mean((np.abs(vh) - np.abs(vt)) ** 2))),
+        "angle_rmse": float(np.sqrt(np.mean(np.rad2deg(dtheta) ** 2))),
+        "TVE_fraction": float(np.mean(tve)),
+        "TVE_percent": float(100.0 * np.mean(tve)),
+    }
+
 @dataclass
 class LinearGaussianModel:
     A: np.ndarray
