@@ -21,6 +21,29 @@ def _static_status(root: Path) -> str:
     return json.loads(source.read_text(encoding="utf-8")).get("status", "UNKNOWN") if source.exists() else "NOT_RUN"
 
 
+def _phase_result(root: Path, filename: str) -> str:
+    """Read a prior phase result without assuming a successful completion."""
+    source = root / "output" / "manifests" / filename
+    return str(json.loads(source.read_text(encoding="utf-8")).get("status", "UNKNOWN")) if source.exists() else "NOT_RUN"
+
+
+def _write_registry(root: Path, results: dict[str, str], target: Path) -> None:
+    """Materialize the no-cherry-picking registry with every planned phase."""
+    registry = pd.read_csv(root / "configs" / "experiment_registry.csv")
+    registry["result_status"] = registry.experiment_id.map(results).fillna("PENDING")
+    registry["status"] = registry.result_status.map({
+        "PASS": "PASS",
+        "FAIL": "FAIL",
+        "BLOCKED_BY_G0": "SKIPPED_WITH_REASON",
+        "PASS_API_ONLY_BLOCKED_BY_G0": "SKIPPED_WITH_REASON",
+    }).fillna("PENDING")
+    registry["status_detail"] = registry.result_status.map({
+        "BLOCKED_BY_G0": "operator verified but G0 static parity failed",
+        "PASS_API_ONLY_BLOCKED_BY_G0": "API passed; DAE execution blocked by G0",
+    }).fillna("")
+    registry.to_csv(target, index=False)
+
+
 def smoke_scenarios() -> tuple[ScenarioSpec, ...]:
     """Cover normal, persistent, transient, simultaneous and integrity mechanisms."""
     common = dict(seed=20260911, operating_point_id="OP_SMOKE_A", model_seed=71, duration_s=1.0, sample_rate_hz=30.0)
@@ -103,6 +126,12 @@ def run(root: Path) -> dict[str, object]:
     table.to_csv(results / "scenario_registry.csv", index=False)
     table.to_parquet(results / "scenario_registry.parquet", index=False)
     pd.DataFrame(columns=["scenario_id", "reason_code", "detail"]).to_csv(rejected / "e03_rejected.csv", index=False)
+    _write_registry(root, {
+        "E00": _phase_result(root, "environment_audit.json"),
+        "E01": _phase_result(root, "static_parity.json"),
+        "E02": _phase_result(root, "pmu_terminal_map.json"),
+        "E03": status,
+    }, reports / "experiment_registry.csv")
     (reports / "scenario_smoke.md").write_text(
         "# Scenario/event/noise API smoke\n\n"
         f"Status: **{status}**\n\n"
