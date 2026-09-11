@@ -98,7 +98,7 @@ def _andes_array(model: Any, name: str, default: np.ndarray) -> np.ndarray:
     return np.asarray(candidate.v if candidate is not None and hasattr(candidate, "v") else default)
 
 
-def _solution_from_network(net: Any, branch_flows: list[PandapowerBranchFlow]) -> PandapowerStaticSolution:
+def _solution_from_network(net: Any, branch_flows: list[PandapowerBranchFlow], *, network_injections: dict[int, complex] | None = None) -> PandapowerStaticSolution:
     """Convert a solved canonical pandapower net to the campaign convention."""
     if not bool(net.converged):
         raise RuntimeError("Translated canonical pandapower case did not converge")
@@ -110,16 +110,16 @@ def _solution_from_network(net: Any, branch_flows: list[PandapowerBranchFlow]) -
         bus_ids=bus_ids,
         voltage_pu=result.vm_pu.to_numpy(dtype=float),
         angle_rad=np.deg2rad(result.va_degree.to_numpy(dtype=float)),
-        injections_mva={
+        injections_mva=(network_injections if network_injections is not None else {
             bus: complex(-float(row.p_mw), -float(row.q_mvar))
             for bus, (_, row) in zip(bus_ids, result.iterrows())
-        },
+        }),
         branch_flows=tuple(branch_flows),
         base_mva=float(net.sn_mva),
     )
 
 
-def solve_canonical_from_andes() -> tuple[PandapowerStaticSolution, dict[str, Any]]:
+def solve_canonical_from_andes(*, return_net: bool = False) -> tuple[PandapowerStaticSolution, dict[str, Any]] | tuple[Any, dict[str, Any]]:
     """Translate ANDES' static inputs into pandapower and independently solve them.
 
     The bundled cases share IEEE-39 topology but not the same operating point.
@@ -222,15 +222,35 @@ def solve_canonical_from_andes() -> tuple[PandapowerStaticSolution, dict[str, An
         else:
             hv_bus, lv_bus, tap_side = int(to_bus), int(from_bus), "lv"
         index = pp.create_transformer_from_parameters(
-            net, hv_bus=hv_bus, lv_bus=lv_bus, sn_mva=base_mva,
+            net, hv_bus=hv_bus, lv_bus=lv_bus,
             vn_hv_kv=float(max(vn_from, vn_to)), vn_lv_kv=float(min(vn_from, vn_to)),
+            # ANDES line impedances are on the system base.  Keeping the
+            # transformer rating explicit makes pandapower's conversion back
+            # to the system base auditable and lossless.
+            sn_mva=base_mva,
             vkr_percent=float(resistance * 100.0), vk_percent=float(np.hypot(resistance, reactance) * 100.0),
             pfe_kw=0.0, i0_percent=0.0, shift_degree=float(np.rad2deg(shift)),
-            tap_side=tap_side, tap_neutral=0, tap_pos=1,
-            tap_step_percent=float((tap - 1.0) * 100.0), name=identifier, in_service=bool(enabled),
+            tap_side=tap_side, tap_neutral=0,
+            tap_pos=float(np.sign(tap - 1.0)),
+            tap_step_percent=float(abs(tap - 1.0) * 100.0),
+            tap_changer_type="Ratio", tap_dependency_table=False,
+            name=identifier, in_service=bool(enabled),
         )
         flow_metadata.append((identifier, "trafo", int(index)))
         transformer_count += 1
+    if return_net:
+        return net, {
+            "authority": "ANDES bundled ieee39_full.xlsx static inputs",
+            "target": "pandapower independently solved translation",
+            "bus_count": len(buses),
+            "pq_load_count": load_count,
+            "generator_count": generator_count,
+            "shunt_count": shunt_count,
+            "impedance_branch_count": line_count,
+            "transformer_branch_count": transformer_count,
+            "translated_branch_count": len(flow_metadata),
+            "flow_metadata": flow_metadata,
+        }
     pp.runpp(net, calculate_voltage_angles=True)
     flows: list[PandapowerBranchFlow] = []
     for identifier, kind, index in flow_metadata:
@@ -250,7 +270,23 @@ def solve_canonical_from_andes() -> tuple[PandapowerStaticSolution, dict[str, An
                 from_power_mva=complex(float(result.p_hv_mw), float(result.q_hv_mvar)),
                 to_power_mva=complex(float(result.p_lv_mw), float(result.q_lv_mvar)),
             ))
-    return _solution_from_network(net, flows), {
+    # res_bus reports the element balance and intentionally excludes the
+    # admittance contribution of static shunts.  For cross-solver parity use
+    # the complete solved network injection S = V*conj(Ybus*V), including
+    # line charging, transformers and shunts.
+    ppc_internal = net._ppc["internal"]
+    ybus = ppc_internal["Ybus"].toarray()
+    lookup = net._pd2ppc_lookups["bus"]
+    complex_voltage = np.zeros(len(ppc_internal["bus"]), dtype=complex)
+    for bus in net.bus.index:
+        ppc_bus = int(lookup[int(bus)])
+        row = net.res_bus.loc[int(bus)]
+        complex_voltage[ppc_bus] = float(row.vm_pu) * np.exp(1j * np.deg2rad(float(row.va_degree)))
+    solved_injections = {
+        int(bus): complex(value * net.sn_mva)
+        for bus, value in zip(sorted(net.bus.index), complex_voltage * np.conj(ybus @ complex_voltage))
+    }
+    return _solution_from_network(net, flows, network_injections=solved_injections), {
         "authority": "ANDES bundled ieee39_full.xlsx static inputs",
         "target": "pandapower independently solved translation",
         "bus_count": len(buses),

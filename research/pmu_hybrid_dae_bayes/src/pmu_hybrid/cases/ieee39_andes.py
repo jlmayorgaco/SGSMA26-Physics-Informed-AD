@@ -85,7 +85,21 @@ def solve_static() -> AndesStaticSolution:
     )
     base_mva = float(getattr(system.config, "mva", 100.0))
     voltage = voltage_pu * np.exp(1j * angle_rad)
-    injections = net_injections_mva(bus_ids, voltage, branches, base_mva)
+    shunts_pu: dict[int, complex] = {}
+    if hasattr(system, "Shunt"):
+        for enabled, bus, conductance, susceptance, nominal in zip(
+            _value(system.Shunt, "u", np.ones(system.Shunt.n)).astype(bool),
+            _value(system.Shunt, "bus", np.array([])).astype(int),
+            _value(system.Shunt, "g", np.zeros(system.Shunt.n)).astype(float),
+            _value(system.Shunt, "b", np.zeros(system.Shunt.n)).astype(float),
+            _value(system.Shunt, "Sn", np.full(system.Shunt.n, base_mva)).astype(float),
+        ):
+            if enabled:
+                shunts_pu[int(bus)] = shunts_pu.get(int(bus), 0j) + complex(
+                    conductance * nominal / base_mva,
+                    susceptance * nominal / base_mva,
+                )
+    injections = net_injections_mva(bus_ids, voltage, branches, base_mva, shunts_pu)
     return AndesStaticSolution(
         bus_ids=bus_ids,
         voltage_pu=voltage_pu,
