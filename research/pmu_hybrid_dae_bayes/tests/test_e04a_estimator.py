@@ -1,6 +1,6 @@
 import numpy as np
 from pmu_hybrid.e04a_estimator import (
-    LinearGaussianModel, snapshot_wls, kalman_filter, fixed_lag_filter,
+    LinearGaussianModel, snapshot_wls, kalman_filter, fixed_lag_filter, fixed_lag_filter_fast, fixed_lag_filter_fast_multi,
     interleaved_to_complex, complex_to_interleaved, wrapped_angle_error,
     best_global_rotation, phasor_metrics,
 )
@@ -83,3 +83,14 @@ def test_gauge_mode_covariance_is_conditioned_by_observation():
     m = LinearGaussianModel(A, C, np.eye(2) * 1e-9, np.array([[1e-4]]), np.eye(2))
     prior = m.P0[0, 0]; post = kalman_filter(m, np.zeros((1, 1)))[0][1][0, 0]
     assert post < prior
+
+
+def test_cached_fixed_lag_matches_dense_oracle():
+    m = model(); ys = np.array([[0., 0.], [1., 0.], [2., 0.], [3., 0.], [4., 0.]])
+    dense = fixed_lag_filter(m, ys, 2); fast = fixed_lag_filter_fast(m, ys, 2)
+    for a, b in zip(dense, fast):
+        if a is None: assert b is None
+        else:
+            assert np.allclose(a[0], b[0], atol=1e-10)
+            assert np.allclose(a[1], b[1], atol=1e-10)
+    assert np.allclose(dense[2][0], fixed_lag_filter_fast_multi(m, ys, [2])[2][2][0])

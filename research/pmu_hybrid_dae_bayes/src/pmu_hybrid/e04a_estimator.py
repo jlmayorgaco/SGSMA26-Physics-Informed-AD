@@ -117,3 +117,60 @@ def fixed_lag_filter(model: LinearGaussianModel, measurements, lag: int):
             xs=xf + G @ (xs-xp1); Ps=Pf + G @ (Ps-pp1) @ G.T; Ps=(Ps+Ps.T)*0.5
         outputs[j]=(xs,Ps)
     return outputs
+
+
+def fixed_lag_filter_fast(model: LinearGaussianModel, measurements, lag: int):
+    """Exact fixed-lag RTS with cached prediction/smoothing gains.
+
+    It has the same posterior as :func:`fixed_lag_filter`, but performs the
+    Riccati solves once during the forward pass and reuses the gains.  This is
+    the implementation used by the post-A1 oracle benchmark; no covariance
+    damping or steady-state approximation is introduced.
+    """
+    y = np.asarray(measurements)
+    filtered = []; xpred = []; ppred = []; gains = [None] * len(y)
+    x = np.zeros(model.A.shape[0]); P = model.P0.copy()
+    for k, obs in enumerate(y):
+        xp, Pp = model.predict(x, P); x, P, *_ = model.update(xp, Pp, obs)
+        xpred.append(xp.copy()); ppred.append(Pp.copy()); filtered.append((x.copy(), P.copy()))
+        if k:
+            # G_{k-1}=P_{k-1|k-1} A' P_{k|k-1}^{-1}; solve, never invert.
+            gains[k] = np.linalg.solve(Pp.T, (filtered[k-1][1] @ model.A.T).T).T
+    out = [None] * len(y)
+    for j in range(max(0, len(y) - lag)):
+        xs, Ps = filtered[j]
+        for t in range(j, min(j + lag, len(y) - 1)):
+            G = gains[t + 1]; xs = filtered[t][0] + G @ (xs - xpred[t + 1]); Ps = filtered[t][1] + G @ (Ps - ppred[t + 1]) @ G.T; Ps = (Ps + Ps.T) * 0.5
+        out[j] = (xs, Ps)
+    return out
+
+
+def fixed_lag_filter_fast_multi(model: LinearGaussianModel, measurements, lags, cache=None):
+    """Compute several exact fixed lags while sharing one forward Riccati pass."""
+    y = np.asarray(measurements); xpred=[]; ppred=[]; gains=[None]*len(y)
+    if cache is None:
+        cache = _rts_covariance_cache(model, len(y))
+    ppred, gains, pfiltered = cache
+    # Measurement-dependent means and covariances from the ordinary filter.
+    filtered=[]; x=np.zeros(model.A.shape[0]); P=model.P0.copy()
+    for k,obs in enumerate(y):
+        xp, _ = model.predict(x, P); x, P, *_ = model.update(xp, ppred[k], obs); xpred.append(xp.copy()); filtered.append((x.copy(),pfiltered[k].copy()))
+    result={}
+    for lag in lags:
+        out=[None]*len(y)
+        for j in range(max(0,len(y)-lag)):
+            xs,Ps=filtered[j]
+            for t in range(j,min(j+lag,len(y)-1)):
+                G=gains[t+1]; xs=filtered[t][0]+G@(xs-xpred[t+1]); Ps=filtered[t][1]+G@(Ps-ppred[t+1])@G.T; Ps=(Ps+Ps.T)*0.5
+            out[j]=(xs,Ps)
+        result[lag]=out
+    return result
+
+
+def _rts_covariance_cache(model: LinearGaussianModel, n_steps: int):
+    """Precompute covariance-only Riccati and RTS gain sequences."""
+    ppred=[]; pfiltered=[]; gains=[None]*n_steps; P=model.P0.copy(); x=np.zeros(model.A.shape[0]); zero=np.zeros(model.C.shape[0])
+    for k in range(n_steps):
+        xp,Pp=model.predict(x,P); _,P,*_=model.update(xp,Pp,zero); ppred.append(Pp.copy()); pfiltered.append(P.copy())
+        if k: gains[k]=np.linalg.solve(Pp.T,(pfiltered[k-1]@model.A.T).T).T
+    return ppred,gains,pfiltered

@@ -27,7 +27,7 @@ def main():
     ds=pd.read_csv(RES/'e04_pd_dataset.csv')
     # Frozen PF equilibrium, never a trajectory-specific t=0 row (load cases
     # alter algebraic initial outputs before the first sampled frame).
-    y0=pd.read_csv(RES/'e04_pd_y0.csv')['pmu'].to_numpy(float)
+    y0=pd.read_csv(RES/'e04_y0_pmu.csv').iloc[:,0].to_numpy(float)
     h0=pd.read_csv(RES/'e04_pd_hidden0.csv')['hidden'].to_numpy(float)
     sigma=1e-3; P0=np.eye(A.shape[0])*1e-2; R=np.eye(C.shape[0])*sigma**2; Q=np.eye(A.shape[0])*1e-6; model=LinearGaussianModel(A,C,Q,R,P0)
     test=ds[ds.split=='TEST']; groups=list(test.groupby('traj',sort=True)); max_test=int(os.getenv('E04_MAX_TEST','1')); groups=groups[:max_test]; lags=[0,1,3,5,10,15,30,60]; per=[]; lagrows=[]; unc=[]; runt=[]; ex=[]
