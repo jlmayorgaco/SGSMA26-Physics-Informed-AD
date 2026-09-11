@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Iterable
+from typing import Any, Iterable, Mapping
 
 import numpy as np
 
@@ -25,6 +25,65 @@ class PMUTerminal:
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class MeasurementBatch:
+    """Clean positive-sequence observations plus an explicit availability mask."""
+
+    values: np.ndarray
+    data_present: np.ndarray
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        values = np.asarray(self.values)
+        mask = np.asarray(self.data_present, dtype=bool)
+        if values.ndim != 3 or values.shape[-1] != 7 or mask.shape != values.shape[:2]:
+            raise ValueError("values must have shape (frames, pmus, 7) and mask (frames, pmus)")
+
+
+def voltage_operator(bus_ids: Iterable[int], voltage: Iterable[complex], pmu_buses: Iterable[int] = PMU_BUSES) -> np.ndarray:
+    """Apply the PMU voltage selector y_p = e_p^T V in Cartesian form."""
+    ids = tuple(int(bus) for bus in bus_ids)
+    vector = np.asarray(tuple(voltage), dtype=complex)
+    if vector.shape != (len(ids),):
+        raise ValueError("voltage vector does not match bus_ids")
+    positions = {bus: index for index, bus in enumerate(ids)}
+    missing = [int(bus) for bus in pmu_buses if int(bus) not in positions]
+    if missing:
+        raise ValueError(f"PMU buses absent from state: {missing}")
+    return np.asarray([vector[positions[int(bus)]] for bus in pmu_buses], dtype=complex)
+
+
+def ideal_state_frequency(angle_rad: Iterable[float], time_s: Iterable[float], *, nominal_frequency_hz: float = NOMINAL_FREQUENCY_HZ) -> tuple[np.ndarray, np.ndarray]:
+    """Ideal state-derivative mode, kept distinct from a causal PMU filter.
+
+    The electrical angle derivative is converted to Hz only after explicitly
+    declaring the approximation f = f0 + theta_dot/(2*pi). ``np.gradient`` is
+    intentionally confined to this offline ideal reference mode.
+    """
+    angles = np.unwrap(np.asarray(tuple(angle_rad), dtype=float))
+    times = np.asarray(tuple(time_s), dtype=float)
+    if angles.ndim != 1 or times.shape != angles.shape or len(times) < 2:
+        raise ValueError("angle and time must be one-dimensional arrays with at least two samples")
+    if np.any(np.diff(times) <= 0):
+        raise ValueError("time must be strictly increasing")
+    frequency = nominal_frequency_hz + np.gradient(angles, times) / (2.0 * np.pi)
+    rocof = np.gradient(frequency, times)
+    return frequency, rocof
+
+
+def build_measurement_batch(voltage: np.ndarray, current: np.ndarray, frequency_hz: np.ndarray, rocof_hz_s: np.ndarray, data_present: np.ndarray, *, metadata: Mapping[str, Any] | None = None) -> MeasurementBatch:
+    """Pack clean observations while preserving missingness as a mask."""
+    voltage = np.asarray(voltage, dtype=complex)
+    current = np.asarray(current, dtype=complex)
+    frequency_hz = np.asarray(frequency_hz, dtype=float)
+    rocof_hz_s = np.asarray(rocof_hz_s, dtype=float)
+    mask = np.asarray(data_present, dtype=bool)
+    if voltage.ndim != 2 or any(array.shape != voltage.shape for array in (current, frequency_hz, rocof_hz_s, mask)):
+        raise ValueError("all observation arrays must have shape (frames, pmus)")
+    values = np.stack((voltage.real, voltage.imag, current.real, current.imag, frequency_hz, rocof_hz_s, mask.astype(float)), axis=-1)
+    return MeasurementBatch(values=values, data_present=mask, metadata={"operator": "clean_positive_sequence", **dict(metadata or {})})
 
 
 def select_controlled_terminal_map(branches: Iterable[Branch], pmu_buses: Iterable[int] = PMU_BUSES) -> dict[int, PMUTerminal]:

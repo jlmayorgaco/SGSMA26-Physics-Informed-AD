@@ -1,0 +1,2 @@
+pflow_ok,tds_ok,frame_count,duration_s,tstep_s,error
+True,True,6,0.05,0.01,
