@@ -42,5 +42,6 @@ def test_regenerated_export_contract_and_test1_regression_exist():
 
 def test_cached_rts_oracle_agreement_artifact():
     oracle = pd.read_csv(RES / "e04a1_b3_oracle.csv")
-    assert len(oracle) == 3
+    assert len(oracle) == 5
+    assert oracle.lag_frames.tolist() == [1, 3, 10, 30, 60]
     assert oracle["pass"].all()
