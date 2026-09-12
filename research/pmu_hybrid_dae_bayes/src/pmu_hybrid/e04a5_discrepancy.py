@@ -115,7 +115,8 @@ def propagate_hidden_process_covariance(Pxx: np.ndarray, Pxc: np.ndarray, Pcc: n
                                         Bc: np.ndarray, Qc: np.ndarray, L_hidden: np.ndarray) -> np.ndarray:
     """One-step marginal covariance propagation for an augmented process model."""
     Pxx, Pxc, Pcc, Bc, Qc, L = map(np.asarray, (Pxx, Pxc, Pcc, Bc, Qc, L_hidden))
-    Pn = Pxx + Bc @ Pcc @ Bc.T + Pxc @ Bc.T + Bc @ Pxc.T + Qc
+    # Latent process noise enters x through the same physical coupling Bc.
+    Pn = Pxx + Bc @ (Pcc + Qc) @ Bc.T + Pxc @ Bc.T + Bc @ Pxc.T
     return L @ ((Pn + Pn.T) / 2) @ L.T
 
 
