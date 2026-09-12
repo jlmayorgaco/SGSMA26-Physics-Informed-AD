@@ -51,8 +51,14 @@ function write_case(cid,f,m,seed,e)
     end
 end
 manifest=DataFrame(case_id=String[],family=String[],m=Float64[],seed=Int[],excitation=String[],kind=String[])
-for f in FAMILIES, m in LEVELS, seed in 1:20; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,"main_grid")); end
-CSV.write(joinpath(OUT,"results","e06_standard_manifest.csv"),manifest)
+if haskey(ENV,"E06_STANDARD_REFINED")
+    bands=Dict("M1_NETWORK"=>[0.75,0.875,1.0,1.125,1.25],"M2_MACHINE"=>[1.0,1.125,1.25,1.375,1.5],"M3_GOVERNOR"=>[0.75,0.875,1.0,1.125,1.25],"M4_AVR"=>[0.75,0.875,1.0,1.125,1.25],"M5_LOAD_MODEL"=>[0.5,0.625,0.75,0.875,1.0],"M6_OPERATING_POINT"=>[0.5,0.625,0.75,0.875,1.0],"M7_COUPLED"=>[0.25,0.375,0.5,0.625,0.75])
+    for f in FAMILIES, m in bands[f], seed in 21:25; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,"refined")); end
+    CSV.write(joinpath(OUT,"results","e06_standard_refined_manifest.csv"),manifest)
+else
+    for f in FAMILIES, m in LEVELS, seed in 1:20; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,"main_grid")); end
+    CSV.write(joinpath(OUT,"results","e06_standard_manifest.csv"),manifest)
+end
 if haskey(ENV,"E06_STANDARD_ONLY"); manifest=manifest[manifest.case_id .== ENV["E06_STANDARD_ONLY"],:]; end
 if haskey(ENV,"E06_STANDARD_FAMILIES"); fs=split(ENV["E06_STANDARD_FAMILIES"],","); manifest=manifest[in.(manifest.family,Ref(fs)),:]; end
 for r in eachrow(manifest); cid=r.case_id; status=write_case(cid,r.family,r.m,r.seed,r.excitation); status!="CHECKPOINT" && println(status," ",cid); end
