@@ -7,6 +7,7 @@ from pmu_hybrid.e04a5_discrepancy import (
     marginal_hidden_covariance, conditional_physical_covariance,
     build_physical_dictionary, propagate_hidden_process_covariance,
     augmented_process_prediction,
+    hidden_component_nees,
 )
 
 
@@ -53,3 +54,10 @@ def test_augmented_process_kalman_prediction_reference():
     expected = np.array([[.9*.9*.2 + .5*.5*.3 + .01, .5*.8*.3],
                          [.5*.8*.3, .8*.8*.3 + .04]])
     assert np.allclose(out, expected)
+
+
+def test_hidden_nees_toy_uses_marginal_diagonal():
+    e = np.array([[[2.0, 0.0]]])
+    cov = np.array([[[[4.0, 0.0], [0.0, 9.0]]]])
+    n = hidden_component_nees(e, cov)
+    assert n[0, 0, 0] == pytest.approx(1.0)
