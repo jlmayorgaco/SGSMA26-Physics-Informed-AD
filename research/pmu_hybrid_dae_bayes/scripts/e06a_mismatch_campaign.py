@@ -77,6 +77,7 @@ def main():
     for (fam,m),g in sub.groupby(["family","m"]):
       mean,lo,hi=bootstrap_mean(g.TVE_mean.to_numpy()); rows.append({"family":fam,"m":m,"method":"B2_NOMINAL","TVE_mean":mean,"TVE_ci95_lo":lo,"TVE_ci95_hi":hi,"TVE_median":g.TVE_median.mean(),"TVE_p95":g.TVE_p95.mean(),"angle_mean":g.angle_rmse.mean(),"vm_mean":g.vm_rmse.mean(),"coverage95":.5*(g.coverage95_re.mean()+g.coverage95_im.mean()),"hidden_nll":g.hidden_nll.mean(),"hidden_nees":g.hidden_nees.mean(),"nis_raw":g.nis_raw.mean(),"acf1":g.acf1.mean(),"acf10":g.acf10.mean(),"ljung_p10":g.ljung_p10.mean()})
     sdf=pd.DataFrame(rows); base=sdf[sdf.m==0][["family","TVE_mean"]]; sdf.to_csv(R/"e06a_summary.csv",index=False); empirical_breakpoints(sdf,base).to_csv(R/"e06a_breakpoints.csv",index=False); bdf.to_csv(R/"e06a_per_bus.csv",index=False); idf.to_csv(R/"e06a_innovation.csv",index=False)
+    pdf[pdf.method.isin(["B2_NOMINAL","B2_U2"])].groupby(["family","m","method"])[["coverage50_re","coverage50_im","coverage90_re","coverage90_im","coverage95_re","coverage95_im","hidden_nll","hidden_nees"]].mean().reset_index().to_csv(R/"e06a_uncertainty.csv",index=False)
     # Weak-bus correlation against the frozen E03 residual proxy (bus ordering is fixed).
     weak=bdf[bdf.hidden_bus.isin([20,33,34,37,38])]
     weak_proxy=pd.DataFrame({"hidden_bus":HIDDEN,"e03_functional_residual_proxy":[1.0 if b in [33,34,20,37,38] else 0.0 for b in HIDDEN]})
