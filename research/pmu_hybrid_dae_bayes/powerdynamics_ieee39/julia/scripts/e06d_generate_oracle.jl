@@ -28,7 +28,7 @@ function mutate!(d,fam,m)
     elseif fam=="M5_LOAD_MODEL"
         t=CSV.read(joinpath(d,"load.csv"),DataFrame); old=Float64(t[1,:KpZ]); new=old-0.10m; t[1,:KpZ]=new; t[1,:KpI]=Float64(t[1,:KpI])+(old-new); CSV.write(joinpath(d,"load.csv"),t); push!(log,(fam,"load.csv",1,"KpZ/KpI",old,new))
     elseif fam=="M6_OPERATING_POINT"; ch!("bus.csv",3,"P",1+0.03m); ch!("bus.csv",3,"Q",1+0.03m)
-    elseif fam=="M7_COUPLED"; for (f,c,v) in [("branch.csv","R",1.03),("machine.csv","H",1.08),("gov.csv","R",1.10),("avr.csv","Ka",1.10)]; ch!(f,1,c,v); end
+    elseif fam=="M7_COUPLED"; for (f,c,v) in [("branch.csv","R",1+0.03m),("machine.csv","H",1+0.08m),("gov.csv","R",1+0.10m),("avr.csv","Ka",1+0.10m)]; ch!(f,1,c,v); end
     end
     log
 end
