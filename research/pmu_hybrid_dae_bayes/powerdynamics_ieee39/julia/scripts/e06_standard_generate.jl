@@ -3,7 +3,7 @@ using NetworkDynamics: SII
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using CSV, DataFrames, LinearAlgebra, Random, SHA
 
-const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output"); const PKGEX=joinpath(pkgdir(PowerDynamics),"docs","examples"); const SRC=joinpath(PKGEX,"ieee39_part1.jl"); const DATASRC=joinpath(PKGEX,"ieee39data"); const CASEDIR=joinpath(OUT,"results","e06_standard_cases")
+const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output"); const PKGEX=joinpath(pkgdir(PowerDynamics),"docs","examples"); const SRC=joinpath(PKGEX,"ieee39_part1.jl"); const DATASRC=joinpath(PKGEX,"ieee39data"); const E06E_MODE=haskey(ENV,"E06E_MODE"); const E06E_TAG=get(ENV,"E06E_TAG",""); const CASEDIR=joinpath(OUT,"results",E06E_MODE ? (isempty(E06E_TAG) ? "e06e_cases" : "e06e_cases_"*E06E_TAG) : "e06_standard_cases")
 mkpath(CASEDIR); mkpath(joinpath(OUT,"results")); mkpath(joinpath(OUT,"reports"))
 const FAMILIES=["M1_NETWORK","M2_MACHINE","M3_GOVERNOR","M4_AVR","M5_LOAD_MODEL","M6_OPERATING_POINT","M7_COUPLED"]; const LEVELS=[0.0,0.25,0.5,0.75,1.0,1.25,1.5]; const EXC=["E-A","E-B","E-C","E-D"]
 function make_data(); d=mktempdir(OUT); for f in readdir(DATASRC); CSV.write(joinpath(d,f),CSV.read(joinpath(DATASRC,f),DataFrame)); end; d end
@@ -31,11 +31,14 @@ function channels(); p=Any[]; h=Any[]; for b in OBS; push!(p,VIndex(b,:busbar₊
 function vals(sol,t,p,h); y=[float(sol(t;idxs=q)) for q in p]; z=[float(sol(t;idxs=q)) for q in h]; y,z end
 function trajectory(nw,s0,seed,exc)
     x0=uflat(s0); p0=pflat(s0); sy=SII.parameter_symbols(nw); pp=copy(p0)
+    # Keep excitation amplitudes on the preregistered 1..20 schedule even
+    # when the independent split uses disjoint seed identifiers.
+    sseed=mod(seed-1,20)+1
     function bump!(needles,frac); j=findfirst(x->any(occursin(n,lowercase(string(x))) for n in needles),sy); if !isnothing(j); pp[only(SII.parameter_index(nw,sy[j]))]*=(1+frac); return true; end; false end
-    if exc=="E-A"; bump!(["pset"],0.015+0.001seed)
-    elseif exc=="E-B"; bump!(["p_ref"],0.015+0.001seed)
-    elseif exc=="E-C"; bump!(["q_ref","qset","v_ref","vset"],0.012+0.001seed)
-    else; bump!(["p_ref"],0.010+0.0005seed); bump!(["pset"],0.010+0.0005seed); end
+    if exc=="E-A"; bump!(["pset"],0.015+0.001sseed)
+    elseif exc=="E-B"; bump!(["p_ref"],0.015+0.001sseed)
+    elseif exc=="E-C"; bump!(["q_ref","qset","v_ref","vset"],0.012+0.001sseed)
+    else; bump!(["p_ref"],0.010+0.0005sseed); bump!(["pset"],0.010+0.0005sseed); end
     sol=Base.invokelatest(solve,ODEProblem(nw,NWState(nw,x0,pp,0.0),(0.0,3.0)),Rodas5P();abstol=1e-9,reltol=1e-9); sol
 end
 function case_id(f,m,seed,e); replace(f,"_"=>"-")*"_m"*replace(string(m),"."=>"p")*"_s"*string(seed)*"_"*replace(e,"-"=>"") end
@@ -51,7 +54,16 @@ function write_case(cid,f,m,seed,e)
     end
 end
 manifest=DataFrame(case_id=String[],family=String[],m=Float64[],seed=Int[],excitation=String[],kind=String[])
-if haskey(ENV,"E06_STANDARD_REFINED")
+if E06E_MODE
+    # Independent trajectory seeds: 101-110 for DEV and 201-220 for TEST.
+    # They are deliberately disjoint from E04/E06 STANDARD/E06-D seeds.
+    fams=["M1_NETWORK","M2_MACHINE","M6_OPERATING_POINT","M7_COUPLED"]
+    e06levels=[0.0,0.5,1.0,1.5]
+    testseeds=haskey(ENV,"E06E_SPLIT") && ENV["E06E_SPLIT"]=="TEST"
+    seeds=testseeds ? (201:220) : (101:110)
+    for f in fams, m in e06levels, seed in seeds; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,haskey(ENV,"E06E_SPLIT") ? ENV["E06E_SPLIT"] : "DEV")); end
+    CSV.write(joinpath(OUT,"results",testseeds ? "e06e_test_manifest.csv" : "e06e_dev_manifest.csv"),manifest)
+elseif haskey(ENV,"E06_STANDARD_REFINED")
     bands=Dict("M1_NETWORK"=>[0.75,0.875,1.0,1.125,1.25],"M2_MACHINE"=>[1.0,1.125,1.25,1.375,1.5],"M3_GOVERNOR"=>[0.75,0.875,1.0,1.125,1.25],"M4_AVR"=>[0.75,0.875,1.0,1.125,1.25],"M5_LOAD_MODEL"=>[0.5,0.625,0.75,0.875,1.0],"M6_OPERATING_POINT"=>[0.5,0.625,0.75,0.875,1.0],"M7_COUPLED"=>[0.25,0.375,0.5,0.625,0.75])
     for f in FAMILIES, m in bands[f], seed in 21:25; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,"refined")); end
     CSV.write(joinpath(OUT,"results","e06_standard_refined_manifest.csv"),manifest)
