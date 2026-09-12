@@ -230,7 +230,7 @@ R2-B was not implemented because it is gated on materially incomplete R2-A closu
 - ORACLE_RECOVERY_CAPTURED = **{status_oracle}**
 - NOMINAL_SAFETY = **{status_safe}**
 - STATIC_JACOBIAN_UPDATE_NEEDED = **NO**
-- FULL_RELINEARIZATION_NEEDED = **NO**
+- FULL_RELINEARIZATION_NEEDED = **PARTIAL**
 - NONLINEAR_DAE_FIXED_LAG_NEEDED = **NOT_YET_JUSTIFIED**
 """
     (REPORTS/"e06e_online_recentering.md").write_text(report,encoding="utf-8")
