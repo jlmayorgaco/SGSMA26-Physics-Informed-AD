@@ -3,7 +3,7 @@ using NetworkDynamics: SII
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using CSV, DataFrames, LinearAlgebra, Random, SHA
 
-const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output"); const PKGEX=joinpath(pkgdir(PowerDynamics),"docs","examples"); const SRC=joinpath(PKGEX,"ieee39_part1.jl"); const DATASRC=joinpath(PKGEX,"ieee39data"); const E06E_MODE=haskey(ENV,"E06E_MODE"); const E06E_TAG=get(ENV,"E06E_TAG",""); const CASEDIR=joinpath(OUT,"results",E06E_MODE ? (isempty(E06E_TAG) ? "e06e_cases" : "e06e_cases_"*E06E_TAG) : "e06_standard_cases")
+const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output"); const PKGEX=joinpath(pkgdir(PowerDynamics),"docs","examples"); const SRC=joinpath(PKGEX,"ieee39_part1.jl"); const DATASRC=joinpath(PKGEX,"ieee39data"); const E06E_MODE=haskey(ENV,"E06E_MODE"); const E06F_MODE=haskey(ENV,"E06F_MODE"); const E06E_TAG=get(ENV,"E06E_TAG",""); const E06F_TAG=get(ENV,"E06F_TAG",""); const CASEDIR=joinpath(OUT,"results",E06E_MODE ? (isempty(E06E_TAG) ? "e06e_cases" : "e06e_cases_"*E06E_TAG) : (E06F_MODE ? (isempty(E06F_TAG) ? "pf_recenter_cases" : "pf_recenter_cases_"*E06F_TAG) : "e06_standard_cases"))
 mkpath(CASEDIR); mkpath(joinpath(OUT,"results")); mkpath(joinpath(OUT,"reports"))
 const FAMILIES=["M1_NETWORK","M2_MACHINE","M3_GOVERNOR","M4_AVR","M5_LOAD_MODEL","M6_OPERATING_POINT","M7_COUPLED"]; const LEVELS=[0.0,0.25,0.5,0.75,1.0,1.25,1.5]; const EXC=["E-A","E-B","E-C","E-D"]
 function make_data(); d=mktempdir(OUT); for f in readdir(DATASRC); CSV.write(joinpath(d,f),CSV.read(joinpath(DATASRC,f),DataFrame)); end; d end
@@ -54,7 +54,13 @@ function write_case(cid,f,m,seed,e)
     end
 end
 manifest=DataFrame(case_id=String[],family=String[],m=Float64[],seed=Int[],excitation=String[],kind=String[])
-if E06E_MODE
+if E06F_MODE
+    fams=["M1_NETWORK","M2_MACHINE","M6_OPERATING_POINT","M7_COUPLED"]
+    e06flevels=[0.0,0.5,1.0,1.5]
+    testseeds=haskey(ENV,"E06F_SPLIT") && ENV["E06F_SPLIT"]=="TEST"; seeds=testseeds ? (401:420) : (301:310)
+    for f in fams, m in e06flevels, seed in seeds; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,haskey(ENV,"E06F_SPLIT") ? ENV["E06F_SPLIT"] : "DEV")); end
+    CSV.write(joinpath(OUT,"results",testseeds ? "e06f_test_manifest.csv" : "e06f_dev_manifest.csv"),manifest)
+elseif E06E_MODE
     # Independent trajectory seeds: 101-110 for DEV and 201-220 for TEST.
     # They are deliberately disjoint from E04/E06 STANDARD/E06-D seeds.
     fams=["M1_NETWORK","M2_MACHINE","M6_OPERATING_POINT","M7_COUPLED"]
