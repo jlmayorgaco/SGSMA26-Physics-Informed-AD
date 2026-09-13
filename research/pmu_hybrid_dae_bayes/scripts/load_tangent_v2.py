@@ -70,7 +70,7 @@ def main() -> dict:
 
     # Central and one-sided physical operators for all 16 candidates.
     central, plus, minus, times = [], [], [], None
-    consistency, amp_rows = [], []
+    consistency, amp_rows, stress_rows = [], [], []
     nominal_v = {}
     vnom, _, _, _, hmeta = h6.load_nominal()
     _, y0rows = h6.build_pd_ybus()
@@ -101,6 +101,12 @@ def main() -> dict:
                              "estimated_amplitude": ah * amp,
                              "bias": ah * amp - amp,
                              "relative_bias": abs(ah - 1.0)})
+        d10 = np.asarray([h6.measurement(v, pmu_rows) for v in _load(_case(bus, 0.1))[1]])[idx] - y0[idx]
+        pred10 = 0.1 * g
+        stress_rows.append({"candidate_bus": bus,
+                            "direction_cosine": float(np.dot(d10.ravel(), pred10.ravel()) / max(np.linalg.norm(d10) * np.linalg.norm(pred10), 1e-12)),
+                            "gain_ratio": float(np.dot(d10.ravel(), pred10.ravel()) / max(np.dot(pred10.ravel(), pred10.ravel()), 1e-12)),
+                            "relative_trajectory_error": _rel(d10, pred10)})
     central = np.asarray(central); plus = np.asarray(plus); minus = np.asarray(minus)
     np.savez_compressed(RES / "load_fd_central_operator.npz", candidate_buses=np.asarray(buses),
                         times=np.asarray(times), epsilon=EPS, central=central,
@@ -133,6 +139,7 @@ def main() -> dict:
     pd.DataFrame(columns=["bus_i", "bus_j", "cosine_coherence", "principal_angle_deg", "sigma_min_concat"]).to_csv(RES / "load_pair_geometry.csv", index=False)
     pd.DataFrame([{"bus_i": 7, "bus_j": 12, "status": "NOT_RUN", "reason": "tangent gate not passed"}]).to_csv(RES / "load_bus7_bus12_geometry.csv", index=False)
     pd.DataFrame(amp_rows).to_csv(RES / "load_amplitude_validation.csv", index=False)
+    pd.DataFrame(stress_rows).to_csv(RES / "load_finite_amplitude_stress.csv", index=False)
 
     max_cons = float(max(r["central_vs_plus_relerr"] for r in consistency))
     summary = {
