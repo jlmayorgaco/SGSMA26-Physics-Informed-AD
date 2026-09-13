@@ -36,6 +36,20 @@ Later estimator, observability, support-oracle, discrepancy, calibration and
 holdout phases are deliberately pending. The campaign must not report event
 localization accuracy before the static-parity and measurement gates pass.
 
+## E06-H/E06-I operating-point gate
+
+The corrected E06-H static gate uses the physically valid 43-coordinate M6
+nuisance basis (bus 31 Slack, bus 39 PV) and demonstrates strong hidden-voltage
+functional recovery from eight PMUs (global median static closure 0.981),
+despite a median local rank of 25/43. E06-I then evaluates the causal streaming
+extension on fresh M6 trajectories. A raw causal Huber trailing mean selected
+on DEV (60 frames, updates every 30 frames) is not safe by itself: TEST online
+closure is negative, convergence is 0.812, and nominal TVE increases materially.
+The static MAP result is therefore retained, while the next estimator design
+must separate dynamic deviations before forming an online center. Details and
+artifacts are in `powerdynamics_ieee39/output/reports/e06h_corrected_m6_static_recentering.md`
+and `powerdynamics_ieee39/output/reports/e06i_online_causal_recentering.md`.
+
 ## Commands
 
 From the repository root in PowerShell:
