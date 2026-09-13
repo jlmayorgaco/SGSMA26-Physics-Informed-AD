@@ -3,7 +3,8 @@ using NetworkDynamics: SII
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using CSV, DataFrames, LinearAlgebra, Random, SHA
 
-const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output"); const PKGEX=joinpath(pkgdir(PowerDynamics),"docs","examples"); const SRC=joinpath(PKGEX,"ieee39_part1.jl"); const DATASRC=joinpath(PKGEX,"ieee39data"); const E06E_MODE=haskey(ENV,"E06E_MODE"); const E06F_MODE=haskey(ENV,"E06F_MODE"); const E06G_MODE=haskey(ENV,"E06G_MODE"); const E06H_MODE=haskey(ENV,"E06H_MODE"); const E06I_MODE=haskey(ENV,"E06I_MODE"); const E06J_MODE=haskey(ENV,"E06J_MODE"); const E06E_TAG=get(ENV,"E06E_TAG",""); const E06F_TAG=get(ENV,"E06F_TAG",""); const E06G_TAG=get(ENV,"E06G_TAG","m6_diagnostic_v1"); const E06H_TAG=get(ENV,"E06H_TAG","m6"); const E06I_TAG=get(ENV,"E06I_TAG","m6"); const E06J_TAG=get(ENV,"E06J_TAG","m6"); const CASEDIR=joinpath(OUT,"results",E06E_MODE ? (isempty(E06E_TAG) ? "e06e_cases" : "e06e_cases_"*E06E_TAG) : (E06F_MODE ? (isempty(E06F_TAG) ? "pf_recenter_cases" : "pf_recenter_cases_"*E06F_TAG) : (E06G_MODE ? "e06g_cases_"*E06G_TAG : (E06H_MODE ? "e06h_cases_"*E06H_TAG : (E06I_MODE ? "e06i_cases_"*E06I_TAG : (E06J_MODE ? "e06j_cases_"*E06J_TAG : "e06_standard_cases"))))))
+const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output"); const PKGEX=joinpath(pkgdir(PowerDynamics),"docs","examples"); const SRC=joinpath(PKGEX,"ieee39_part1.jl"); const DATASRC=joinpath(PKGEX,"ieee39data"); const E06E_MODE=haskey(ENV,"E06E_MODE"); const E06F_MODE=haskey(ENV,"E06F_MODE"); const E06G_MODE=haskey(ENV,"E06G_MODE"); const E06H_MODE=haskey(ENV,"E06H_MODE"); const E06I_MODE=haskey(ENV,"E06I_MODE"); const E06J_MODE=haskey(ENV,"E06J_MODE"); const E04B_MODE=haskey(ENV,"E04B_MODE"); const E06E_TAG=get(ENV,"E06E_TAG",""); const E06F_TAG=get(ENV,"E06F_TAG",""); const E06G_TAG=get(ENV,"E06G_TAG","m6_diagnostic_v1"); const E06H_TAG=get(ENV,"E06H_TAG","m6"); const E06I_TAG=get(ENV,"E06I_TAG","m6"); const E06J_TAG=get(ENV,"E06J_TAG","m6"); const E04B_TAG=get(ENV,"E04B_TAG","v1");
+const CASEDIR=let n="e06_standard_cases"; if E04B_MODE n="joint_map_cases_"*E04B_TAG elseif E06J_MODE n="e06j_cases_"*E06J_TAG elseif E06I_MODE n="e06i_cases_"*E06I_TAG elseif E06H_MODE n="e06h_cases_"*E06H_TAG elseif E06G_MODE n="e06g_cases_"*E06G_TAG elseif E06F_MODE n=(isempty(E06F_TAG) ? "pf_recenter_cases" : "pf_recenter_cases_"*E06F_TAG) elseif E06E_MODE n=(isempty(E06E_TAG) ? "e06e_cases" : "e06e_cases_"*E06E_TAG) end; joinpath(OUT,"results",n) end
 mkpath(CASEDIR); mkpath(joinpath(OUT,"results")); mkpath(joinpath(OUT,"reports"))
 const FAMILIES=["M1_NETWORK","M2_MACHINE","M3_GOVERNOR","M4_AVR","M5_LOAD_MODEL","M6_OPERATING_POINT","M7_COUPLED"]; const LEVELS=[0.0,0.25,0.5,0.75,1.0,1.25,1.5]; const EXC=["E-A","E-B","E-C","E-D"]
 function make_data(); d=mktempdir(OUT); for f in readdir(DATASRC); CSV.write(joinpath(d,f),CSV.read(joinpath(DATASRC,f),DataFrame)); end; d end
@@ -54,7 +55,11 @@ function write_case(cid,f,m,seed,e)
     end
 end
 manifest=DataFrame(case_id=String[],family=String[],m=Float64[],seed=Int[],excitation=String[],kind=String[])
-if E06J_MODE
+if E04B_MODE
+    fams=["M6_OPERATING_POINT"]; levels_j=[0.0,0.5,1.0,1.5]; istest=haskey(ENV,"E04B_SPLIT") && ENV["E04B_SPLIT"]=="TEST"; seeds=istest ? (911:930) : (901:910)
+    for f in fams, m in levels_j, seed in seeds; e=EXC[mod1(seed,length(EXC))]; push!(manifest,(case_id(f,m,seed,e),f,m,seed,e,istest ? "TEST" : "DEV")); end
+    CSV.write(joinpath(OUT,"results",istest ? "joint_map_test_manifest.csv" : "joint_map_dev_manifest.csv"),manifest)
+elseif E06J_MODE
     # E06-J fresh causal M6 split, disjoint from all previous campaigns.
     fams=["M6_OPERATING_POINT"]
     e06jlevels=[0.0,0.5,1.0,1.5]
