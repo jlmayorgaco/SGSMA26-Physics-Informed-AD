@@ -33,7 +33,8 @@ function main()
  load=CSV.read(joinpath(DATASRC,"load.csv"),DataFrame); bus=CSV.read(joinpath(DATASRC,"bus.csv"),DataFrame); valid=innerjoin(load,bus[!,[:bus,:bus_type,:has_load]],on=:bus); valid=valid[(valid.has_load .== true) .& (valid.bus_type .== "PQ") .& (.!(in.(valid.bus, Ref([2,5,6,10,19,22,29,39])))),:]
  requested=parse.(Int,split(get(ENV,"ATLAS_CANDIDATES","7,12"),",")); requested=intersect(requested,Int.(valid.bus)); reps=parse(Int,get(ENV,"ATLAS_REPS","1"));
  mf=DataFrame(candidate_bus=Int[],amplitude=Float64[],realization=Int[],case_id=String[],status=String[],path=String[])
- for b in requested, rep in 1:reps, amp in [0.0;EPS]
+ amps=[0.0; parse.(Float64,split(get(ENV,"ATLAS_AMPS",join(string.(EPS),",")),","))]
+ for b in requested, rep in 1:reps, amp in amps
   cid,ok,dt=simulate(b,amp,rep,make_data()); push!(mf,(b,amp,rep,cid,ok ? "EXECUTED_SUCCESS" : "EXECUTED_FAIL",joinpath(RES,cid*".csv"))); println(cid," ",ok," ",dt)
  end
  CSV.write(joinpath(OUT,"simulation_manifest_native.csv"),mf); CSV.write(joinpath(OUT,"candidate_registry_native.csv"),valid)
