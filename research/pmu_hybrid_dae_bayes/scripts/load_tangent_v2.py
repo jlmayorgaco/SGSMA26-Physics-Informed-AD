@@ -113,7 +113,10 @@ def main() -> dict:
     if inv.exists():
         meta = pd.read_csv(inv)
         meta.to_csv(RES / "load_descriptor_metadata.csv", index=False)
-        descriptor = "PASS" if len(meta) == 192 and (meta.kind == "differential").sum() == 114 and (meta.kind == "algebraic_zero_mass").sum() == 78 else "FAIL"
+        # The inventory alone is not a descriptor-linearization export.  The
+        # gate requires the native E and A matrices as well.
+        has_matrices = (RES / "descriptor_mass_matrix.csv").exists() and (RES / "descriptor_A_matrix.csv").exists()
+        descriptor = "PASS" if has_matrices and len(meta) == 192 and (meta.kind == "differential").sum() == 114 and (meta.kind == "algebraic_zero_mass").sum() == 78 else "FAIL"
         descriptor_hash = hashlib.sha256((RES / "load_descriptor_metadata.csv").read_bytes()).hexdigest()
     else:
         meta = pd.DataFrame(); descriptor = "FAIL"; descriptor_hash = ""
