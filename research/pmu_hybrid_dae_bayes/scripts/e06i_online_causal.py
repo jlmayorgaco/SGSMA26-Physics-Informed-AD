@@ -339,7 +339,7 @@ def main():
                "nominal_center_drift_tve_percent": float(nominal_center), "median_map_update_ms": float(rt.map_update_ms.median()),
                "p95_map_update_ms": float(rt.map_update_ms.quantile(.95)), "median_amortized_ms_per_frame": float(rt.amortized_ms_per_frame.median()),
                "ONLINE_M6_RECENTERING": status_online, "ORACLE_RECOVERY_CAPTURED": status_oracle,
-               "CAUSAL_CENTER_EXTRACTION": "PASS" if closure >= .5 and float(valid.mean()) >= .95 else "PARTIAL",
+               "CAUSAL_CENTER_EXTRACTION": ("PASS" if closure >= .8 and float(valid.mean()) >= .95 else ("PARTIAL" if closure >= .5 and float(valid.mean()) >= .95 else "FAIL")),
                "NOMINAL_SAFETY": status_safe, "REALTIME_AVERAGE": "PASS" if float(rt.amortized_ms_per_frame.median()) <= 33.333 else "FAIL",
                "HARD_REALTIME_BLOCKING": "PASS" if float(rt.blocking_ms_on_update.median()) <= 33.333 else "FAIL",
                "UNCERTAINTY": "PARTIAL", "NONLINEAR_DAE_FIXED_LAG_NEEDED": "NOT_YET_JUSTIFIED"}
@@ -379,7 +379,7 @@ Center tracking and first accepted-update delay are in `e06i_center_tracking.csv
 
 `ONLINE_M6_RECENTERING = {status_online}`  
 `ORACLE_RECOVERY_CAPTURED = {status_oracle}`  
-`CAUSAL_CENTER_EXTRACTION = {'PASS' if closure >= .5 and float(valid.mean()) >= .95 else 'PARTIAL'}`  
+`CAUSAL_CENTER_EXTRACTION = {summary['CAUSAL_CENTER_EXTRACTION']}`  
 `NOMINAL_SAFETY = {status_safe}`  
 `REALTIME_AVERAGE = {summary['REALTIME_AVERAGE']}`  
 `HARD_REALTIME_BLOCKING = {summary['HARD_REALTIME_BLOCKING']}`  
