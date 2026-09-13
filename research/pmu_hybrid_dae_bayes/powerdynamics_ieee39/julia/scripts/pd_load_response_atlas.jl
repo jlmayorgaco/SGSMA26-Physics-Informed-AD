@@ -2,7 +2,7 @@ using PowerDynamics, PowerDynamics.Library, ModelingToolkitBase, NetworkDynamics
 using NetworkDynamics: SII
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using CSV, DataFrames, LinearAlgebra, Random
-const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output","load_response_atlas_v1"); const RES=joinpath(OUT,"results"); const CK=joinpath(OUT,"checkpoints"); mkpath(RES); mkpath(CK)
+const ROOT=normpath(joinpath(@__DIR__,"..","..")); const OUT=joinpath(ROOT,"output",get(ENV,"ATLAS_OUT","load_response_atlas_v1")); const RES=joinpath(OUT,"results"); const CK=joinpath(OUT,"checkpoints"); mkpath(RES); mkpath(CK)
 const SRC=joinpath(pkgdir(PowerDynamics),"docs","examples","ieee39_part1.jl"); const DATASRC=joinpath(pkgdir(PowerDynamics),"docs","examples","ieee39data")
 const EPS=[0.0025,-0.0025,0.005,-0.005,0.01,-0.01,0.02,-0.02,0.10]
 function make_data(); d=mktempdir(OUT); for f in readdir(DATASRC); CSV.write(joinpath(d,f),CSV.read(joinpath(DATASRC,f),DataFrame)); end; d end
