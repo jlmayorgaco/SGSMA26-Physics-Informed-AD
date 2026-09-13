@@ -22,18 +22,25 @@ function build(data)
  nw,s0
 end
 const OBS=[2,5,6,10,19,22,29,39]
-function main()
+function simulate(mode::Symbol)
  d=make_data(); nw,s0=build(d); sy=SII.parameter_symbols(nw); bus7_syms=filter(x->occursin("7",string(x)) && (occursin("Pset",string(x)) || occursin("Qset",string(x))),sy); println("BUS7_PARAMETER_SYMBOLS=",bus7_syms)
- aff=ComponentAffect([], [Symbol("ZIPLoad₊Pset"),Symbol("ZIPLoad₊Qset")]) do u,p,ctx
-   p[Symbol("ZIPLoad₊Pset")] *= 1.10; p[Symbol("ZIPLoad₊Qset")] *= 1.10
+ if mode != :control
+   factor = mode == :event ? 1.10 : 1.0
+   aff=ComponentAffect([], [Symbol("ZIPLoad₊Pset"),Symbol("ZIPLoad₊Qset")]) do u,p,ctx
+     p[Symbol("ZIPLoad₊Pset")] *= factor; p[Symbol("ZIPLoad₊Qset")] *= factor
+   end
+   set_callback!(nw[VIndex(7)], PresetTimeComponentCallback([2.0],aff))
  end
- set_callback!(nw[VIndex(7)], PresetTimeComponentCallback([2.0],aff))
  sol=solve(ODEProblem(nw,s0,(0.0,5.0)),Rodas5P();abstol=1e-9,reltol=1e-9,saveat=1/30)
- println("RET=",sol.retcode," N=",length(sol.t))
- # Save complete positive-sequence bus voltage truth; native state stays continuous under parameter callback.
+ println("MODE=",mode," RET=",sol.retcode," N=",length(sol.t))
  rows=DataFrame(time=Float64[],bus=Int[],V_re=Float64[],V_im=Float64[],V_mag=Float64[],V_ang=Float64[])
  for (k,t) in enumerate(sol.t), b in 1:39; z=complex(float(sol(t;idxs=VIndex(b,:busbar₊u_r))),float(sol(t;idxs=VIndex(b,:busbar₊u_i)))); push!(rows,(t,b,real(z),imag(z),abs(z),angle(z))); end
- CSV.write(joinpath(CASEDIR,"bus7_full_truth.csv"),rows)
- DataFrame(case_id=["BUS7_LOAD_STEP_PQ10_T2"],event=["LOAD_CHANGE"],bus=[7],onset_s=[2.0],deltaP_fraction=[.10],deltaQ_fraction=[.10],p_pre=[-2.3380000305],q_pre=[-.84],p_post=[-2.5718000336],q_post=[-.924],retcode=[string(sol.retcode)],n_frames=[length(sol.t)] ) |> x->CSV.write(joinpath(CASEDIR,"bus7_event_metadata.csv"),x)
+ return sol, rows
+end
+function main()
+ solc, control = simulate(:control); CSV.write(joinpath(CASEDIR,"bus7_full_truth_control.csv"),control)
+ soln, null = simulate(:null); CSV.write(joinpath(CASEDIR,"bus7_full_truth_null.csv"),null)
+ sole, event = simulate(:event); CSV.write(joinpath(CASEDIR,"bus7_full_truth.csv"),event)
+ DataFrame(case_id=["BUS7_LOAD_STEP_PQ10_T2"],event=["LOAD_CHANGE"],bus=[7],onset_s=[2.0],deltaP_fraction=[.10],deltaQ_fraction=[.10],p_pre=[-2.3380000305],q_pre=[-.84],p_post=[-2.5718000336],q_post=[-.924],retcode=[string(sole.retcode)],n_frames=[length(sole.t)] ) |> x->CSV.write(joinpath(CASEDIR,"bus7_event_metadata.csv"),x)
 end
 main()
