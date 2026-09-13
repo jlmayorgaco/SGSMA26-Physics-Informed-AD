@@ -83,6 +83,8 @@ def main():
                     "relative_frobenius_error": np.nan,
                     "cosine_similarity": np.nan,
                     "reason": "native E/A/B_g unavailable"} for b in buses]).to_csv(RES / "load_tangent_metrics_v3.csv", index=False)
+    bg_audit = pd.DataFrame([{"status": "FAIL", "reason": "native PowerDynamics load residual derivative B_g not exported"}])
+    bg_audit.to_csv(RES / "load_Bg_audit.csv", index=False)
     pd.DataFrame(columns=["candidate_bus", "amplitude", "estimate", "bias", "status"]).to_csv(RES / "load_amplitude_tangent_v3.csv", index=False)
     pd.DataFrame(columns=["bus_i", "bus_j", "cosine", "principal_angle_deg", "sigma_min", "label"]).to_csv(RES / "load_pair_geometry_unwhitened.csv", index=False)
 
