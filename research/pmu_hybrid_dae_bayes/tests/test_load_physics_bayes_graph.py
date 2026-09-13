@@ -14,7 +14,7 @@ def test_downstream_bayes_and_graph_claims_are_blocked_by_tangent_gate():
     s = pd.read_csv(RES / 'campaign_summary.csv').iloc[0]
     assert s.TRAJECTORY_TANGENT_VALIDATION == 'NOT_RUN'
     assert s.SOURCE_BAYES_EVIDENCE == 'NOT_RUN'
-    assert s.GSP_EVENT_OPERATOR == 'NOT_SUPPORTED'
+    assert s.GSP_EVENT_OPERATOR == 'NOT_EVALUATED'
 
 def test_fd_and_linearity_gates_are_materialized():
     s = pd.read_csv(RES / 'campaign_summary.csv').iloc[0]
