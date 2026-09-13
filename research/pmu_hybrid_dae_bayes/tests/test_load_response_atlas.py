@@ -4,17 +4,17 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1] / 'powerdynamics_ieee39' / 'output' / 'load_response_atlas_v1'
 RES = ROOT / 'results'
 
-def test_native_atlas_has_two_complete_candidate_groups():
+def test_native_atlas_has_complete_first_realization_groups():
     m = pd.read_csv(ROOT / 'simulation_manifest_native.csv')
-    assert len(m) == 20
-    assert set(m.candidate_bus) == {7, 12}
+    assert len(m) == 64
+    assert len(set(m.candidate_bus)) == 16
     assert set(m.status) == {'EXECUTED_SUCCESS'}
 
 def test_fd_operator_is_voltage_only_and_dimensioned():
     o = pd.read_parquet(RES / 'fd_candidate_operators.parquet')
     assert set(o.channel) <= set(range(16))
-    assert set(o.candidate_bus) == {7, 12}
-    assert len(o) == 2 * 4 * 30 * 16
+    assert len(set(o.candidate_bus)) == 16
+    assert len(o) == 16 * 1 * 30 * 16
 
 def test_fd_derivative_converges_and_units_are_fractional():
     c = pd.read_csv(RES / 'fd_derivative_convergence.csv')
