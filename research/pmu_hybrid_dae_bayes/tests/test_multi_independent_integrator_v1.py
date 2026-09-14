@@ -27,7 +27,9 @@ def test_selected_manifest_is_frozen_and_stratified():
         "WEAK_WEAK": 16, "WEAK_STRONG": 16, "MODERATE": 16, "FINITE": 16
     }
     assert selected[["case_id", "noise_seed"]].duplicated().sum() == 0
-    digest = hashlib.sha256(selected.to_csv(index=False).encode()).hexdigest()
+    # The summary hashes the exact frozen CSV bytes (rather than pandas' type
+    # re-serialization, which can change integer formatting on read-back).
+    digest = hashlib.sha256((RES / "selected_cases.csv").read_bytes()).hexdigest()
     assert digest == _summary().selected_case_manifest_hash
 
 
