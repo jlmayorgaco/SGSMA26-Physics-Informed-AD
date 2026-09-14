@@ -201,6 +201,28 @@ def conditional_amp_grid(rw, support, Dw, Qw, qijw, ngrid=31):
     ll = -.5 * (const + qn) - .5 * (aa.ravel() / SIGMA_A) ** 2 - .5 * (bb.ravel() / SIGMA_A) ** 2 - 2 * math.log(SIGMA_A * math.sqrt(2 * math.pi)); ww = np.exp(ll - logsumexp(ll)).reshape(aa.shape); return g, ww, (aa, bb)
 
 
+def atom_aware_hpd(vals, weights, atom, mass=0.95):
+    """Return median and a valid HPD hull for a spike-and-slab posterior.
+
+    The atom at zero is included first.  The remaining continuous grid points
+    are added in descending posterior-mass order until the requested mass is
+    reached.  A hull is reported for compact CSV consumption, while the atom
+    mass and continuous mass are retained explicitly.
+    """
+    vals = np.asarray(vals, float); weights = np.asarray(weights, float)
+    keep = np.isfinite(vals) & np.isfinite(weights) & (weights >= 0)
+    vals, weights = vals[keep], weights[keep]
+    atom = float(np.clip(atom, 0.0, 1.0)); cont = float(weights.sum())
+    if cont > 0: weights = weights / cont * (1.0 - atom)
+    med = 0.0 if atom >= 0.5 else float(np.interp(max(0.5 - atom, 0.0), np.cumsum(weights[np.argsort(vals)]) / max(weights.sum(), 1e-300), vals[np.argsort(vals)]))
+    need = max(float(mass) - atom, 0.0)
+    if need <= 1e-15 or vals.size == 0 or weights.sum() <= 0:
+        return med, 0.0, 0.0, 0.0, "ATOM_ONLY"
+    order = np.argsort(weights)[::-1]; cs = np.cumsum(weights[order]); cut = int(np.searchsorted(cs, need, side="left")); sel = vals[order[: cut + 1]]
+    lo = float(min(0.0, np.min(sel))); hi = float(max(0.0, np.max(sel)))
+    return med, lo, hi, float(weights[order[: cut + 1]].sum()), "ATOM_PLUS_CONTINUOUS"
+
+
 def amplitude_audit(manifest, RW, post, Dw, Qw, qijw, z_full=None):
     """Audit C1--C4 without changing any frozen model quantities.
 
@@ -250,7 +272,7 @@ def amplitude_audit(manifest, RW, post, Dw, Qw, qijw, z_full=None):
                     grid, ww, _ = cond_cache[s]; vals.extend(grid.tolist()); weights.extend((pp[k] * ww).tolist())
                 else:
                     grid, ww, (aag, bbg) = cond_cache[s]; arr = aag if gbus == s[0] else bbg; vals.extend(arr.ravel().tolist()); weights.extend((pp[k] * ww).ravel().tolist())
-            vals = np.asarray(vals); weights = np.asarray(weights); total = float(atom + weights.sum()); weights /= max(total, 1e-300); atom /= max(total, 1e-300); order = np.argsort(vals); c = np.cumsum(weights[order]); med = 0.0 if atom >= .5 else float(np.interp(.5 - atom, c, vals[order])); lo = 0.0 if atom >= .025 else float(np.interp(.025 - atom, c, vals[order])); hi = 0.0 if atom >= .975 else float(np.interp(.975 - atom, c, vals[order])); trueamp = float(x.amplitude_i if gbus == x.source_i else x.amplitude_j if gbus == x.source_j else 0.0); mixture.append({"candidate_space": "FULL", "regime": x.regime, "bus": gbus, "true_present": int(gbus in true), "atom_mass": atom, "posterior_mean": float(np.sum(vals * weights)), "posterior_median": med, "credible_lo95": lo, "credible_hi95": hi, "covered_95": lo <= trueamp <= hi, "set_width": hi - lo, "bias": float(np.sum(vals * weights) - trueamp)})
+            vals = np.asarray(vals); weights = np.asarray(weights); total = float(atom + weights.sum()); weights /= max(total, 1e-300); atom /= max(total, 1e-300); med, lo, hi, hpd_cont_mass, hpd_type = atom_aware_hpd(vals, weights, atom, mass=.95); trueamp = float(x.amplitude_i if gbus == x.source_i else x.amplitude_j if gbus == x.source_j else 0.0); covered = bool((trueamp == 0.0 and atom > 0.0) or (lo <= trueamp <= hi and hpd_cont_mass > 0.0)); mixture.append({"candidate_space": "FULL", "regime": x.regime, "bus": gbus, "true_present": int(gbus in true), "atom_mass": atom, "posterior_mean": float(np.sum(vals * weights)), "posterior_median": med, "credible_lo95": lo, "credible_hi95": hi, "credible_set_continuous_mass": hpd_cont_mass, "credible_set_type": hpd_type, "covered_95": covered, "set_width": hi - lo, "bias": float(np.sum(vals * weights) - trueamp)})
     o = pd.DataFrame(oracle); m = pd.DataFrame(mixture); mr = pd.DataFrame(map_rows)
     o.to_csv(RES / "load_multi_amplitude_oracle.csv", index=False)
     m.to_csv(RES / "load_multi_amplitude_model_averaged.csv", index=False)
