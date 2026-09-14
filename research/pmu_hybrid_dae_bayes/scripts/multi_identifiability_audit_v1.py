@@ -243,6 +243,10 @@ def amplitude_audit(manifest, RW, post, Dw, Qw, qijw, z_full=None):
         # whose selected support equals the known support.
         map_rows.append({"regime": x.regime, "map_double": int(x.pred_M == 2),
                          "map_support_correct": int(x.pred_M == 2 and pilot.parse_support(x.pred_support) == pilot.parse_support(x.true_support)),
+                         "coverage_i_50": bool(x.amp_i_lo50 <= x.amplitude_i <= x.amp_i_hi50),
+                         "coverage_j_50": bool(x.amp_j_lo50 <= x.amplitude_j <= x.amp_j_hi50),
+                         "coverage_i_90": bool(x.amp_i_lo90 <= x.amplitude_i <= x.amp_i_hi90),
+                         "coverage_j_90": bool(x.amp_j_lo90 <= x.amplitude_j <= x.amp_j_hi90),
                          "coverage_i_95": bool(x.amp_i_lo95 <= x.amplitude_i <= x.amp_i_hi95),
                          "coverage_j_95": bool(x.amp_j_lo95 <= x.amplitude_j <= x.amp_j_hi95)})
 

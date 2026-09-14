@@ -43,6 +43,7 @@ def test_c1_c2_c3_c4_outputs_and_atom_bounds():
     mix = pd.read_csv(RES / "load_multi_amplitude_model_averaged.csv")
     assert len(oracle) == 3840  # both amplitudes for all frozen double rows
     assert len(maps) == 3840
+    assert {"coverage_i_50", "coverage_j_50", "coverage_i_90", "coverage_j_90", "coverage_i_95", "coverage_j_95"}.issubset(maps.columns)
     assert set(mix.true_present) == {0, 1}
     assert ((mix.atom_mass >= -1e-12) & (mix.atom_mass <= 1 + 1e-12)).all()
     assert maps.map_double.sum() >= maps.map_support_correct.sum()
