@@ -1,6 +1,7 @@
 """Finalize confirmatory artifacts without generating additional TDS trajectories."""
 from pathlib import Path
 import json, math, sys
+import subprocess
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 HERE=Path(__file__).resolve().parents[1]; PD=HERE/"powerdynamics_ieee39"
@@ -37,6 +38,7 @@ def main():
     old_grid_comparison(); plots()
     # Repair the human-readable report after the execution script completed.
     summary=pd.read_csv(RES/"multi_likelihood_confirmatory_summary.csv").iloc[0].to_dict() if (RES/"multi_likelihood_confirmatory_summary.csv").exists() else {}
+    summary["HEAD_FINAL"]=subprocess.check_output(["git","rev-parse","HEAD"],cwd=HERE,text=True).strip()
     a=pd.read_csv(RES/"true_support_calibration.csv"); q=pd.read_csv(RES/"quadrature_stability.csv"); old=pd.read_csv(RES/"old_grid_vs_adaptive.csv")
     old_line="Median secondary old-grid/adaptive log-evidence difference: {:.4g}; median mean-shift in adaptive SD units: {:.4g}.".format(float(old.logZ_diff.median()),float(old.mean_diff_over_sd.median()))
     lines=["# MULTI-LIKELIHOOD-CONFIRMATORY-V1","",json.dumps(summary,indent=2),"","## Contract","","384 fresh physical trajectories (24 frozen supports x 4 regimes x 4 signs), each reused for 20 noise seeds (7,680 rows); 200 independent H0 CAL rows. Levels A/B/C use a deterministic five-seed-per-trajectory analysis subset to bound runtime; the complete noise manifest remains frozen.","","Integration uses local adaptive Gauss-Hermite centered at a damped Gauss-Newton posterior mode, with log-domain evidence and the frozen unbounded Gaussian prior. Order refinement and the secondary 31-point grid comparison are diagnostic only. No V1/V2 TEST row entered fitting or selection.","","## Level A coverage by regime","",a.groupby('regime')[['cover95_i','cover95_j']].mean().to_markdown(),"","## Quadrature","",q.describe().to_markdown(),"",old_line,"","## Scope","","The prospective hypothesis space contains 24 of 120 doubles; GLOBAL_SUPPORT_RECOVERY=NOT_ESTABLISHED. ANALYTIC_DAE_TANGENT remains PENDING. No multi-event beyond simultaneous doubles, ML, or future action was executed."]
