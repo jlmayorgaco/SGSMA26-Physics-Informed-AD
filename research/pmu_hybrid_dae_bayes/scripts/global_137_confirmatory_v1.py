@@ -208,7 +208,12 @@ def summarize(C,I,A,cache,Dw,Qw,qijw,L):
     return card,ss,MA,M,ev
 
 def gk_check(C,cache,Dw,Qw,qijw,L,yn,idx,rows):
-    chosen=C[(C.true_M==2)&(C.regime.isin(["WEAK_WEAK","WEAK_STRONG","MODERATE","FINITE"]))].groupby("regime").head(1); out=[]; nm=pd.read_csv(RES/"noise_manifest.csv")
+    base=C[(C.true_M==2)&(C.regime.isin(["WEAK_WEAK","WEAK_STRONG","MODERATE","FINITE"]))]
+    picks=[]
+    for reg in ["WEAK_WEAK","WEAK_STRONG","MODERATE","FINITE"]:
+        q=base[(base.regime==reg)&(base.source_i==7)&(base.source_j==12)]
+        picks.append(q.iloc[0] if len(q) else base[base.regime==reg].iloc[0])
+    chosen=pd.DataFrame(picks); out=[]; nm=pd.read_csv(RES/"noise_manifest.csv")
     for r in chosen.itertuples(index=False):
         i,j=tuple(sorted((int(r.source_i),int(r.source_j)))); nr=nm[nm.case_id==r.case_id].iloc[0]; rw=wht(obs(nr.physical_path,yn,idx,rows)+noise(int(nr.noise_seed)),L); gh0=primary.support_evidence(rw,i,j,Dw,Qw,qijw,n=31); gh=float(gh0[0]+math.log(1/SIGMA_A)); ghmi,ghmj,_,_,_=primary.moments(gh0[1],gh0[2],gh0[3]); gk=independent.gk_support(rw,i,j,Dw,Qw,qijw,1e-7,1e-7); out.append(dict(case_id=r.case_id,regime=r.regime,support=str((i,j)),status="PASS",logZ_GH31=gh,logZ_GK2D=float(gk["logZ"]),abs_delta_logZ=abs(gh-float(gk["logZ"])),mean_i_GH=float(ghmi),mean_i_GK=float(gk["mean_i"]),mean_j_GH=float(ghmj),mean_j_GK=float(gk["mean_j"])))
     pd.DataFrame(out).to_csv(RES/"gk_reference_check.csv",index=False)
