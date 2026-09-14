@@ -33,7 +33,7 @@ def test_pilot_posterior_normalization_and_h0():
 def test_conditional_information_and_step_sensitivity_are_finite():
     info = pd.read_csv(ROOT / "load_multi_pilot_info.csv")
     sens = pd.read_csv(ROOT / "load_multi_pilot_qij_step_sensitivity.csv")
-    assert len(info) == 12 * 2 * 8
+    assert len(info) == 12 * 2 * 16
     assert not info.degenerate.any()
     assert np.isfinite(info.I_j_given_i).all()
     assert float(sens.relative_to_h005.max()) < 1e-2

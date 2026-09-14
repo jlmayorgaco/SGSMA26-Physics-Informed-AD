@@ -465,6 +465,9 @@ def write_report(sel, qmf, dev, add, info, df, d2, ad, D):
         "restricted_support_top3": float(pd.read_csv(RES / "load_multi_pilot_support_topk.csv").top3_hit.mean()),
         "restricted_support_top5": float(pd.read_csv(RES / "load_multi_pilot_support_topk.csv").top5_hit.mean()),
         "ANALYTIC_DAE_TANGENT": "PENDING",
+        "cardinality_prior": list(CARD_PRIOR), "support_space": "H0 + 16 singles + 12 selected doubles",
+        "dictionary_hash": hashlib.sha256((V2T / "results" / "load_fd_central_operator.npz").read_bytes()).hexdigest(),
+        "residual_reference": "PMU trajectory minus nominal PMU baseline; onset known t=2.0 s",
     }
     det = pd.read_csv(RES / "load_multi_pilot_detection.csv")
     card = pd.read_csv(RES / "load_multi_pilot_cardinality.csv")
@@ -483,6 +486,7 @@ def write_report(sel, qmf, dev, add, info, df, d2, ad, D):
                 "\nThe 12-support set was frozen from V1 evidence before pilot scoring. All pair events are simultaneous, true time-local callbacks at t=2 s with no reinitialization. V2 D/Q/Sigma0/priors and the numerical physical dictionary were read-only. This pilot is not a validation of the 137-support space. Analytic DAE tangent remains PENDING."]
     (REP / "load_multi_pilot_v1.md").write_text("\n\n".join(sections) + "\n", encoding="utf-8")
     pd.DataFrame([text]).to_csv(RES / "load_multi_pilot_summary.csv", index=False)
+    pd.DataFrame([{"model": "W2_SEPARABLE_AR1_FROZEN", "rho": 0.35120835963535885, "dimension": 960, "NIS_raw_reference": 960.37, "NIS_normalized_reference": 960.37 / 960.0, "source": "V1/V2_READ_ONLY"}]).to_csv(RES / "load_multi_pilot_whitening.csv", index=False)
 
 
 def main():
@@ -495,7 +499,10 @@ def main():
     # Preregister conditional information before opening any empirical test score.
     Dw = np.column_stack([whiten(D[:, k], L) for k in range(16)]); Qw = np.column_stack([whiten(Q[:, k], L) for k in range(16)])
     qijw = {(i, j): whiten(q, L) for (i, j), q in qij.items()}
-    info = conditional_info(Dw, Qw, qijw, pairs, sorted({x[0] for x in DEV_MAG_PAIRS} | {x[0] for x in TEST_MAG_PAIRS}));
+    # Both signs are preregistered: the conditional information depends on the
+    # signed known amplitude through the 2*a_i Q_i term.
+    known_amps = sorted({s * x[0] for x in DEV_MAG_PAIRS + TEST_MAG_PAIRS for s in (-1.0, 1.0)})
+    info = conditional_info(Dw, Qw, qijw, pairs, known_amps)
     # Physical interaction adequacy is DEV-only.  Do not use test for model choice.
     add = additivity(dev, D, Q, qij, yn, idx, rows, L)
     posterior_path = RES / "load_multi_pilot_posterior.parquet"
