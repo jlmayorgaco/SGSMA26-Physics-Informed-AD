@@ -10,6 +10,7 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
+from scipy.integrate import quad, quad_vec
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "powerdynamics_ieee39/output/multi_independent_integrator_v1"
@@ -119,3 +120,56 @@ def test_report_statuses_and_required_plots():
 def test_gaussian_tail_reference_value():
     # Contract for the standardized [-10,10] integration domain.
     assert math.erfc(10 / math.sqrt(2)) == pytest.approx(1.523970604832119e-23, rel=1e-12)
+
+
+def test_one_and_two_dimensional_adaptive_gaussian_integrals():
+    one = quad(lambda x: math.exp(-.5 * x * x) / math.sqrt(2 * math.pi), -10, 10, epsabs=1e-12)[0]
+    two = quad_vec(lambda x: np.array([
+        math.exp(-.5 * x * x) / math.sqrt(2 * math.pi),
+        x * math.exp(-.5 * x * x) / math.sqrt(2 * math.pi),
+    ]), -10, 10, epsabs=1e-12)[0]
+    assert one == pytest.approx(1.0, abs=1e-12)
+    assert two[0] == pytest.approx(1.0, abs=1e-12)
+    assert two[1] == pytest.approx(0.0, abs=1e-12)
+
+
+def test_bivariate_correlated_gaussian_moments_and_log_shift():
+    rho = .8
+    norm2 = 1.0 / (2 * math.pi * math.sqrt(1 - rho * rho))
+    def inner(x):
+        return quad_vec(lambda y: math.exp(-(x*x - 2*rho*x*y + y*y) / (2*(1-rho*rho))) * norm2 * np.array([1., x, y, x*y]), -10, 10, epsabs=1e-10)[0]
+    # Integrate vector-valued moments without using GH nodes.
+    moments = quad_vec(inner, -10, 10, epsabs=1e-9)[0]
+    assert moments[0] == pytest.approx(1.0, abs=1e-8)
+    assert moments[1] == pytest.approx(0.0, abs=1e-8)
+    assert moments[2] == pytest.approx(0.0, abs=1e-8)
+    assert moments[3] == pytest.approx(rho, abs=1e-8)
+    # A large negative log shift must not change the recovered log integral.
+    shift = -500.0
+    raw = quad(lambda x: math.exp(-.5*(x-2.)**2 + shift), -10, 10, epsabs=1e-12)[0]
+    shifted = quad(lambda x: math.exp(-.5*(x-2.)**2), -10, 10, epsabs=1e-12)[0]
+    assert math.log(raw) == pytest.approx(math.log(shifted) + shift, abs=1e-10)
+
+
+def test_multimodal_toy_and_high_correlation_are_finite():
+    # Two well-separated modes exercise adaptive subdivision; the second
+    # integral is a narrow correlated Gaussian and checks finite moments.
+    mix = quad(lambda x: .5*math.exp(-50*(x-2)**2) + .5*math.exp(-50*(x+2)**2), -10, 10, epsabs=1e-10)[0]
+    assert mix > 0 and math.isfinite(mix)
+    rho = .999
+    inv = 1.0 / (1-rho*rho)
+    corr_mass = quad_vec(lambda x: quad_vec(lambda y: np.array([
+        math.exp(-.5*inv*(x*x - 2*rho*x*y + y*y)),
+        y*math.exp(-.5*inv*(x*x - 2*rho*x*y + y*y)),
+    ]), -10, 10, epsabs=1e-8)[0], -10, 10, epsabs=1e-8)[0]
+    assert np.isfinite(corr_mass).all() and corr_mass[0] > 0
+
+
+def test_cardinality_evidence_reconstruction_and_support_normalization():
+    logs = np.array([-10.0, -11.0, -12.0])
+    ell_star = logs.max(); A = np.exp(logs - ell_star).sum(); N = len(logs)
+    reconstructed = ell_star - math.log(N) + math.log(A)
+    direct = math.log(np.exp(logs).mean())
+    assert reconstructed == pytest.approx(direct, abs=1e-12)
+    post = np.exp(logs - logs.max()); post /= post.sum()
+    assert post.sum() == pytest.approx(1.0, abs=1e-12)
