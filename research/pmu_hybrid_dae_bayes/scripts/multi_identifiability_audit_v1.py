@@ -178,7 +178,11 @@ def fisher_increment(RW, manifest, Dw, Qw, qijw, z_restricted):
     out = []
     for name, cols in (("MODEL_AMP", ["abs_aj"]), ("MODEL_INFO", ["abs_aj", "I"])):
         X = np.log(np.maximum(dev[cols].to_numpy(float), 1e-15)); y = dev.resolved.to_numpy(int); model = LogisticRegression(penalty=None, solver="lbfgs", max_iter=2000).fit(X, y); Xt = np.log(np.maximum(test[cols].to_numpy(float), 1e-15)); prob = model.predict_proba(Xt)[:, 1]
-        out.append({"model": name, "dev_n": len(dev), "test_n": len(test), "test_NLL": float(-np.mean(test.resolved * np.log(np.maximum(prob, 1e-12)) + (1 - test.resolved) * np.log(np.maximum(1 - prob, 1e-12)))), "test_Brier": float(np.mean((prob - test.resolved) ** 2)), "test_AUROC": float(roc_auc_score(test.resolved, prob)), "dev_coefficients": str(model.coef_.ravel().tolist()), "dev_intercept": float(model.intercept_[0])})
+        edges = np.linspace(0.0, 1.0, 11); ece = 0.0
+        for bi, (lo, hi) in enumerate(zip(edges[:-1], edges[1:])):
+            mask = (prob >= lo) & ((prob < hi) if bi < 9 else (prob <= hi))
+            if mask.any(): ece += float(mask.mean()) * abs(float(prob[mask].mean()) - float(test.resolved.to_numpy()[mask].mean()))
+        out.append({"model": name, "dev_n": len(dev), "test_n": len(test), "test_NLL": float(-np.mean(test.resolved * np.log(np.maximum(prob, 1e-12)) + (1 - test.resolved) * np.log(np.maximum(1 - prob, 1e-12)))), "test_Brier": float(np.mean((prob - test.resolved) ** 2)), "test_AUROC": float(roc_auc_score(test.resolved, prob)), "test_ECE": float(ece), "test_calibration_mean_pred": float(prob.mean()), "test_event_rate": float(test.resolved.mean()), "dev_coefficients": str(model.coef_.ravel().tolist()), "dev_intercept": float(model.intercept_[0])})
     # Within amplitude strata: I versus resolution (descriptive only).
     strata = []
     for reg, g in test.groupby("regime"):

@@ -33,6 +33,7 @@ def test_fisher_incremental_and_within_strata_are_frozen_evaluations():
     x = pd.read_csv(RES / "load_multi_fisher_incremental.csv")
     assert set(x.model) == {"MODEL_AMP", "MODEL_INFO"}
     assert len(x) == 2 and (x.test_n == 3840).all() and (x.dev_n == 192).all()
+    assert {"test_NLL", "test_Brier", "test_AUROC", "test_ECE"}.issubset(x.columns)
     s = pd.read_csv(RES / "load_multi_fisher_within_stratum.csv")
     assert set(s.regime) == {"FINITE", "MODERATE", "WEAK_STRONG", "WEAK_WEAK"}
 
