@@ -104,12 +104,12 @@ def support_set_for_case(row,cdf,Dw,Qw,qijw):
     # True support, GH MAP double, best single by frozen GH evidence, top-3
     # GH doubles, and one deliberately low-evidence double.
     true=(int(row.source_i),int(row.source_j)); probs=json.loads(row.support_probs_json); order=[ast for ast in sorted(probs,key=probs.get,reverse=True)]
-    doubles=[]
-    for s in [true]+[eval(x) for x in order[:3]]+[eval(order[-1])]:
+    doubles=[]; gh_top=[eval(x) for x in order[:3]]; gh_map=gh_top[0] if gh_top else true
+    for s in [true,gh_map]+gh_top+[eval(order[-1])]:
         if tuple(s) not in doubles: doubles.append(tuple(s))
     rw=obs_residual(row.physical_path, FROZEN[3], FROZEN[4], FROZEN[5], FROZEN[6], int(row.noise_seed))
     single_logs={b:gh_single_logz(rw,b,Dw,Qw) for b in primary.BUSES}; best_single=max(single_logs,key=single_logs.get)
-    supports=[(i,j,"TRUE_DOUBLE" if (i,j)==true else ("GH_TOP3" if (i,j) in [eval(x) for x in order[:3]] else "LOW_EVIDENCE_DOUBLE")) for i,j in doubles]
+    supports=[(i,j,"TRUE_DOUBLE" if (i,j)==true else ("GH_MAP_DOUBLE" if (i,j)==tuple(gh_map) else ("GH_TOP3" if (i,j) in gh_top else "LOW_EVIDENCE_DOUBLE"))) for i,j in doubles]
     supports.append((best_single,best_single,"BEST_SINGLE"))
     out=[]
     for i,j,label in supports:
@@ -166,8 +166,8 @@ def main():
         rw=obs_residual(r.physical_path,yn,idx,rows,L,int(r.noise_seed)); logs=[]
         for i,j in primary.PAIRS:
             k=gk_support(rw,i,j,Dw,Qw,qijw,1e-7,1e-7); logs.append((i,j,k["logZ"]))
-        h0=-.5*(DIM*np.log(2*np.pi)+rw@rw); singles=[gh_single_logz(rw,b,Dw,Qw) for b in primary.BUSES]; gh_doubles=[gh_support(rw,i,j,Dw,Qw,qijw)["logZ"] for i,j in primary.PAIRS]; all_logs=[h0]+singles+gh_doubles; pri=np.log(np.r_[primary.CARD_PRIOR[0],np.full(16,primary.CARD_PRIOR[1]/16),np.full(len(logs),primary.CARD_PRIOR[2]/len(logs))]); pgh=np.exp(np.asarray(all_logs)+pri-mlc.logsumexp(np.asarray(all_logs)+pri)); all_gk=[h0]+singles+[x[2] for x in logs]; pgk=np.exp(np.asarray(all_gk)+pri-mlc.logsumexp(np.asarray(all_gk)+pri)); map_gh=int(np.argmax(pgh)); map_gk=int(np.argmax(pgk)); card.append({"case_id":r.case_id,"noise_seed":r.noise_seed,"regime":r.regime,"pM0_GK":pgk[0],"pM1_GK":pgk[1:17].sum(),"pM2_GK":pgk[17:].sum(),"pM0_GH":pgh[0],"pM1_GH":pgh[1:17].sum(),"pM2_GH":pgh[17:].sum(),"abs_diff_M0":abs(pgk[0]-pgh[0]),"abs_diff_M1":abs(pgk[1:17].sum()-pgh[1:17].sum()),"abs_diff_M2":abs(pgk[17:].sum()-pgh[17:].sum()),"map_flip":int(map_gh!=map_gk),"omitted_mass_bound":0.0,"space":"24 doubles; exact GK doubles and GH singles/H0"});
-        order=np.argsort([x[2] for x in logs])[::-1]; true=(int(r.source_i),int(r.source_j)); sup_rows.append({"case_id":r.case_id,"noise_seed":r.noise_seed,"true_support":str(true),"p_true_GK":float(pgk[17+next(k for k,x in enumerate(logs) if (x[0],x[1])==true)]),"top1_GK":str((logs[order[0]][0],logs[order[0]][1])),"top3_GK":str([(logs[k][0],logs[k][1]) for k in order[:3]])})
+        h0=-.5*(DIM*np.log(2*np.pi)+rw@rw); singles=[gh_single_logz(rw,b,Dw,Qw) for b in primary.BUSES]; gh_doubles=[gh_support(rw,i,j,Dw,Qw,qijw)["logZ"] for i,j in primary.PAIRS]; all_logs=[h0]+singles+gh_doubles; pri=np.log(np.r_[primary.CARD_PRIOR[0],np.full(16,primary.CARD_PRIOR[1]/16),np.full(len(logs),primary.CARD_PRIOR[2]/len(logs))]); pgh=np.exp(np.asarray(all_logs)+pri-mlc.logsumexp(np.asarray(all_logs)+pri)); all_gk=[h0]+singles+[x[2] for x in logs]; pgk=np.exp(np.asarray(all_gk)+pri-mlc.logsumexp(np.asarray(all_gk)+pri)); map_gh=int(np.argmax(pgh)); map_gk=int(np.argmax(pgk)); card.append({"case_id":r.case_id,"noise_seed":r.noise_seed,"regime":r.regime,"pM0_GK":pgk[0],"pM1_GK":pgk[1:17].sum(),"pM2_GK":pgk[17:].sum(),"pM0_GH":pgh[0],"pM1_GH":pgh[1:17].sum(),"pM2_GH":pgh[17:].sum(),"abs_diff_M0":abs(pgk[0]-pgh[0]),"abs_diff_M1":abs(pgk[1:17].sum()-pgh[1:17].sum()),"abs_diff_M2":abs(pgk[17:].sum()-pgh[17:].sum()),"map_flip":int(map_gh!=map_gk),"omitted_mass_bound":1.0,"omitted_double_supports":96,"space":"24 doubles; exact GK doubles and GH singles/H0"});
+        order=np.argsort([x[2] for x in logs])[::-1]; gh_order=np.argsort(gh_doubles)[::-1]; true=(int(r.source_i),int(r.source_j)); true_idx=next(k for k,x in enumerate(logs) if (x[0],x[1])==true); gh_true_idx=next(k for k,x in enumerate(primary.PAIRS) if x==true); top_gk=(logs[order[0]][0],logs[order[0]][1]); top_gh=(primary.PAIRS[gh_order[0]][0],primary.PAIRS[gh_order[0]][1]); sup_rows.append({"case_id":r.case_id,"noise_seed":r.noise_seed,"true_support":str(true),"p_true_GK":float(pgk[17+true_idx]),"p_true_GH":float(pgh[17+gh_true_idx]),"p_true_abs_diff":abs(float(pgk[17+true_idx])-float(pgh[17+gh_true_idx])),"top1_GK":str(top_gk),"top1_GH":str(top_gh),"top3_GK":str([(logs[k][0],logs[k][1]) for k in order[:3]]),"top3_GH":str([(primary.PAIRS[k][0],primary.PAIRS[k][1]) for k in gh_order[:3]]),"map_flip":int(top_gk!=top_gh)})
     carddf=pd.DataFrame(card); carddf.to_csv(RES/"cardinality_crosscheck.csv",index=False); pd.DataFrame(sup_rows).to_csv(RES/"support_crosscheck.csv",index=False)
     # Bus7/Bus12 rows, all available regimes, with GH/GK evidence and moments.
     bus=pd.DataFrame([r for r in evrows if int(r["support_i"])==7 and int(r["support_j"])==12]); bus.to_csv(RES/"bus7_bus12_crosscheck.csv",index=False)
