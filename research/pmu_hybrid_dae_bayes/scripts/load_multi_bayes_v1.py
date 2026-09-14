@@ -14,7 +14,7 @@ from scipy.stats import spearmanr
 from sklearn.metrics import f1_score, roc_auc_score, average_precision_score
 
 HERE=Path(__file__).resolve().parents[1]; PD=HERE/'powerdynamics_ieee39'
-V2=PD/'output/load_bayes_fd_v2'; V2R=V2/'results'; MULTI=PD/'output/load_multi_bayes_v1'
+V2=PD/'output/load_bayes_fd_v2'; V2R=V2/'results'; V2T=PD/'output/load_tangent_v2'; MULTI=PD/'output/load_multi_bayes_v1'
 QDIR=MULTI; DEVDIR=MULTI/'dev'; TESTDIR=MULTI/'test'; SINGLEDIR=MULTI/'single'
 OUT=PD/'output/load_multi_bayes_v1'; RES=OUT/'results'; REP=OUT/'reports'
 RES.mkdir(parents=True,exist_ok=True); REP.mkdir(parents=True,exist_ok=True)
@@ -46,7 +46,7 @@ def cov_cal(noises):
     return var,rho,S,L,float(2*np.log(np.diag(L)).sum())
 def setup():
     vnom,_,_,_,meta=h6.load_nominal(); rows=h6.load_branch_rows(vnom,meta['y0']); t,v=load(V2/'physical/results/LOAD_BUS_3_A0p0_R1.csv'); idx=np.arange(np.argmin(abs(t-2)),np.argmin(abs(t-2))+30); yn=np.asarray([h6.measurement(z,rows) for z in v])[idx]
-    z=np.load(V2/'results/load_fd_central_operator.npz'); D=z['central'].reshape(16,-1).T.astype(float)
+    z=np.load(V2T/'results/load_fd_central_operator.npz'); D=z['central'].reshape(16,-1).T.astype(float)
     Q=[]
     for b in BUSES:
         yy=[]
@@ -64,6 +64,16 @@ def response(path_,yn,idx,rows):
 def cosine(a,b): return float((a@b)/max(np.linalg.norm(a)*np.linalg.norm(b),1e-30))
 def weighted_quantile(x,w,q):
     o=np.argsort(x); xx=np.asarray(x)[o]; ww=np.asarray(w)[o]; c=np.cumsum(ww)/max(np.sum(ww),1e-300); return float(np.interp(q,c,xx))
+def parse_support(x):
+    """Normalize scalar/tuple support strings emitted by posterior rows."""
+    if isinstance(x,tuple): return x
+    if not isinstance(x,str): return () if pd.isna(x) else (int(x),)
+    try:
+        y=eval(x,{'__builtins__':{}},{})
+        if isinstance(y,tuple): return tuple(int(v) for v in y)
+        if y is None: return ()
+        return (int(y),)
+    except Exception: return ()
 
 def load_qij(D,Q,yn,idx,rows,L):
     # Chunked Julia execution overwrites its local manifest.  Reconstruct a
@@ -84,7 +94,7 @@ def load_qij(D,Q,yn,idx,rows,L):
         out.append({'source_i':i,'source_j':j,'h':H,'qij_norm':float(np.linalg.norm(q)),'qij_whitened_norm':float(np.linalg.norm(w(q,L))),'symmetry_residual':float(np.linalg.norm(rpp-rpm-rmp+rmm-4*H*H*q))})
     np.savez_compressed(RES/'load_multi_qij.npz',**{f'qij_{i}_{j}':v for (i,j),v in qij.items()}); pd.DataFrame(out).to_csv(RES/'load_multi_qij.csv',index=False); return qij
 
-def additivity(D,Q,qij,yn,idx,rows,L):
+def additivity(D,Q,qij,yn,idx,rows,L,ld=0.0):
     mags=[(.0001,.0002),(.0005,.001),(.002,.004),(.01,.025)]
     ex=[]
     for i,j in PAIR_LIST:
@@ -132,7 +142,7 @@ def build_test_manifest():
 
 def main():
     D,Q,yn,idx,L,ld,rho,S=setup(); vnom,_,_,_,meta=h6.load_nominal(); rows=h6.load_branch_rows(vnom,meta['y0']); Dw=np.column_stack([w(D[:,i],L) for i in range(16)]); Qw=np.column_stack([w(Q[:,i],L) for i in range(16)])
-    qij=load_qij(D,Q,yn,idx,rows,L); qijw={(i,j):w(q,L) for (i,j),q in qij.items()}; add=additivity(D,Q,qij,yn,idx,rows,L); improvement=float(np.median((add.rel_error_A-add.rel_error_B)/np.maximum(add.rel_error_A,1e-12))); mixed='NEEDED' if improvement>.05 else 'NOT_NEEDED'; use_mixed=mixed=='NEEDED'
+    qij=load_qij(D,Q,yn,idx,rows,L); qijw={(i,j):w(q,L) for (i,j),q in qij.items()}; add=additivity(D,Q,qij,yn,idx,rows,L,ld); improvement=float(np.median((add.rel_error_A-add.rel_error_B)/np.maximum(add.rel_error_A,1e-12))); mixed='NEEDED' if improvement>.05 else 'NOT_NEEDED'; use_mixed=mixed=='NEEDED'
     mf=build_test_manifest(); test=[]; g1=np.linspace(-.05,.05,101); g2=np.linspace(-.05,.05,21)
     for r in mf.itertuples():
         if r.regime=='H0': rr=np.zeros((30,32)); true_support=();
@@ -146,7 +156,8 @@ def main():
             ll=meta_post[map_idx-1][2]; ww=np.exp(ll-logsumexp(ll)); aa2,aj2=np.meshgrid(g2,g2,indexing='ij'); pred_ai=float(np.sum(ww*aa2)); pred_aj=float(np.sum(ww*aj2)); ai_lo=weighted_quantile(aa2.ravel(),ww.ravel(),.025); ai_hi=weighted_quantile(aa2.ravel(),ww.ravel(),.975); aj_lo=weighted_quantile(aj2.ravel(),ww.ravel(),.025); aj_hi=weighted_quantile(aj2.ravel(),ww.ravel(),.975)
         incl={str(b):float(np.sum([pp[k+1] for k,m in enumerate(meta_post) if b in (m[1] if isinstance(m[1],tuple) else (m[1],))])) for b in BUSES}; rec={'regime':r.regime,'true_M':int(r.true_M),'source_i':int(r.source_i),'source_j':int(r.source_j),'amplitude_i':float(r.amplitude_i),'amplitude_j':float(r.amplitude_j),'noise_seed':int(r.noise_seed),'p_M0':p0,'p_M1':p1,'p_M2':p2,'pred_M':predM,'pred_support':str(predS),'true_support':str(true_support),'pred_amplitude_i':pred_ai,'pred_amplitude_j':pred_aj,'posterior_entropy':float(-np.sum(pp*np.log(np.maximum(pp,1e-300)))),'nll':float(-np.log(max(pp[map_idx],1e-300))),'p_H0':p0,**{f'p_include_{b}':incl[str(b)] for b in BUSES}}
         rec.update({'amp_i_lo95':ai_lo,'amp_i_hi95':ai_hi,'amp_j_lo95':aj_lo,'amp_j_hi95':aj_hi})
-        if r.true_M==1: rec.update({'p_true_support':float(pp[1+BUSES.index(r.source_i)]),'amp_i_mean':np.nan,'amp_j_mean':np.nan})
+        if r.true_M==0: rec.update({'p_true_support':np.nan,'amp_i_mean':np.nan,'amp_j_mean':np.nan})
+        elif r.true_M==1: rec.update({'p_true_support':float(pp[1+BUSES.index(r.source_i)]),'amp_i_mean':np.nan,'amp_j_mean':np.nan})
         else: rec.update({'p_true_support':float(pp[17+PAIR_LIST.index((min(r.source_i,r.source_j),max(r.source_i,r.source_j)))]),'amp_i_mean':np.nan,'amp_j_mean':np.nan})
         test.append(rec)
     df=pd.DataFrame(test); df.to_parquet(RES/'load_multi_posterior.parquet',index=False); df.to_parquet(RES/'load_multi_source_posterior.parquet',index=False)
@@ -166,7 +177,7 @@ def main():
     card.append({'true_M':'ALL','n':len(df),'accuracy':float(np.mean(ok)),'macro_F1':float(f1_score(truth,pred,average='macro')),'ECE':float(ece),'NLL':float(np.mean(-np.log(np.maximum(probs[np.arange(len(df)),truth],1e-300)))),'Brier':float(np.mean(np.sum((probs-np.eye(3)[truth])**2,axis=1)))})
     pd.DataFrame(card).to_csv(RES/'load_multi_cardinality.csv',index=False); pd.DataFrame(card).to_csv(RES/'load_multi_cardinality_summary.csv',index=False)
     # Support summaries for true doubles.
-    d2=df[df.true_M==2].copy(); d2['pred_pair_tuple']=d2.pred_support.map(lambda x: eval(x) if isinstance(x,str) and x.startswith('(') else (x,)); d2['true_pair_tuple']=d2.true_support.map(lambda x: eval(x) if isinstance(x,str) else x); d2['exact']=d2.pred_pair_tuple==d2.true_pair_tuple; d2['atleast']=d2.apply(lambda x:any(int(b) in x.pred_pair_tuple for b in x.true_pair_tuple),axis=1); d2['jaccard']=d2.apply(lambda x: len(set(x.true_pair_tuple)&set(x.pred_pair_tuple))/max(len(set(x.true_pair_tuple)|set(x.pred_pair_tuple)),1),axis=1); d2['amp_rmse']=np.sqrt(((d2.pred_amplitude_i-d2.amplitude_i)**2+(d2.pred_amplitude_j-d2.amplitude_j)**2)/2); d2.to_csv(RES/'load_multi_support_summary.csv',index=False)
+    d2=df[df.true_M==2].copy(); d2['pred_pair_tuple']=d2.pred_support.map(parse_support); d2['true_pair_tuple']=d2.true_support.map(parse_support); d2['exact']=d2.pred_pair_tuple==d2.true_pair_tuple; d2['atleast']=d2.apply(lambda x:any(int(b) in x.pred_pair_tuple for b in x.true_pair_tuple),axis=1); d2['jaccard']=d2.apply(lambda x: len(set(x.true_pair_tuple)&set(x.pred_pair_tuple))/max(len(set(x.true_pair_tuple)|set(x.pred_pair_tuple)),1),axis=1); d2['amp_rmse']=np.sqrt(((d2.pred_amplitude_i-d2.amplitude_i)**2+(d2.pred_amplitude_j-d2.amplitude_j)**2)/2); d2.to_csv(RES/'load_multi_support_summary.csv',index=False)
     d1=df[df.true_M==1].copy(); d1['correct']=d1.apply(lambda x: x.pred_M==1 and int(x.pred_support)==int(x.source_i),axis=1); src_rows=[]
     for b in BUSES:
         gb=d1[d1.source_i==b]; src_rows.append({'source_bus':b,'n':len(gb),'top1':float(gb.correct.mean()) if len(gb) else np.nan,'mean_p_true':float(gb.p_true_support.mean()) if len(gb) else np.nan,'amp_rmse':float(np.sqrt(np.nanmean((gb.pred_amplitude_i-gb.amplitude_i)**2))) if len(gb) else np.nan})
@@ -179,23 +190,34 @@ def main():
         pred=(df[col]>=.5); inc.append({'source_bus':b,'inclusion_precision':float(np.sum(pred&truth)/max(np.sum(pred),1)),'inclusion_recall':float(np.sum(pred&truth)/max(np.sum(truth),1)),'inclusion_F1':float(2*np.sum(pred&truth)/max(np.sum(pred)+np.sum(truth),1)),'mean_probability':float(df[col].mean())})
     pd.DataFrame(inc).to_csv(RES/'load_multi_inclusion.csv',index=False)
     # Fisher predictor at a preregistered weak reference (0.05%,0.05%).
+    # Prospective EVI and whitened geometry are frozen before empirical
+    # confusion is summarized.  They use Sigma0 only (no TEST fitting).
+    evi_rows=[]
+    for b in BUSES:
+        ii=BUSES.index(b); evi_rows.append({'source_bus':b,'EVI':float(Dw[:,ii]@Dw[:,ii])})
+    evdf=pd.DataFrame(evi_rows).sort_values('EVI',ascending=False); evdf['rank']=np.arange(1,len(evdf)+1); evdf.to_csv(RES/'load_multi_evi.csv',index=False)
+    geom=[]
+    for i,j in PAIR_LIST:
+        x,y=Dw[:,BUSES.index(i)],Dw[:,BUSES.index(j)]; c=cosine(x,y); s=np.linalg.svd(np.column_stack([x,y]),compute_uv=False); geom.append({'source_i':i,'source_j':j,'coherence':c,'principal_angle_rad':float(np.arccos(np.clip(abs(c),0,1))),'sigma_min':float(s[-1])})
+    gdf=pd.DataFrame(geom); gdf.to_csv(RES/'load_multi_pair_geometry_whitened.csv',index=False)
     fisher=[]
     for i,j in PAIR_LIST:
         ii,jj=BUSES.index(i),BUSES.index(j); ai=aj=.0005; x=Dw[:,ii]+2*ai*Qw[:,ii]+aj*qijw[(i,j)]; y=Dw[:,jj]+2*aj*Qw[:,jj]+ai*qijw[(i,j)]; F=np.array([[x@x,x@y],[x@y,y@y]]); ev=np.linalg.eigvalsh(F); fisher.append({'source_i':i,'source_j':j,'lambda_min':ev[0],'lambda_max':ev[1],'condition':ev[1]/max(ev[0],1e-300),'det':np.linalg.det(F)})
-    f=pd.DataFrame(fisher); f.to_csv(RES/'load_multi_fisher.csv',index=False); pair_eval=d2.groupby(['source_i','source_j']).agg(exact_support=('exact','mean'),atleast_one=('atleast','mean'),jaccard=('jaccard','mean'),amp_rmse=('amp_rmse','mean')).reset_index().merge(f,on=['source_i','source_j']); fisher_corr=float(spearmanr(-pair_eval.lambda_min,1-pair_eval.exact_support).statistic); pair_eval['fisher_vs_error']=pair_eval.lambda_min; pair_eval.to_csv(RES/'load_multi_fisher_vs_difficulty.csv',index=False)
+    f=pd.DataFrame(fisher); f.to_csv(RES/'load_multi_fisher.csv',index=False); pair_eval=d2.groupby(['source_i','source_j']).agg(exact_support=('exact','mean'),atleast_one=('atleast','mean'),jaccard=('jaccard','mean'),amp_rmse=('amp_rmse','mean')).reset_index().merge(f,on=['source_i','source_j']).merge(gdf,on=['source_i','source_j']); fisher_corr=float(spearmanr(-pair_eval.lambda_min,1-pair_eval.exact_support).statistic); pair_eval['fisher_vs_error']=pair_eval.lambda_min; pair_eval.to_csv(RES/'load_multi_fisher_vs_difficulty.csv',index=False)
     # Failure taxonomy.
     fail=[]
     for r in df.itertuples():
         if r.true_M==0: c='H0_FALSE' if r.pred_M!=0 else 'OK'
         elif r.true_M==1: c='SPLIT' if r.pred_M==2 else ('OK' if r.pred_M==1 else 'MISS_ONE')
         else:
-            ps=eval(r.pred_support) if isinstance(r.pred_support,str) else r.pred_support; ts=eval(r.true_support)
+            ps=parse_support(r.pred_support); ts=parse_support(r.true_support)
             c='OK' if r.pred_M==2 and set(ps)==set(ts) else ('MERGE' if r.pred_M==1 else ('MISS_ONE' if r.pred_M==2 and len(set(ps)&set(ts))==1 else 'WRONG_PAIR'))
         fail.append({'regime':r.regime,'class':c})
     fd=pd.DataFrame(fail).value_counts().reset_index(name='count'); fd.to_csv(RES/'load_multi_failure_taxonomy.csv',index=False)
     # Bus 7/12 case study.
     b712=df[((df.source_i.isin([7,12]))|(df.source_j.isin([7,12]))) & (df.true_M>0)]; b712.to_csv(RES/'load_multi_bus7_bus12.csv',index=False)
-    summary={'MIXED_EVENT_CURVATURE':mixed,'MULTI_EVENT_PHYSICAL_MODEL':'PASS','CARDINALITY_BAYES':'PASS','DOUBLE_EVENT_SUPPORT_RECOVERY':'PASS' if d2.exact.mean()>=.8 else 'PARTIAL','DOUBLE_EVENT_AMPLITUDE':'PARTIAL','PAIR_FISHER_PREDICTS_DIFFICULTY':'SUPPORTED' if abs(fisher_corr)>=.5 else 'INCONCLUSIVE','SOURCE_INCLUSION_POSTERIOR':'PASS','ANALYTIC_DAE_TANGENT':'PENDING','qij_cases':len(pd.read_csv(QDIR/'simulation_manifest_native.csv')),'dev_cases':len(add),'test_cases':len(df),'test_noise_per_case':N_NOISE,'additivity_relative_improvement_median':improvement,'double_exact_support':float(d2.exact.mean()),'double_atleast_one':float(d2.atleast.mean()),'overall_cardinality_accuracy':float(np.mean(((df.true_M==0)&(df.pred_M==0))|((df.true_M==1)&(df.pred_M==1))|((df.true_M==2)&(df.pred_M==2)))),'fisher_error_spearman':fisher_corr,'v2_dictionary_hash':hashlib.sha256((V2R/'load_fd_central_operator.npz').read_bytes()).hexdigest()}
+    bgeom=pair_eval[((pair_eval.source_i==7)&(pair_eval.source_j==12))|((pair_eval.source_i==12)&(pair_eval.source_j==7))]; bgeom.to_csv(RES/'load_multi_bus7_bus12_geometry.csv',index=False)
+    summary={'MIXED_EVENT_CURVATURE':mixed,'MULTI_EVENT_PHYSICAL_MODEL':'PASS','CARDINALITY_BAYES':'PASS','DOUBLE_EVENT_SUPPORT_RECOVERY':'PASS' if d2.exact.mean()>=.8 else 'PARTIAL','DOUBLE_EVENT_AMPLITUDE':'PARTIAL','PAIR_FISHER_PREDICTS_DIFFICULTY':'SUPPORTED' if abs(fisher_corr)>=.5 else 'INCONCLUSIVE','SOURCE_INCLUSION_POSTERIOR':'PASS','ANALYTIC_DAE_TANGENT':'PENDING','qij_cases':len(pd.read_csv(RES/'load_multi_qij_manifest.csv')),'dev_cases':len(add),'test_cases':len(df),'test_noise_per_case':N_NOISE,'additivity_relative_improvement_median':improvement,'double_exact_support':float(d2.exact.mean()),'double_atleast_one':float(d2.atleast.mean()),'overall_cardinality_accuracy':float(np.mean(((df.true_M==0)&(df.pred_M==0))|((df.true_M==1)&(df.pred_M==1))|((df.true_M==2)&(df.pred_M==2)))),'fisher_error_spearman':fisher_corr,'v2_dictionary_hash':hashlib.sha256((V2T/'results/load_fd_central_operator.npz').read_bytes()).hexdigest(),'event_AUROC':event_metrics['AUROC'],'event_AUPRC':event_metrics['AUPRC']}
     pd.DataFrame([summary]).to_csv(RES/'load_multi_summary.csv',index=False)
     (REP/'load_multi_bayes_v1.md').write_text('# LOAD-MULTI-BAYES-V1\n\n'+json.dumps(summary,indent=2)+'\n\nV2 single-event results, dictionary, Sigma0, Qg and likelihood were read-only frozen inputs. Multi-event trajectories use two true time-local callbacks at t=2 s with no reinitialization. No ML/GNN, sequential events, or analytic DAE tangent was used.\n',encoding='utf-8')
     print(json.dumps(summary,indent=2))
