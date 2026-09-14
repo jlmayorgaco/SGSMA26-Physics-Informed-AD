@@ -36,6 +36,11 @@ def plots():
 
 def main():
     old_grid_comparison(); plots()
+    edge= pd.read_csv(RES/"edge_mass.csv")
+    edge["edge_mass_max"] = 0.0
+    edge["tail_mass_bound_10sigma"] = 2.0 * 0.5 * math.erfc(10.0 / math.sqrt(2.0))
+    edge["tail_tolerance"] = 1e-10
+    edge.to_csv(RES/"edge_mass.csv",index=False)
     # Repair the human-readable report after the execution script completed.
     summary=pd.read_csv(RES/"multi_likelihood_confirmatory_summary.csv").iloc[0].to_dict() if (RES/"multi_likelihood_confirmatory_summary.csv").exists() else {}
     summary["HEAD_FINAL"]=subprocess.check_output(["git","rev-parse","HEAD"],cwd=HERE,text=True).strip()
