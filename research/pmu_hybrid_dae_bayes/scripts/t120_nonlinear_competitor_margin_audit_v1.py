@@ -255,7 +255,8 @@ def main():
         X=np.array([[a,b,a*a,a*b,b*b,1] for a,b,_ in cands]); rank=np.linalg.matrix_rank(X)
         if rank<min(6,len(cands)): continue
         Y=np.stack([y[:3840] for _,_,y in cands]); coef=np.linalg.lstsq(X,Y,rcond=None)[0]; pred=X@coef; loo=float(np.mean([np.linalg.norm(pred[k]-Y[k]) for k in range(len(cands))])); x=np.array([r.optimal_b1,r.optimal_b2,r.optimal_b1**2,r.optimal_b1*r.optimal_b2,r.optimal_b2**2,1]); yhat=x@coef; interp.append({"op_tag":op,"pair":r.pair,"ai":r.ai,"aj":r.aj,"competitor_support":r.competitor_support,"n_samples":len(cands),"design_rank":rank,"loo_rmse":loo,"interpolated_tds_margin":float(np.linalg.norm(whiten(model(arr,target_support,(r.ai,r.aj),120)-yhat,var,120))),"status":"INTERPOLATED_TDS_MARGIN_ESTIMATE"})
-    pd.DataFrame(interp).to_csv(RES/"tds_interpolated_margin_diagnostic.csv",index=False)
+    interp_cols = ["op_tag", "pair", "ai", "aj", "competitor_support", "n_samples", "design_rank", "loo_rmse", "interpolated_tds_margin", "status"]
+    pd.DataFrame(interp, columns=interp_cols).to_csv(RES/"tds_interpolated_margin_diagnostic.csv",index=False)
     # Figures are compact diagnostics and never drive selection.
     try:
         import matplotlib.pyplot as plt
