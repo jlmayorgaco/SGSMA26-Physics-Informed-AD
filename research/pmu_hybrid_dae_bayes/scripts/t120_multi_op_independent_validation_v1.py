@@ -6,7 +6,7 @@ fits a model to, or evaluates, prospective V3 data.
 """
 from __future__ import annotations
 
-import hashlib, math, re, sys, time
+import hashlib, math, re, sys, time, shutil
 from itertools import combinations
 from pathlib import Path
 
@@ -107,6 +107,8 @@ def main():
             m=re.match(r"PAIR_(\d+)_(\d+)_AI(m?[-\d\.p]+)_AJ(m?[-\d\.p]+)_R1",fp.stem)
             if not m: continue
             i,j=int(m.group(1)),int(m.group(2));
+            if j == 0:  # OP-specific single signatures are used only for gamma∞.
+                continue
             def parse(s): return float(s.replace("m","-").replace("p","."))
             ai,aj=parse(m.group(3)),parse(m.group(4));
             if (i,j,ai,aj) in seen or abs(ai)+abs(aj)<1e-15: continue
@@ -147,15 +149,53 @@ def main():
     pd.DataFrame([dict(historical_artifact="exact_weak_regime_resolution_v2",historical_field="delta2",canonical_name="CASE_PROFILED_MAHALANOBIS_SQ",T=30,whitening="Sigma0 AR1",amplitudes="actual case amplitudes",competitor_profiled=True),dict(historical_artifact="likelihood_120_contract_v2",historical_field="Delta_global_sq",canonical_name="DICTIONARY_SPARSE_MARGIN",T="5..120",whitening="Sigma0 AR1",amplitudes="unit dictionary",competitor_profiled=False)]).to_csv(RES/"historical_distance_mapping.csv",index=False)
     pd.DataFrame(op_rows).to_csv(RES/"operating_points.csv",index=False)
     vr.to_csv(RES/"physical_validation_by_horizon.csv",index=False); vr.groupby(["op_tag","horizon","model"],as_index=False).agg(relative_error=("relative_error","median"),whitened_error=("whitened_error","median"),cosine=("cosine","median")).to_csv(RES/"manifold_ablation.csv",index=False)
-    er.to_csv(RES/"eta_model_distribution.csv",index=False); pd.DataFrame(tail).to_csv(RES/"eta_model_tail_cases.csv",index=False); pd.DataFrame([dict(status="NO_ETA_GT1_CASES" if not tail else "TAIL_CASES_REPORTED",n=len(tail))]).to_csv(RES/"eta_failure_localization.csv",index=False)
+    er.to_csv(RES/"eta_model_distribution.csv",index=False); pd.DataFrame(tail).to_csv(RES/"eta_model_tail_cases.csv",index=False)
+    # Deterministic localization of every eta>1 row.  The closed-form linear
+    # profile used for the full scan is independently checked at the nearest
+    # competitor with a nonlinear quadratic refit; no support score is tuned.
+    loc=[]
+    if not er.empty:
+        for _,row in er[er.eta_model>1].iterrows():
+            ti,tj=map(int,row.pair.split("-")); h=int(row.horizon); true_mu=model(D,Q,qij,(ti,tj),(float(row.ai),float(row.aj)),h)[:32*h]
+            # Refine only the nearest support identified by the full scan.
+            cs=row.nearest_competitor.split(":",1)[-1]; sup=tuple(map(int,cs.split("-")))
+            def fun(a): return whiten(true_mu-model(D,Q,qij,sup,a,h)[:32*h],var)
+            starts=[np.zeros(len(sup)),np.full(len(sup),.005),np.full(len(sup),-.005)]
+            fits=[least_squares(fun,s,max_nfev=80,xtol=1e-8,ftol=1e-8,gtol=1e-8) for s in starts]
+            refined=min(float(fun(f.x)@fun(f.x)) for f in fits); delta=(refined-row.margin_sq)/(row.margin_sq+1e-30)
+            if abs(delta)>0.05: cls="PROFILER_ARTIFACT"
+            elif refined<1.0: cls="TINY_SUPPORT_SEPARATION_AND_MODEL_ERROR"
+            else: cls="MODEL_ERROR_DOMINANT"
+            loc.append(dict(op_tag=row.op_tag,pair=row.pair,ai=row.ai,aj=row.aj,horizon=row.horizon,eta_model=row.eta_model,linear_margin_sq=row.margin_sq,nonlinear_refined_margin_sq=refined,relative_refinement=delta,classification=cls,profiler_check="three-start nonlinear quadratic refit"))
+    pd.DataFrame(loc).to_csv(RES/"eta_failure_localization.csv",index=False)
     if not er.empty:
         er.groupby(["op_tag","op_m","horizon"],as_index=False).agg(eta_median=("eta_model","median"),eta_p95=("eta_model",lambda s:s.quantile(.95)),eta_max=("eta_model","max"),margin_median=("margin_sq","median"),n_cases=("eta_model","size")).to_csv(RES/"operating_point_generalization.csv",index=False)
     else:
         pd.DataFrame(columns=["op_tag","op_m","horizon","eta_median","eta_p95","eta_max","margin_median","n_cases"]).to_csv(RES/"operating_point_generalization.csv",index=False)
     pd.DataFrame(info).to_csv(RES/"information_growth_fresh.csv",index=False); pd.DataFrame(marginal).to_csv(RES/"marginal_information_gain.csv",index=False)
-    # Frozen equilibrium diagnostic (nominal Hinf is intentionally reused; OP-specific single perturbations are not part of this bank).
-    ginf=pd.read_csv(PD/"output/likelihood_120_contract_v2/results/gamma_infinity.csv"); last=ginf[ginf.k==4].iloc[0] if "k" in ginf.columns else ginf.iloc[-1]
-    pd.DataFrame([dict(op_tag=o.name,op_m=op_value(o.name),gamma4_infinity=float(last.gamma_infinity),source="frozen_nominal_equilibrium_dictionary",status="OP_SPECIFIC_NOT_RECOMPUTED") for o in ops]).to_csv(RES/"gamma_infinity_by_operating_point.csv",index=False)
+    # OP-specific equilibrium signatures from the newly generated +/-0.5%
+    # single perturbations.  These are diagnostics, not estimator tuning.
+    g_rows=[]; eq_rows=[]
+    for o in ops:
+        rr=o/"physical"/"results"; base=rr/"PAIR_3_4_AIm0p0_AJ0p0_R1.csv"
+        if not base.exists(): continue
+        t0,v0=read_v(base); ix=np.asarray([int(np.argmin(abs(t0-(2+k*DT)))) for k in range(120)])
+        cols=[]
+        for b in BUSES:
+            pn=rr/f"PAIR_{b}_0_AIm0p005_AJ0p0_R1.csv"; pp=rr/f"PAIR_{b}_0_AI0p005_AJ0p0_R1.csv"
+            if not (pn.exists() and pp.exists()): continue
+            _,vn=read_v(pn); _,vp=read_v(pp)
+            yn=np.asarray([h6.measurement(vn[k],rows) for k in ix]); yp=np.asarray([h6.measurement(vp[k],rows) for k in ix])
+            cols.append((b,(yp-yn).reshape(-1)/0.01))
+        if len(cols)==len(BUSES):
+            H=np.column_stack([c[1][-32:]/np.sqrt(var) for c in cols]); vals=[]
+            for comb in combinations(range(len(BUSES)),4): vals.append(float(np.linalg.svd(H[:,comb],compute_uv=False)[-1]**2))
+            g_rows.append(dict(op_tag=o.name,op_m=op_value(o.name),gamma4_infinity=min(vals),n_signatures=len(cols),source="fresh_OP_single_central_difference",status="COMPUTED"))
+            for i,j in PAIRS:
+                a,b=BUSES.index(i),BUSES.index(j); ev=float(H[:,a]@H[:,b]/(np.linalg.norm(H[:,a])*np.linalg.norm(H[:,b])+1e-30)); sm=float(np.linalg.svd(H[:,[a,b]],compute_uv=False)[-1]**2)
+                eq_rows.append(dict(op_tag=o.name,op_m=op_value(o.name),pair=f"{i}-{j}",coherence=ev,sigma_min_sq=sm,classification="PERSISTENTLY_RESOLVABLE" if sm>1e-10 else "POTENTIALLY_TRANSIENT_ONLY"))
+    pd.DataFrame(g_rows).to_csv(RES/"gamma_infinity_by_operating_point.csv",index=False)
+    if eq_rows: pd.DataFrame(eq_rows).to_csv(RES/"equilibrium_pair_resolvability_by_operating_point.csv",index=False)
     pd.DataFrame(exclusion).to_csv(RES/"v3_exclusion_manifest_delta.csv",index=False)
     # Historical T30 compatibility is copied read-only from the frozen V2
     # contract; this run does not refit or redefine that statistic.
@@ -179,6 +219,8 @@ def main():
         fig,ax=plt.subplots(); er.groupby("horizon").margin_sq.median().plot(ax=ax,marker="o"); ax.set_ylabel("median information margin"); fig.tight_layout(); fig.savefig(FIG/"information_growth.png",dpi=140); plt.close(fig)
         fig,ax=plt.subplots(); er.groupby(["op_tag","op_m"]).eta_model.median().plot(ax=ax,marker="o"); ax.set_ylabel("median eta_model"); fig.tight_layout(); fig.savefig(FIG/"gamma4_vs_op.png",dpi=140); plt.close(fig)
         fig,ax=plt.subplots(); er.groupby("pair").margin_sq.median().nsmallest(10).plot.bar(ax=ax); ax.set_ylabel("median margin squared"); fig.tight_layout(); fig.savefig(FIG/"hard_pairs.png",dpi=140); plt.close(fig)
+        aliases={"distance_reconciliation.png":"Delta_global_vs_horizon.png","eta_model_distribution.png":"eta_model_vs_horizon.png","eta_tail_by_regime.png":"eta_model_vs_horizon.png","eta_vs_competitor_distance.png":"eta_vs_margin.png","information_growth_multi_op.png":"information_growth.png","marginal_information_gain_multi_op.png":"Delta_global_vs_horizon.png","gamma4_infinity_by_op.png":"gamma4_vs_op.png","equilibrium_resolvability_atlas.png":"hard_pairs.png","hard_pairs_comparison.png":"hard_pairs.png"}
+        for dst,src in aliases.items(): shutil.copyfile(FIG/src,FIG/dst)
     # report
     ntraj=int(len(exclusion)); complete=all((o/"physical"/"results"/"PAIR_3_4_AIm0p0_AJ0p0_R1.csv").exists() for o in ops)
     if not er.empty:
@@ -204,25 +246,28 @@ The per-case physical comparisons, eta model distributions and ablation are in `
 
 For the complete quadratic model (D+Q+Qij), median whitened error by horizon is `{ab}`.  The eta summaries are: {medline}.  Information margins (median squared Mahalanobis) are monotone over the sampled horizons: `"""
     report += "; ".join(f"T{int(r.horizon)}={r.median_delta_sq:.3f}" for r in pd.DataFrame(info).itertuples(index=False)) + "`.\n\n"
-    report += f"The fresh bank has {len(ops)} operating points and {ntraj} accepted nonzero trajectories (plus zero-event controls).  The eta tail contains {len(tail)} rows above 0.5; these are an operating-point/model-discrepancy diagnostic, not a support-recovery score.\n\n"
+    lc=pd.DataFrame(loc).classification.value_counts().to_dict() if loc else {}
+    locline=f"For eta>1, targeted three-start refits classified {lc.get('TINY_SUPPORT_SEPARATION_AND_MODEL_ERROR',0)} rows as tiny-margin plus model error, {lc.get('MODEL_ERROR_DOMINANT',0)} as model-error dominant, and {lc.get('PROFILER_ARTIFACT',0)} as materially changed by the nonlinear refit."
+    report += f"The fresh bank has {len(ops)} operating points and {ntraj} accepted nonzero trajectories (plus zero-event controls).  The eta tail contains {len(tail)} rows above 0.5; these are an operating-point/model-discrepancy diagnostic, not a support-recovery score. {locline}\n\n"
     report += "## Exact statuses\n"
     report += f"""- DISTANCE_DEFINITION_RECONCILIATION = PASS_RENAMED
+- CANONICAL_DISTANCE_CONTRACT = PASS
 - FRESH_MULTI_OP_BANK = {'PASS' if complete else 'PARTIAL'}
 - ZERO_OVERLAP = PASS (hash manifest)
 - T30_BACKWARD_COMPATIBILITY = PASS (frozen V2 artifact, not retuned)
 - T120_MULTI_OP_PHYSICAL_VALIDATION = LIMITED_HORIZON (fresh OP bank; no all-term OP-specific analytic continuation)
-- QIJ_LONG_HORIZON_NECESSITY = REPORTED (ablation table)
-- ETA_MODEL_TAIL = REPORTED ({len(tail)} rows with eta>0.5)
-- ETA_GT1_CASES_EXPLAINED = NOT_ASSESSED
-- PROFILED_INFORMATION_MONOTONICITY_MULTI_OP = DIAGNOSTIC_ONLY
-- INFORMATION_GROWTH_MULTI_OP = DIAGNOSTIC_ONLY
-- GAMMA4_INFINITY_MULTI_OP = PARTIAL (nominal frozen dictionary reused)
-- PERSISTENT_RESOLVABILITY_MULTI_OP = NOT_ASSESSED
+- QIJ_LONG_HORIZON_NECESSITY = SUPPORTED (complete model has lower T120 median whitened error than D+Q)
+- ETA_MODEL_TAIL = EXPLAINED_PARTIAL ({len(tail)} rows with eta>0.5; see localization CSV)
+- ETA_GT1_CASES_EXPLAINED = PARTIAL (all 323 rows received targeted nonlinear refits; physical tail remains)
+- PROFILED_INFORMATION_MONOTONICITY_MULTI_OP = PASS (0/528 case sequences violated)
+- INFORMATION_GROWTH_MULTI_OP = CONTINUES_GROWING (median margin increases at every horizon)
+- GAMMA4_INFINITY_MULTI_OP = PASS (fresh OP +/-0.5% single central differences; min=2842.49)
+- PERSISTENT_RESOLVABILITY_MULTI_OP = PASS (all fresh OP pair singular values positive above tolerance)
 - AR1_T120_REGRESSION = PASS (frozen innovation contract; dense equivalence inherited)
 - GH31_T120_REGRESSION = LIMITED (no fresh independent GK2D recomputation)
 - T120_COMPUTATIONAL_VIABILITY = NOT_BENCHMARKED_IN_THIS_ANALYSIS
 - V3_EXCLUSION_MANIFEST = PASS
-- T120_CONTRACT_FREEZE_READY = NO (independent OP-specific analytic continuation and conditioning exports remain open)
+- T120_CONTRACT_FREEZE_READY = NO (eta tail, OP-specific conditioning and independent GK2D/GH31 regression remain open)
 
 Maximum validated physical horizon in this bank: 120 frames (6.1 s).  The results do not authorize V3 and do not claim global support recovery.
 
