@@ -28,7 +28,10 @@ function run(tag,m)
   inj2="        if k == 2\n            CSV.write(joinpath(RES, \"state_second_self_\"*string(BUSES[b])*\".csv\"), DataFrame(reshape(full_state(x2self[:,b],x2aself[:,b]),1,:), :auto))\n        end\n" * needle2
   txt=replace(txt,needle2=>inj2)
   needle3="            qcross[(k-1)*nout+1:k*nout,r] .= Cfull*full_state(x2[:,r],x2a[:,r]) + Hobse[:,ii,jj]"
-  inj3=needle3 * "\n            if k == 2 && ((BUSES[ii],BUSES[jj]) in [(7,12),(26,28),(3,18),(16,18)])\n                CSV.write(joinpath(RES, \"state_second_cross_\"*string(BUSES[ii])*\"_\"*string(BUSES[jj])*\".csv\"), DataFrame(reshape(full_state(x2[:,r],x2a[:,r]),1,:), :auto))\n            end"
+  # Export every cross direction at the first post-event sample.  The full
+  # state-map closure requires all 120 current analytic initializations, not
+  # just the pilot subset.
+  inj3=needle3 * "\n            if k == 2\n                CSV.write(joinpath(RES, \"state_second_cross_\"*string(BUSES[ii])*\"_\"*string(BUSES[jj])*\".csv\"), DataFrame(reshape(full_state(x2[:,r],x2a[:,r]),1,:), :auto))\n            end"
   txt=replace(txt,needle3=>inj3)
   mod=Module(Symbol("ANINIT_",rand(UInt))); Base.include_string(mod,txt,"analytic_initial_state_$(tag).jl")
   println("analytic_initial_state_done ",tag)
