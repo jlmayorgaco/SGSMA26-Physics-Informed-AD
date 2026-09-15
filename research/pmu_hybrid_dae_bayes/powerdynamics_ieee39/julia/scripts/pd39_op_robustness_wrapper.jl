@@ -9,6 +9,7 @@ const JULIA_ROOT = dirname(@__DIR__)
 const OUTROOT = joinpath(ROOT, "output", "second_order_op_robustness_v1")
 const TAG = get(ENV, "OP_TAG", "nominal")
 const M = parse(Float64, get(ENV, "OP_M", "0.0"))
+const NF_OVERRIDE = parse(Int, get(ENV, "NF_OVERRIDE", "30"))
 const EXP_SCRIPT = joinpath(@__DIR__, "pd39_analytic_second_order_v1.jl")
 const PKG_DATA = joinpath(pkgdir(PowerDynamics), "docs", "examples", "ieee39data")
 const OPDATA = joinpath(OUTROOT, "op_data", TAG)
@@ -41,6 +42,7 @@ txt = replace(txt,
 txt = replace(txt,
     "const SRC = joinpath(pkgdir(PowerDynamics), \"docs\", \"examples\", \"ieee39_part1.jl\")" =>
     "const SRC = raw\"" * joinpath(OPDATA, "ieee39_part1.jl") * "\"")
+txt = replace(txt, "const NF = 30" => "const NF = $(NF_OVERRIDE)")
 # Install a source file with the OP data directory embedded.
 src_txt = read(joinpath(pkgdir(PowerDynamics), "docs", "examples", "ieee39_part1.jl"), String)
 src_txt = replace(src_txt, "DATA_DIR = joinpath(pkgdir(PowerDynamics), \"docs\", \"examples\", \"ieee39data\")" => "DATA_DIR = raw\"" * OPDATA * "\"")
