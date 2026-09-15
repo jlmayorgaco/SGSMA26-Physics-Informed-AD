@@ -92,6 +92,10 @@ def main():
         fig,ax=plt.subplots(); allc.groupby("derivative_order").relative_error.median().plot.bar(ax=ax); ax.set_ylabel("state first-flow relative error"); fig.tight_layout(); fig.savefig(FIG/"state_derivative_errors.png",dpi=140); plt.close(fig)
         fig,ax=plt.subplots(); x=allc.groupby("derivative_order")[["differential_relative_error","algebraic_relative_error"]].median(); x.plot.bar(ax=ax); ax.set_ylabel("relative error"); fig.tight_layout(); fig.savefig(FIG/"differential_vs_algebraic_error.png",dpi=140); plt.close(fig)
     head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=HERE,text=True).strip(); s7=allc[(allc.direction=="self_7")&(allc.derivative_order==2)]; c712=allc[(allc.direction=="cross_7_12")&(allc.derivative_order==2)]
+    first_max=float(pd.DataFrame(first).relative_error.max()) if first else float("nan")
+    second_median=float(pd.DataFrame(second).relative_error.median()) if second else float("nan")
+    second_cos_min=float(pd.DataFrame(second).cosine.min()) if second else float("nan")
+    uncertainty_median=float(pd.DataFrame(second).uncertainty.median()) if second else float("nan")
     report=f"""# T120 FIRST-FLOW STATE DERIVATIVE V1
 
 START_HEAD = `318aa24db4d21a06229e7ade7bdb11254a27d4fc`  
@@ -99,11 +103,11 @@ FINAL_HEAD = `{head}`; branch `research/pmu-hybrid-dae-bayes-v1`; no push.
 
 ## Full state export
 
-The exact production callback/first numerical flow was replayed at `m=.35,.85,1.25` using the existing M6 operating-point contract.  The producer recorded the complete native `u(t1) in R^192` (114 differential, 78 algebraic) for the four mandatory self directions and four mandatory cross directions, at h=.005 and .0025, plus a zero-event baseline.  All recorded solves returned `Success`; no prospective V3 data were generated.
+The exact production callback/first numerical flow was replayed at `m=.35,.85,1.25` using the existing M6 operating-point contract.  The producer recorded `{len(state_rows)}` perturbed complete native maps (48 per operating point) in `R^192` (114 differential, 78 algebraic), covering the four mandatory self directions and four mandatory cross directions at h=.005 and .0025, plus three zero-event baselines.  All recorded solves returned `Success`; no prospective V3 data were generated.
 
 ## State derivative comparison
 
-Centered derivatives were Richardson extrapolated.  The stored self convention is `u_ii=2Q_i`.  Bus7 self second-order state parity has maximum relative error `{s7.relative_error.max() if not s7.empty else float('nan'):.4f}`; Bus7/12 cross has `{c712.relative_error.max() if not c712.empty else float('nan'):.4f}`.  First-order state errors are below the numerical uncertainty scale.  Differential/algebraic errors and largest-coordinate discrepancies are in `current_vs_exact_initialization.csv`.
+Centered derivatives were Richardson extrapolated.  The stored self convention is `u_ii=2Q_i`.  Across the 12 first-order rows, max relative error is `{first_max:.3e}`.  Across the 24 second-order rows, median relative error is `{second_median:.4f}`, minimum cosine is `{second_cos_min:.6f}`, and median Richardson uncertainty is `{uncertainty_median:.3e}`.  Bus7 self second-order state parity has maximum relative error `{s7.relative_error.max() if not s7.empty else float('nan'):.4f}`; Bus7/12 cross has `{c712.relative_error.max() if not c712.empty else float('nan'):.4f}`.  Differential/algebraic errors and largest-coordinate discrepancies are in `current_vs_exact_initialization.csv`.
 
 The PMU-only replay could not see controller/machine internal differential coordinates or most algebraic network coordinates.  Those hidden directions are now explicit in `pmu_hidden_state_visibility.csv`; they are precisely the directions that can alter second-order propagation while leaving 32-channel first-step output nearly unchanged.
 
