@@ -360,7 +360,7 @@ def analyze(stage_b: bool = False):
     # equilibrium comparison, not re-estimated from the new trajectories.
     gpath= AUDIT/"results"/"gamma4_regression.csv"; grow=pd.read_csv(gpath) if gpath.exists() else pd.DataFrame(); fr=[]
     for x in cdf.itertuples(index=False):
-        gm=grow[grow.op_tag==x.op_tag]; gamma=float(gm.gamma4.iloc[0]) if len(gm) and "gamma4" in gm else float("nan"); fr.append(dict(target_case_id=x.target_case_id,op_tag=x.op_tag,finite_margin=x.d_tds_grid_local,gamma4_infinity=gamma,finite_small=bool(x.d_tds_grid_local<0.5),equilibrium_positive=bool(np.isfinite(gamma) and gamma>0)))
+        gm=grow[grow.op_tag==x.op_tag]; gamma=float(gm.gamma4_infinity.iloc[0]) if len(gm) and "gamma4_infinity" in gm else float("nan"); fr.append(dict(target_case_id=x.target_case_id,op_tag=x.op_tag,finite_margin=x.d_tds_grid_local,gamma4_infinity=gamma,finite_small=bool(x.d_tds_grid_local<0.5),equilibrium_positive=bool(np.isfinite(gamma) and gamma>0)))
     pd.DataFrame(fr).to_csv(RES/"finite_vs_equilibrium_resolvability.csv",index=False)
     # exclusion manifest now includes Stage B files.
     ex=[]
@@ -378,9 +378,24 @@ def analyze(stage_b: bool = False):
             else: ax.scatter(adf[adf.horizon==120].d_analytic_at_same_b,adf[adf.horizon==120].d_center,s=15,alpha=.5)
             ax.set(xlabel=xlab,ylabel=ylab); fig.tight_layout(); fig.savefig(FIG/fn,dpi=140); plt.close(fig)
         fig,ax=plt.subplots(); cdf.classification.value_counts().plot.bar(ax=ax); ax.set_ylabel("cases"); fig.tight_layout(); fig.savefig(FIG/"eta_gt1_case_breakdown.png",dpi=140); plt.close(fig)
+        fig,ax=plt.subplots();
+        if len(ldf):
+            for cid,g in ldf.groupby("target_case_id"): ax.plot(g.horizon,g.d_tds,alpha=.15,color="tab:blue")
+        ax.set(xlabel="horizon",ylabel="local nonlinear distance"); fig.tight_layout(); fig.savefig(FIG/"local_distance_surfaces.png",dpi=140); plt.close(fig)
+        fig,ax=plt.subplots();
+        if len(hp): ax.scatter(hp.d_analytic,hp.d_tds_grid_local,s=25); lim=np.nanmax([hp.d_analytic.max(),hp.d_tds_grid_local.max()]); ax.plot([0,lim],[0,lim],"k--")
+        ax.set(xlabel="analytic margin",ylabel="hard-pair nonlinear margin"); fig.tight_layout(); fig.savefig(FIG/"hard_pair_physical_margins.png",dpi=140); plt.close(fig)
+        fig,ax=plt.subplots();
+        if len(fr): ax.scatter([z.finite_margin for z in fr],[z.gamma4_infinity for z in fr],s=18,alpha=.6)
+        ax.set(xlabel="finite-horizon margin",ylabel="gamma4 infinity"); fig.tight_layout(); fig.savefig(FIG/"finite_vs_equilibrium_margin.png",dpi=140); plt.close(fig)
+        fig,ax=plt.subplots();
+        cdf.groupby("target_case_id").first().plot.scatter(x="d_analytic",y="d_center",ax=ax,s=18); ax.set(xlabel="analytic distance",ylabel="center distance"); fig.tight_layout(); fig.savefig(FIG/"physical_margin_certificates.png",dpi=140); plt.close(fig)
     except Exception: pass
     hist = pd.read_csv(AUDIT/"results"/"historical_eta_gt1_transition.csv") if (AUDIT/"results"/"historical_eta_gt1_transition.csv").exists() else pd.DataFrame()
     counts=cdf.classification.value_counts().to_dict(); tail=cdf[cdf.eta_model>1]
+    tail_classes = set(tail.classification.astype(str))
+    closure = "PASS" if not any(x.startswith(("D_","B_","E_")) for x in tail_classes) else "FAIL"
+    contract = "FREEZE_READY" if closure == "PASS" and not any(cdf.classification.astype(str).str.startswith("E_")) else "OPEN_MARGIN_QUESTION"
     report=f"""# TARGETED-NONLINEAR-MARGIN-CLOSURE-V1
 
 Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `{subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
@@ -412,17 +427,17 @@ TRIANGLE_INEQUALITY_CERTIFICATES = {'PASS' if bool(adf.triangle_pass.all()) else
 STAGE_B_LOCAL_PROFILES = {'PASS' if len(ldf) else 'NOT_ACTIVATED'}  
 ETA_GT1_PHYSICAL_MARGIN_CLASSIFICATION = {('PASS' if len(tail) and not any(tail.classification.str.startswith('E_')) else 'PARTIAL')}  
 H_M_SMALL_MARGIN_HYPOTHESIS = {'SUPPORTED' if len(tail) and (tail.classification.str.startswith('A_').sum()+tail.classification.str.startswith('C_').sum())/len(tail) > .5 else 'NOT_SUPPORTED'}  
-CONTROL_CASE_MARGIN_FIDELITY = {'PASS' if len(cc) else 'PARTIAL'}  
-HARD_PAIR_NONLINEAR_DIFFICULTY = {'SUPPORTED' if len(hp) else 'PARTIAL'}  
+CONTROL_CASE_MARGIN_FIDELITY = {'PASS' if len(cc) and not any(cdf[cdf.eta_model<.01].classification.astype(str).str.startswith('E_')) else 'PARTIAL'}  
+HARD_PAIR_NONLINEAR_DIFFICULTY = {'SUPPORTED' if len(hp) and not any(hp.classification.astype(str).str.startswith('E_')) else 'PARTIAL'}  
 FINITE_VS_EQUILIBRIUM_RESOLVABILITY = {'PASS' if len(fr) else 'PARTIAL'}  
-NONLINEAR_MARGIN_CLOSURE = {'PASS' if not any(tail.classification.str.startswith('E_')) else 'PARTIAL'}  
-T120_PHYSICAL_CONTRACT = {'FREEZE_READY' if not any(tail.classification.str.startswith('E_')) else 'OPEN_MARGIN_QUESTION'}  
-PHYSICAL_MODEL_DEVELOPMENT = {'CLOSED' if not any(tail.classification.str.startswith('E_')) else 'TARGETED_EXTENSION_REMAINING'}  
-V3_READINESS = {'READY' if not any(tail.classification.str.startswith('E_')) else 'NOT_READY'}
+NONLINEAR_MARGIN_CLOSURE = {closure}  
+T120_PHYSICAL_CONTRACT = {contract}  
+PHYSICAL_MODEL_DEVELOPMENT = {'CLOSED' if closure == 'PASS' else 'TARGETED_EXTENSION_REMAINING'}  
+V3_READINESS = {'READY' if contract == 'FREEZE_READY' else 'NOT_READY'}
 
 ## One next scientific action
 
-{'Proceed to the frozen prospective V3 contract.' if not any(tail.classification.str.startswith('E_')) else 'Run only the minimum targeted extension for cases classified E; do not start V3.'}
+{'Proceed to the frozen prospective V3 contract.' if closure == 'PASS' else 'Run the minimum targeted extension for the residual-manifold-error tail cases; do not start V3.'}
 """
     (REP/"targeted_nonlinear_margin_closure_v1.md").write_text(report,encoding="utf-8")
     (OUT/"CHATGPT_REVIEW").mkdir(exist_ok=True)
