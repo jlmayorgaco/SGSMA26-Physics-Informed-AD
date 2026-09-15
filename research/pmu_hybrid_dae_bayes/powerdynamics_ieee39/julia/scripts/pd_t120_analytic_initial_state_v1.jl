@@ -12,8 +12,8 @@ function run(tag,m)
   txt=read(SRC0,String); txt=replace(txt,"const OUT = joinpath(ROOT, \"output\", \"analytic_second_order_dae_v1\")"=>"const OUT = raw\""*outpath*"\""); txt=replace(txt,"const SRC = joinpath(pkgdir(PowerDynamics), \"docs\", \"examples\", \"ieee39_part1.jl\")"=>"const SRC = raw\""*srcpath*"\""); txt=replace(txt,"const NF = 30"=>"const NF = 30")
   part=read(joinpath(pkgdir(PowerDynamics),"docs","examples","ieee39_part1.jl"),String); part=replace(part,"DATA_DIR = joinpath(pkgdir(PowerDynamics), \"docs\", \"examples\", \"ieee39data\")"=>"DATA_DIR = raw\""*data*"\""); write(srcpath,part)
   # Emit full state derivatives after the k=2 (t=DT) analytic step.  The
-  # exporter stores self terms as Q=1/2*u_ii, so state second derivatives are
-  # multiplied by two for the comparison contract.
+  # state_second_* files store the raw u_ij derivatives; only the PMU Q-self
+  # output below carries the Taylor 1/2 factor.
   needle="        for (r,(_,_,ii,jj)) in enumerate(pairlist)\n            x2a[:,r] .= -(A_aa \\ (A_ad*x2[:,r] + He[aidx,ii,jj]))"
   inj="""        if k == 2
             for b in 1:length(BUSES)
