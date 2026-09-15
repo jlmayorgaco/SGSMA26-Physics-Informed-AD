@@ -21,6 +21,7 @@ import pandas as pd
 
 HERE = Path(__file__).resolve().parents[1]
 PD = HERE / "powerdynamics_ieee39"
+sys.path.insert(0, str(HERE))
 OUT = PD / "output" / "targeted_nonlinear_margin_closure_v1"
 RES, REP, FIG, PHYS = (OUT / x for x in ("results", "reports", "figures", "physical"))
 for p in (RES, REP, FIG, PHYS):
