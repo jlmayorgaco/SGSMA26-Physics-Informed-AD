@@ -388,7 +388,7 @@ def main():
         "Primary localization is `NONZERO_AT_ONSET`, with a short-time/post-event flow contribution. "
         f"Window-level frozen Richardson comparisons are {summary['q_self_window_median']:.3e} median / "
         f"{summary['q_self_window_max']:.3e} max for self and {summary['q_cross_window_median']:.3e} median / "
-        f"{summary['q_cross_window_max']:.3e} max for the cross subset; these are distinct from per-frame onset ratios.")
+        f"{summary['q_cross_window_max']:.3e} max for representative cross 7–12; these are distinct from per-frame onset ratios.")
     report = report.replace(
         "Short-time files are retained as a local-flow diagnostic; the exact analytic variational curve is not silently replaced by interpolation.",
         "Short-time files are retained as a local-flow diagnostic; at matched tau≈0.0333 s the discrepancy is stable across dt=1/30, 1/60, and 1/120 s, but comparison uses the frozen T30 curve as interpolation and is therefore partial rather than a dt→0 proof.")
