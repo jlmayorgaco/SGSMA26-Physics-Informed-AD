@@ -1,6 +1,6 @@
 # TARGETED-NONLINEAR-MARGIN-CLOSURE-V1
 
-Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `f0b36db0ce3d99ffeff5d826f40a00a8f3d044b5`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
+Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `8a923939088f5964d0f0271b7618daa18847bf07`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
 
 ## Frozen preregistration and data
 
@@ -12,7 +12,7 @@ All 48 Stage-A points completed; triangle certificates pass for 240/240 horizon 
 
 ## Nonlinear local margins
 
-Stage B was activated for 30 targets and evaluated on the immutable local stencil.  Classifications are: `{'D_RESIDUAL_MANIFOLD_ERROR': 30, 'E_INCONCLUSIVE_NEEDS_TARGETED_EXTENSION': 16, 'A_GENUINE_PHYSICAL_SMALL_MARGIN_SUPPORTED': 2}`.  Eta>1 classification counts are `{'D_RESIDUAL_MANIFOLD_ERROR': 18}`.  Hard-pair details are in `hard_pair_physical_validation.csv`; controls are separated in `control_case_margin_validation.csv`.
+Stage B was activated for 30 targets and evaluated on the immutable local stencil.  The design was used as a raw grid minimum (no quadratic interpolation was claimed because the preregistered full-rank/LOO/PSD checks were not satisfied uniformly).  Classifications are: `{'D_RESIDUAL_MANIFOLD_ERROR': 30, 'E_INCONCLUSIVE_NEEDS_TARGETED_EXTENSION': 16, 'A_GENUINE_PHYSICAL_SMALL_MARGIN_SUPPORTED': 2}`.  Eta>1 classification counts are `{'D_RESIDUAL_MANIFOLD_ERROR': 18}`.  Hard-pair details are in `hard_pair_physical_validation.csv`; controls are separated in `control_case_margin_validation.csv`.
 
 ## Interpretation and limits
 

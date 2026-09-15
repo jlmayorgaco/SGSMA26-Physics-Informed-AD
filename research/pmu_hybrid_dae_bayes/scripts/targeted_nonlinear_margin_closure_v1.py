@@ -423,7 +423,7 @@ All {len(adf)//len(HORIZONS)} Stage-A points completed; triangle certificates pa
 
 ## Nonlinear local margins
 
-Stage B was activated for {int(actdf.stage_b_active.sum())} targets and evaluated on the immutable local stencil.  Classifications are: `{counts}`.  Eta>1 classification counts are `{tail.classification.value_counts().to_dict()}`.  Hard-pair details are in `hard_pair_physical_validation.csv`; controls are separated in `control_case_margin_validation.csv`.
+Stage B was activated for {int(actdf.stage_b_active.sum())} targets and evaluated on the immutable local stencil.  The design was used as a raw grid minimum (no quadratic interpolation was claimed because the preregistered full-rank/LOO/PSD checks were not satisfied uniformly).  Classifications are: `{counts}`.  Eta>1 classification counts are `{tail.classification.value_counts().to_dict()}`.  Hard-pair details are in `hard_pair_physical_validation.csv`; controls are separated in `control_case_margin_validation.csv`.
 
 ## Interpretation and limits
 
