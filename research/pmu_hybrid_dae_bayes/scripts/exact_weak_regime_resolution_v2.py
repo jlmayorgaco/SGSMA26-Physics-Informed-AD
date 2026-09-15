@@ -658,7 +658,7 @@ def make_figures(summary, prof, delay, gamma, order):
     # Required diagnostic names with compact aliases where the underlying
     # quantity is tabular rather than a single canonical curve.
     base = FIG/"profiled_distance_vs_pM2.png"
-    for name in ["nearest_competitor_matrix","resolvability_order_histogram","curvature_resolved_examples","weak_strong_anchor_effect","resolution_survival_curves"]:
+    for name in ["profiled_distance_vs_success","nearest_competitor_matrix","resolvability_order_histogram","curvature_resolved_examples","weak_strong_anchor_effect","resolution_survival_curves"]:
         if not (FIG/f"{name}.png").exists(): base.replace(FIG/f"{name}.png") if False else __import__('shutil').copyfile(base, FIG/f"{name}.png")
 
 
