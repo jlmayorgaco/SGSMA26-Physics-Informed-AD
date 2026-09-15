@@ -136,9 +136,9 @@ def main():
     vr=pd.DataFrame(val_rows); er=pd.DataFrame(eta_rows)
     if not er.empty:
         for h,g in er.groupby("horizon"):
-            info.append(dict(horizon=h,median_delta_sq=float(g.margin_sq.median()),mean_delta_sq=float(g.margin_sq.mean()),p10=float(g.margin_sq.quantile(.1)),p90=float(g.margin_sq.quantile(.9)),n_cases=len(g)))
+            info.append(dict(horizon=h,median_delta_sq=float(g.margin_sq.median()),median_J=float(0.5*g.margin_sq.median()),mean_delta_sq=float(g.margin_sq.mean()),p10=float(g.margin_sq.quantile(.1)),p90=float(g.margin_sq.quantile(.9)),n_cases=len(g)))
         med=[x["median_delta_sq"] for x in info]
-        for k,x in enumerate(info): marginal.append(dict(horizon=x["horizon"],median_marginal_gain=np.nan if k==0 else x["median_delta_sq"]-med[k-1]))
+        for k,x in enumerate(info): marginal.append(dict(horizon=x["horizon"],median_marginal_gain=np.nan if k==0 else x["median_delta_sq"]-med[k-1],median_marginal_J=np.nan if k==0 else 0.5*(x["median_delta_sq"]-med[k-1])))
         # eta distribution by horizon
         for h,g in er.groupby("horizon"):
             eta_rows_summary=dict(horizon=h,n=len(g),median=float(g.eta_model.median()),p90=float(g.eta_model.quantile(.9)),p95=float(g.eta_model.quantile(.95)),p99=float(g.eta_model.quantile(.99)),max=float(g.eta_model.max()),frac_gt_1=float(np.mean(g.eta_model>1)))
