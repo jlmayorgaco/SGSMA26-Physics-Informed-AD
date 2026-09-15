@@ -14,7 +14,7 @@ const PKG = joinpath(pkgdir(PowerDynamics), "docs", "examples", "ieee39data")
 const SRC = joinpath(pkgdir(PowerDynamics), "docs", "examples", "ieee39_part1.jl")
 const TAU = 2.0; const DT = 1/30; const T1 = TAU + DT; const HORIZON = 5.0
 const TOL = 1e-10
-const SELF_BUSES = [7,26,3,16]
+const SELF_BUSES = [7,26,3,16,12]
 const CROSS_PAIRS = [(7,12),(26,28),(3,18),(16,18)]
 const OPS = [("op_m035",0.35),("op_m085",0.85),("op_m125",1.25)]
 

@@ -18,7 +18,7 @@ HERE=Path(__file__).resolve().parents[1]; PD=HERE/"powerdynamics_ieee39"
 MAP=PD/"output/t120_first_flow_state_derivative_v1/state_maps"; AN=PD/"output/second_order_op_robustness_v1"; PREV=PD/"output/t120_op_conditioned_manifold_closure_v1"
 OUT=PD/"output/t120_first_flow_state_derivative_v1"; RES=OUT/"results"; REP=OUT/"reports"; FIG=OUT/"figures"; REV=OUT/"CHATGPT_REVIEW"
 for p in (RES,REP,FIG,REV): p.mkdir(parents=True,exist_ok=True)
-BUSES=[3,4,7,8,12,15,16,18,20,21,23,24,25,26,27,28]; SELF=[7,26,3,16]; CROSSES=[(7,12),(26,28),(3,18),(16,18)]; OPS=[("op_m035",.35),("op_m085",.85),("op_m125",1.25)]
+BUSES=[3,4,7,8,12,15,16,18,20,21,23,24,25,26,27,28]; SELF=[7,26,3,16,12]; CROSSES=[(7,12),(26,28),(3,18),(16,18)]; OPS=[("op_m035",.35),("op_m085",.85),("op_m125",1.25)]
 
 def vec(path):
     d=pd.read_csv(path)
@@ -103,11 +103,11 @@ FINAL_HEAD = `{head}`; branch `research/pmu-hybrid-dae-bayes-v1`; no push.
 
 ## Full state export
 
-The exact production callback/first numerical flow was replayed at `m=.35,.85,1.25` using the existing M6 operating-point contract.  The producer recorded `{len(state_rows)}` perturbed complete native maps (48 per operating point) in `R^192` (114 differential, 78 algebraic), covering the four mandatory self directions and four mandatory cross directions at h=.005 and .0025, plus three zero-event baselines.  All recorded solves returned `Success`; no prospective V3 data were generated.
+The exact production callback/first numerical flow was replayed at `m=.35,.85,1.25` using the existing M6 operating-point contract.  The producer recorded `{len(state_rows)}` perturbed complete native maps (52 per operating point) in `R^192` (114 differential, 78 algebraic), covering five self directions (including Bus 12 for the 7–12 first-order cross audit) and four mandatory cross directions at h=.005 and .0025, plus three zero-event baselines.  All recorded solves returned `Success`; no prospective V3 data were generated.
 
 ## State derivative comparison
 
-Centered derivatives were Richardson extrapolated.  The stored self convention is `u_ii=2Q_i`.  Across the 12 first-order rows, max relative error is `{first_max:.3e}`.  Across the 24 second-order rows, median relative error is `{second_median:.4f}`, minimum cosine is `{second_cos_min:.6f}`, and median Richardson uncertainty is `{uncertainty_median:.3e}`.  Bus7 self second-order state parity has maximum relative error `{s7.relative_error.max() if not s7.empty else float('nan'):.4f}`; Bus7/12 cross has `{c712.relative_error.max() if not c712.empty else float('nan'):.4f}`.  Differential/algebraic errors and largest-coordinate discrepancies are in `current_vs_exact_initialization.csv`.
+Centered derivatives were Richardson extrapolated.  The stored self convention is `u_ii=2Q_i`.  Across the first-order rows, max relative error is `{first_max:.3e}`.  Across the second-order rows, median relative error is `{second_median:.4f}`, minimum cosine is `{second_cos_min:.6f}`, and median Richardson uncertainty is `{uncertainty_median:.3e}`.  Bus7 self second-order state parity has maximum relative error `{s7.relative_error.max() if not s7.empty else float('nan'):.4f}`; Bus7/12 cross has `{c712.relative_error.max() if not c712.empty else float('nan'):.4f}`.  Differential/algebraic errors and largest-coordinate discrepancies are in `current_vs_exact_initialization.csv`.
 
 The PMU-only replay could not see controller/machine internal differential coordinates or most algebraic network coordinates.  Those hidden directions are now explicit in `pmu_hidden_state_visibility.csv`; they are precisely the directions that can alter second-order propagation while leaving 32-channel first-step output nearly unchanged.
 

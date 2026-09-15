@@ -12,9 +12,9 @@ RES = OUT / "results"
 def test_complete_native_state_maps_are_finite_and_dimensioned():
     rows = pd.read_csv(RES / "full_state_first_flow.csv")
     assert set(rows.op_tag) == {"op_m035", "op_m085", "op_m125"}
-    # 3 operating points x (4 self directions x 4 signs/scales +
+    # 3 operating points x (5 self directions x 4 signs/scales +
     # 4 cross directions x 8 sign/scale combinations).
-    assert len(rows) == 144
+    assert len(rows) == 156
     assert set(rows.n_state) == {192}
     assert rows.finite.astype(bool).all()
 
@@ -22,8 +22,8 @@ def test_complete_native_state_maps_are_finite_and_dimensioned():
 def test_first_flow_derivative_orders_and_parity():
     first = pd.read_csv(RES / "first_order_state_derivatives.csv")
     second = pd.read_csv(RES / "second_order_state_derivatives.csv")
-    assert len(first) == 12
-    assert len(second) == 24
+    assert len(first) == 15
+    assert len(second) == 27
     assert first.relative_error.max() < 1e-5
     assert second.relative_error.max() > 1e-2
     assert np.isfinite(second[["relative_error", "cosine"]].to_numpy()).all()
