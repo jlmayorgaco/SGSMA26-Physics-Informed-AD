@@ -201,6 +201,15 @@ def main():
                 eq_rows.append(dict(op_tag=o.name,op_m=op_value(o.name),pair=f"{i}-{j}",coherence=ev,sigma_min_sq=sm,classification="PERSISTENTLY_RESOLVABLE" if sm>1e-10 else "POTENTIALLY_TRANSIENT_ONLY"))
     pd.DataFrame(g_rows).to_csv(RES/"gamma_infinity_by_operating_point.csv",index=False)
     if eq_rows: pd.DataFrame(eq_rows).to_csv(RES/"equilibrium_pair_resolvability_by_operating_point.csv",index=False)
+    # Rebuild the exclusion manifest from every generated trajectory file,
+    # including zero-event controls and OP-specific single-signature audits.
+    all_ex=[]
+    for o in ops:
+        for fp in (o/"physical"/"results").glob("PAIR_*.csv"):
+            stem=fp.stem
+            kind="single_signature" if "_0_AI" in stem or "_0_AIm" in stem else ("zero_event_control" if re.search(r"AI(?:m)?0p0_AJ(?:m)?0p0", stem) else "pair_event")
+            all_ex.append(dict(op_tag=o.name,trajectory=fp.name,trajectory_kind=kind,sha256=hashlib.sha256(fp.read_bytes()).hexdigest(),excluded_from_v3=True))
+    exclusion=all_ex
     pd.DataFrame(exclusion).to_csv(RES/"v3_exclusion_manifest_delta.csv",index=False)
     # Historical T30 compatibility is copied read-only from the frozen V2
     # contract; this run does not refit or redefine that statistic.
@@ -238,7 +247,7 @@ def main():
         aliases={"distance_reconciliation.png":"Delta_global_vs_horizon.png","eta_model_distribution.png":"eta_model_vs_horizon.png","eta_tail_by_regime.png":"eta_model_vs_horizon.png","eta_vs_competitor_distance.png":"eta_vs_margin.png","information_growth_multi_op.png":"information_growth.png","marginal_information_gain_multi_op.png":"Delta_global_vs_horizon.png","gamma4_infinity_by_op.png":"gamma4_vs_op.png","equilibrium_resolvability_atlas.png":"hard_pairs.png","hard_pairs_comparison.png":"hard_pairs.png"}
         for dst,src in aliases.items(): shutil.copyfile(FIG/src,FIG/dst)
     # report
-    ntraj=int(len(exclusion)); complete=all((o/"physical"/"results"/"PAIR_3_4_AIm0p0_AJ0p0_R1.csv").exists() for o in ops)
+    ntraj=int(sum(1 for x in exclusion if x.get("trajectory_kind")=="pair_event")); complete=all((o/"physical"/"results"/"PAIR_3_4_AIm0p0_AJ0p0_R1.csv").exists() for o in ops)
     if not er.empty:
         agg_eta=er.groupby("horizon").eta_model.agg(["median",lambda s:s.quantile(.95),"max"])
         medline="; ".join(f"T{int(ix)} median={row['median']:.3f}, p95={row['<lambda_0>']:.3f}, max={row['max']:.3f}" for ix,row in agg_eta.iterrows())
