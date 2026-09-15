@@ -227,7 +227,12 @@ def main():
         qual=cdf[(cdf.op_tag==r.op_tag)&(cdf.pair==r.pair)].quality.iloc[0] if len(cdf[(cdf.op_tag==r.op_tag)&(cdf.pair==r.pair)]) else "NO_USEFUL_REFERENCE"
         cls="INCONCLUSIVE_REFERENCE" if qual=="NO_USEFUL_REFERENCE" else ("TRUE_SMALL_MARGIN_SUPPORTED" if dgrid<0.5 and 0.5<dan/max(dgrid,1e-30)<2 else ("ANALYTIC_MARGIN_DISTORTION" if abs(math.log(max(dan,1e-30)/max(dgrid,1e-30)))>math.log(2) else "MIXED"))
         dec.append({"op_tag":r.op_tag,"pair":r.pair,"ai":r.ai,"aj":r.aj,"horizon":120,"e_model":r.model_error,"d_analytic":dan,"d_tds_grid":dgrid,"R_grid":dan/max(dgrid,1e-30),"reference_quality":qual,"classification":cls})
-    ddf=pd.DataFrame(dec); ddf.to_csv(RES/"numerator_denominator_decomposition.csv",index=False); gdf.to_csv(RES/"margin_distortion.csv",index=False)
+    ddf=pd.DataFrame(dec); ddf.to_csv(RES/"numerator_denominator_decomposition.csv",index=False)
+    margin_df = gdf.copy()
+    margin_df["J_model"] = 0.5 * margin_df["d_analytic"] ** 2
+    margin_df["J_tds_grid"] = 0.5 * margin_df["tds_grid_distance"] ** 2
+    margin_df["margin_distortion"] = margin_df["J_model"] / np.maximum(margin_df["J_tds_grid"], 1e-30)
+    margin_df.to_csv(RES/"margin_distortion.csv",index=False)
     # Trace the previously published fixed-dictionary eta>1 rows without
     # refitting or reusing them as development data.
     hist_path = PD / "output" / "t120_op_conditioned_manifold_closure_v1" / "results" / "eta_tail_transition_classification.csv"
