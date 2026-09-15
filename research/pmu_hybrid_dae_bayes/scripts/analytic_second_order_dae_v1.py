@@ -139,7 +139,13 @@ def main() -> None:
             qp = (read_resp(pp)+read_resp(pm))/(2*h*h); k = BUSES.index(b); aw = solve_triangular(L,A_Qs[:,k],lower=True); qw = solve_triangular(L,qp,lower=True)
             fdrows.append({"candidate_bus":b,"h":h,"analytic_norm":float(np.linalg.norm(A_Qs[:,k])),"fresh_fd_norm":float(np.linalg.norm(qp)),"relative_l2_error":float(np.linalg.norm(A_Qs[:,k]-qp)/max(np.linalg.norm(qp),1e-300)),"whitened_relative_l2_error":float(np.linalg.norm(aw-qw)/max(np.linalg.norm(qw),1e-300)),"cosine":_cos(A_Qs[:,k],qp),"fresh_fd_status":"PASS"}); fresh_rows += 2
     fresh = pd.DataFrame(fdrows); fresh.to_csv(RES / "analytic_vs_fresh_fd.csv", index=False)
-    pd.DataFrame([{"namespace":"ANALYTIC_SECOND_ORDER_DAE_V1_FRESH_FD_DEV_20260914","new_tds_rows":fresh_rows,"unique_nonzero_trajectories":fresh_rows,"candidates":4,"step_sizes":"0.0025;0.005;0.01","future_v3_excluded":True,"status":"PASS" if len(fresh)==12 else "PARTIAL"}]).to_csv(RES / "v3_exclusion_manifest_delta.csv", index=False)
+    fdm = [{"namespace":"ANALYTIC_SECOND_ORDER_DAE_V1_FRESH_FD_DEV_20260914","case_id":"SUMMARY","new_tds_rows":fresh_rows,"unique_nonzero_trajectories":fresh_rows,"candidates":4,"step_sizes":"0.0025;0.005;0.01","future_v3_excluded":True,"status":"PASS" if len(fresh)==12 else "PARTIAL"}]
+    raw_manifest = EXP / "fresh_fd_dev_20260914" / "simulation_manifest_native.csv"
+    if raw_manifest.exists():
+        for rr in pd.read_csv(raw_manifest).itertuples(index=False):
+            if abs(float(rr.amplitude)) > 1e-12:
+                fdm.append({"namespace":"ANALYTIC_SECOND_ORDER_DAE_V1_FRESH_FD_DEV_20260914","case_id":rr.case_id,"new_tds_rows":1,"unique_nonzero_trajectories":1,"candidates":int(rr.candidate_bus),"step_sizes":"","future_v3_excluded":True,"status":str(rr.status)})
+    pd.DataFrame(fdm).to_csv(RES / "v3_exclusion_manifest_delta.csv", index=False)
 
     # Plots required by the protocol.
     for title, a, b, fn in [("Self Q: analytic vs frozen", A_Qs, Q, "Qself_analytic_vs_frozen.png"), ("Cross Q: analytic vs frozen", A_Qc, F_Qc, "Qcross_analytic_vs_frozen.png")]:
