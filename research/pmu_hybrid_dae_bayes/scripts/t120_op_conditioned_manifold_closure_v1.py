@@ -336,7 +336,7 @@ The local signatures vary smoothly with m (see `signature_op_sensitivity.csv` an
 ## Exact statuses
 
 CURRENT_DICTIONARY_OP_DEPENDENCE = UNDERSTOOD  
-OP_CONDITIONED_DICTIONARY = {status}  
+OP_CONDITIONED_DICTIONARY = PARTIAL (local exports complete; OP-specific finite production-map replay pending)  
 OP_CONDITIONED_T120_PHYSICAL_VALIDATION = LIMITED_HORIZON  
 ETA_MODEL_TAIL_REDUCTION = QUANTIFIED  
 PREVIOUS_ETA_GT1_RECLASSIFIED = PARTIAL  
