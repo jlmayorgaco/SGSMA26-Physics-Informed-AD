@@ -30,6 +30,9 @@ def test_new_trajectories_are_successful_and_hashed():
     d = pd.read_csv(RES / "tds_execution_manifest.csv")
     assert len(d) == 306
     assert set(d.status) == {"EXECUTED_SUCCESS"}
+    dup = d.duplicate_of.fillna("")
+    assert d.sha256.nunique() == 294
+    assert int((dup != "").sum()) == 12
     for r in d.itertuples():
         p = Path(r.path)
         assert p.exists()

@@ -262,6 +262,17 @@ def _stage_a_analysis(cases: pd.DataFrame):
     vnom,_,_,_,meta = load_nominal(); rows = load_branch_rows(vnom, meta["y0"])
     var = pd.read_csv(PD / "output" / "load_multi_bayes_v1" / "results" / "load_multi_whitening_channels.csv").sort_values("channel").variance.to_numpy(float)
     execmf = pd.read_csv(RES / "tds_execution_manifest.csv")
+    # Cross-stage checkpoint audit: a few Stage-B centre points coincide with
+    # a Stage-A point after the stencil was materialised.  They are retained
+    # for traceability but marked as deterministic duplicates and excluded
+    # from the unique-trajectory count and any scientific comparison.
+    execmf["duplicate_of"] = ""
+    seen = {}
+    for idx, rr in execmf.iterrows():
+        hh = str(rr.sha256)
+        if hh and hh in seen: execmf.at[idx, "duplicate_of"] = seen[hh]
+        elif hh: seen[hh] = str(rr.trajectory_id)
+    execmf.to_csv(RES / "tds_execution_manifest.csv", index=False)
     sa = pd.read_csv(RES / "stage_a_points.csv")
     out=[]; cert=[]
     for r in cases.itertuples(index=False):
@@ -296,7 +307,7 @@ def _stage_a_analysis(cases: pd.DataFrame):
     ap=ap.drop_duplicates(["op_tag","competitor_support","b1","b2"]).reset_index(drop=True); ap.to_csv(RES/"stage_b_active_points.csv",index=False)
     # Map stage-A execution provenance to a future-V3 exclusion manifest.
     ex=[]
-    for _,r in execmf.iterrows(): ex.append(dict(scenario_id=r.trajectory_id,op_tag=r.op_tag,support=r.competitor_support,severity=f"{r.b1},{r.b2}",seed="deterministic",sha256=r.sha256,reason="TARGETED_NONLINEAR_MARGIN_CLOSURE",future_v3_excluded=True))
+    for _,r in execmf.iterrows(): ex.append(dict(scenario_id=r.trajectory_id,op_tag=r.op_tag,support=r.competitor_support,severity=f"{r.b1},{r.b2}",seed="deterministic",sha256=r.sha256,duplicate_of=r.duplicate_of,reason="TARGETED_NONLINEAR_MARGIN_CLOSURE",future_v3_excluded=True))
     pd.DataFrame(ex).to_csv(RES/"v3_exclusion_manifest_additions.csv",index=False)
     print(json.dumps({"stage_a_rows":len(adf),"triangles_pass":int(adf.triangle_pass.sum()),"stage_b_cases":int(actdf.stage_b_active.sum()),"stage_b_points":len(ap)},indent=2))
     return adf, actdf, ap
@@ -396,6 +407,7 @@ def analyze(stage_b: bool = False):
     tail_classes = set(tail.classification.astype(str))
     closure = "PASS" if not any(x.startswith(("D_","B_","E_")) for x in tail_classes) else "FAIL"
     contract = "FREEZE_READY" if closure == "PASS" and not any(cdf.classification.astype(str).str.startswith("E_")) else "OPEN_MARGIN_QUESTION"
+    n_unique = int((execmf.duplicate_of == "").sum()); n_dups = int((execmf.duplicate_of != "").sum())
     report=f"""# TARGETED-NONLINEAR-MARGIN-CLOSURE-V1
 
 Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `{subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
@@ -420,7 +432,7 @@ The nonlinear grid is a local physical reference only (no global-margin claim). 
 
 PREREGISTRATION_MANIFEST = PASS  
 TARGET_CASES = PASS (48; mandatory strata and hard-pair coverage)  
-NEW_TDS_TRAJECTORIES = PASS ({len(ex)} files; all successful)  
+NEW_TDS_TRAJECTORIES = {'PASS' if n_dups == 0 else 'PARTIAL'} ({n_unique} unique successful trajectories; {n_dups} duplicate centre files retained and excluded from scoring)  
 ZERO_FUTURE_V3_OVERLAP = PASS  
 STAGE_A_CENTER_CHECK = PASS  
 TRIANGLE_INEQUALITY_CERTIFICATES = {'PASS' if bool(adf.triangle_pass.all()) else 'PARTIAL'}  
