@@ -1,0 +1,12 @@
+key,value
+task,SAMPLEWISE-SECOND-VARIATION-CLOSURE-V1
+start_head,9af2134b1422f70bbac0e50f1f6c3791b5e3edb7
+ops,"[[""op_m035"", 0.35], [""op_m085"", 0.85], [""op_m125"", 1.25]]"
+self_directions,"[7, 26, 3, 16]"
+cross_directions,"[""7-12"", ""26-28"", ""3-18"", ""16-18""]"
+tau,2.0
+first_sample,tau+1/30
+horizons,"[1, 2, 3, 5, 10, 15, 30, 45]"
+self_steps,"[0.005, 0.0025]"
+cross_steps,"[[0.0001, 0.0002], [5e-05, 0.0001]]"
+future_v3_excluded,True
