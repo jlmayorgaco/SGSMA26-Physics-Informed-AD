@@ -17,6 +17,9 @@ if MODE == "SINGLE"
     ENV["MULTI_AMPS"] = get(ENV, "L120_AMPS", "-0.005,0.0,0.005")
 else
     ENV["MULTI_H"] = get(ENV, "L120_H", "0.005")
+    if MODE == "DEV"
+        ENV["MULTI_MAG_PAIRS"] = get(ENV, "L120_MAG_PAIRS", "0.0001,0.0002;0.0005,0.001;0.002,0.004;0.01,0.025")
+    end
 end
 
 txt = read(BASE, String)
@@ -25,6 +28,10 @@ txt = read(BASE, String)
 # explicitly to keep all generated artifacts inside this repository.
 const ROOT_LIT = replace(ROOT, "\\" => "/")
 txt = replace(txt, r"const ROOT=normpath\(joinpath\(@__DIR__,\"\.\.\",\"\.\.\"\)\)" => "const ROOT=raw\"$ROOT_LIT\"")
+if haskey(ENV, "L120_DATASRC") && !isempty(ENV["L120_DATASRC"])
+    const DATA_LIT = replace(ENV["L120_DATASRC"], "\\" => "/")
+    txt = replace(txt, r"const DATASRC=joinpath\(pkgdir\(PowerDynamics\),\"docs\",\"examples\",\"ieee39data\"\)" => "const DATASRC=raw\"$DATA_LIT\"")
+end
 txt = replace(txt, "(0.0,5.0)" => "(0.0," * HORIZON * ")")
 mod = Module(Symbol("L120_PHYSICAL_", rand(UInt)))
 Base.include_string(mod, txt, "pd_load_multi_atlas_l120.jl")
