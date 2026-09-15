@@ -160,7 +160,7 @@ The audit used the nominal validated IEEE-39 plant, the production `PresetTimeCo
 
 ## First-step derivatives
 
-Centered state first/second derivatives were computed at t1 and Richardson extrapolated from h=0.0025 and 0.005. Relative Richardson uncertainty is {float(unc[(unc.direction=='self_bus7')&(unc.derivative_order==2)].relative_richardson_error_h0025.iloc[0]):.3e} for Bus7 self and {float(unc[(unc.direction=='cross_bus7_12')&(unc.derivative_order==3)].relative_richardson_error_h0025.iloc[0]):.3e} for the 7/12 cross second derivative. The full coordinate vectors are stored in `production_first_step_derivatives.csv`; no hidden equilibrium or event parameter is supplied to the continuation.
+Centered state first/second derivatives were computed at t1 and Richardson extrapolated from h=0.0025 and 0.005. Relative Richardson uncertainty is {float(unc[(unc.direction=='self_bus7')&(unc.derivative_order==2)].relative_richardson_error_h0025.iloc[0]):.3e} for Bus7 self and {float(unc[(unc.direction=='cross_bus7_12')&(unc.derivative_order==3)].relative_richardson_error_h0025.iloc[0]):.3e} for the 7/12 cross second derivative. In the cross rows, `derivative_order=1,2,3` denotes u7, u12, and u7,12 respectively; for self, 1 and 2 denote u7 and u7,7. The full coordinate vectors are stored in `production_first_step_derivatives.csv`; no hidden equilibrium or event parameter is supplied to the continuation.
 
 ## Three-way result
 
