@@ -310,6 +310,8 @@ def main():
     val = []
     state_manifest = []
     for op, m, state_tag, _ in OPS:
+        _, Mmeta, _, _ = _read_meta(state_tag)
+        alg_idx = np.flatnonzero(np.isclose(np.diag(Mmeta), 0.0)); dif_idx = np.flatnonzero(~np.isclose(np.diag(Mmeta), 0.0))
         files = _all_maps(op)
         state_manifest.extend({"op_tag": op, "file": f.name, "n_state": 192, "finite": bool(np.isfinite(_csv_vec(f)).all()), "time_s": 2 + DT} for f in files)
         for b in BUSES:
@@ -322,7 +324,8 @@ def main():
                 val.append({"op_tag": op, "op_m": m, "direction": f"self_{b}", "derivative_order": order,
                             "relative_error": rel(exact, a), "cosine": cos(exact, a), "uncertainty_raw": unc,
                             "uncertainty_relative": unc / max(np.linalg.norm(exact), 1e-30), "reference_norm": np.linalg.norm(exact),
-                            "analytic_norm": np.linalg.norm(a), "_vec_exact": exact})
+                            "analytic_norm": np.linalg.norm(a), "differential_relative_error": rel(exact[dif_idx], a[dif_idx]),
+                            "algebraic_relative_error": rel(exact[alg_idx], a[alg_idx]), "_vec_exact": exact})
         for i, j in PAIRS:
             paths = [map_path(op, "cross", i, j, si * h, sj * h) for h in (H5, H2) for si, sj in ((1, 1), (1, -1), (-1, 1), (-1, -1))]
             if not all(p.exists() for p in paths):
@@ -332,7 +335,8 @@ def main():
             val.append({"op_tag": op, "op_m": m, "direction": f"cross_{i}_{j}", "derivative_order": 2,
                         "relative_error": rel(q, a), "cosine": cos(q, a), "uncertainty_raw": unc,
                         "uncertainty_relative": unc / max(np.linalg.norm(q), 1e-30), "reference_norm": np.linalg.norm(q),
-                        "analytic_norm": np.linalg.norm(a), "_vec_exact": q})
+                        "analytic_norm": np.linalg.norm(a), "differential_relative_error": rel(q[dif_idx], a[dif_idx]),
+                        "algebraic_relative_error": rel(q[alg_idx], a[alg_idx]), "_vec_exact": q})
     # Do not write object-valued vectors to CSV.
     vdf = pd.DataFrame(val)
     vdf.drop(columns=["_vec_exact"], errors="ignore").to_csv(RES / "derivative_validation.csv", index=False)
