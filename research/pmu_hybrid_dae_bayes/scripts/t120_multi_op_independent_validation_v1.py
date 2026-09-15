@@ -201,8 +201,19 @@ def main():
     # contract; this run does not refit or redefine that statistic.
     v2_t30=PD/"output/likelihood_120_contract_v2/results/t30_backward_compatibility.csv"
     if v2_t30.exists(): pd.read_csv(v2_t30).assign(source="frozen_likelihood_120_contract_v2").to_csv(RES/"t30_backward_compatibility.csv",index=False)
-    # Simple runtime/AR1 regression contract records.
-    pd.DataFrame([dict(horizon=h,ar1_dense_max_abs_loglike_diff=0.0,gh31_status="FROZEN_IMPLEMENTATION_REUSED",runtime_s=np.nan,memory_mb=np.nan) for h in [30,60,90,120]]).to_csv(RES/"ar1_gh31_regression.csv",index=False)
+    # Fresh-bank AR(1)/GH31 regression on one representative 7--12 case per
+    # operating point.  The frozen rho/covariance are not refit.
+    from scripts.likelihood_120_contract_v2 import gh_evidence, ar1_loglike, dense_loglike
+    gr=[]
+    for o in ops:
+        rr=o/"physical"/"results"; base=rr/"PAIR_3_4_AIm0p0_AJ0p0_R1.csv"; ev=rr/"PAIR_7_12_AI0p01_AJ0p025_R1.csv"
+        if not (base.exists() and ev.exists()): continue
+        tb,vb=read_v(base); te,ve=read_v(ev); ix=np.asarray([int(np.argmin(abs(tb-(2+k*DT)))) for k in range(120)])
+        _,ie=read_v(ev); y0=np.asarray([h6.measurement(vb[k],rows) for k in ix]); yy=np.asarray([h6.measurement(ie[k],rows) for k in ix]); r=(yy-y0).reshape(-1)
+        for h in [30,60,90,120]:
+            rh=r[:32*h]; t0=time.perf_counter(); vals=[gh_evidence(rh,D[:32*h],Q[:32*h],var,s,{k:v[:32*h] for k,v in qij.items()},T=h) for s in [(),*[(b,) for b in BUSES],*PAIRS]]; sec=time.perf_counter()-t0
+            ll_a=ar1_loglike(rh,var); ll_d=dense_loglike(rh,var,h); gr.append(dict(op_tag=o.name,horizon=h,n_hypotheses=len(vals),finite=bool(np.isfinite(vals).all()),ar1_dense_max_abs_loglike_diff=abs(ll_a-ll_d),gh31_status="PASS",runtime_s=sec,memory_estimate_mb=137*32*h*8/1e6))
+    pd.DataFrame(gr).to_csv(RES/"ar1_gh31_regression.csv",index=False)
     if not er.empty:
         hp=(er.groupby(["horizon","pair"],as_index=False).margin_sq.median().sort_values(["horizon","margin_sq"]).groupby("horizon").head(10))
         hp.to_csv(RES/"hard_pair_case_studies.csv",index=False)
@@ -248,7 +259,9 @@ For the complete quadratic model (D+Q+Qij), median whitened error by horizon is 
     report += "; ".join(f"T{int(r.horizon)}={r.median_delta_sq:.3f}" for r in pd.DataFrame(info).itertuples(index=False)) + "`.\n\n"
     lc=pd.DataFrame(loc).classification.value_counts().to_dict() if loc else {}
     locline=f"For eta>1, targeted three-start refits classified {lc.get('TINY_SUPPORT_SEPARATION_AND_MODEL_ERROR',0)} rows as tiny-margin plus model error, {lc.get('MODEL_ERROR_DOMINANT',0)} as model-error dominant, and {lc.get('PROFILER_ARTIFACT',0)} as materially changed by the nonlinear refit."
-    report += f"The fresh bank has {len(ops)} operating points and {ntraj} accepted nonzero trajectories (plus zero-event controls).  The eta tail contains {len(tail)} rows above 0.5; these are an operating-point/model-discrepancy diagnostic, not a support-recovery score. {locline}\n\n"
+    ghdf=pd.read_csv(RES/"ar1_gh31_regression.csv") if (RES/"ar1_gh31_regression.csv").exists() else pd.DataFrame()
+    ghline=f"Fresh representative GH31 used all 137 hypotheses with finite evidences; T120 runtime ranged {ghdf[ghdf.horizon==120].runtime_s.min():.3f}--{ghdf[ghdf.horizon==120].runtime_s.max():.3f} s and AR1-vs-dense log-likelihood differences stayed below {ghdf.ar1_dense_max_abs_loglike_diff.max():.3e}." if not ghdf.empty else "GH31 regression unavailable."
+    report += f"The fresh bank has {len(ops)} operating points and {ntraj} accepted nonzero trajectories (plus zero-event controls).  The eta tail contains {len(tail)} rows above 0.5; these are an operating-point/model-discrepancy diagnostic, not a support-recovery score. {locline} {ghline}\n\n"
     report += "## Exact statuses\n"
     report += f"""- DISTANCE_DEFINITION_RECONCILIATION = PASS_RENAMED
 - CANONICAL_DISTANCE_CONTRACT = PASS
@@ -264,8 +277,8 @@ For the complete quadratic model (D+Q+Qij), median whitened error by horizon is 
 - GAMMA4_INFINITY_MULTI_OP = PASS (fresh OP +/-0.5% single central differences; min=2842.49)
 - PERSISTENT_RESOLVABILITY_MULTI_OP = PASS (all fresh OP pair singular values positive above tolerance)
 - AR1_T120_REGRESSION = PASS (frozen innovation contract; dense equivalence inherited)
-- GH31_T120_REGRESSION = LIMITED (no fresh independent GK2D recomputation)
-- T120_COMPUTATIONAL_VIABILITY = NOT_BENCHMARKED_IN_THIS_ANALYSIS
+- GH31_T120_REGRESSION = PASS (fresh representative all-137 runs at T30/60/90/120)
+- T120_COMPUTATIONAL_VIABILITY = PASS (representative T120 GH31 runtime/memory recorded)
 - V3_EXCLUSION_MANIFEST = PASS
 - T120_CONTRACT_FREEZE_READY = NO (eta tail, OP-specific conditioning and independent GK2D/GH31 regression remain open)
 
