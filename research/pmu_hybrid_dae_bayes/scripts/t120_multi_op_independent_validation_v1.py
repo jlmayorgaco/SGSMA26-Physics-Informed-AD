@@ -126,7 +126,12 @@ def main():
                 eta_rows.append(dict(op_tag=op.name,op_m=opm,pair=f"{i}-{j}",ai=ai,aj=aj,regime=regime,horizon=h,eta_model=eta,model_error_norm=float(np.linalg.norm(ew)),margin_sq=margin,nearest_competitor=ct+":"+"-".join(map(str,cs))))
                 if eta>0.5: tail.append(dict(op_tag=op.name,pair=f"{i}-{j}",ai=ai,aj=aj,horizon=h,eta_model=eta,margin_sq=margin,nearest_competitor=ct+":"+"-".join(map(str,cs))))
             exclusion.append(dict(op_tag=op.name,trajectory=fp.name,sha256=hashlib.sha256(fp.read_bytes()).hexdigest(),excluded_from_v3=True))
-        op_rows.append(dict(op_tag=op.name,op_m=opm,mutation="bus3.P,Q *= 1+0.03*m",trajectory_dir=str(rr),n_files=len(files),baseline_present=True,g_z_condition_number="NOT_EXPORTED_BY_HARNESS",stability="not_recomputed"))
+        buscsv=OUT/"op_data"/op.name/"bus.csv"
+        if buscsv.exists():
+            bd=pd.read_csv(buscsv); ptotal=float(bd.P.sum()); qtotal=float(bd.Q.sum()); ngen=float(bd.loc[bd.bus_type.astype(str).str.upper().isin(["PV","SLACK"]),"P"].sum())
+        else: ptotal=qtotal=ngen=float("nan")
+        obs_vm=float(np.mean(np.abs(vb[:,np.asarray(h6.OBS)-1]))) if hasattr(h6,"OBS") else float("nan")
+        op_rows.append(dict(op_tag=op.name,op_m=opm,mutation="bus3.P,Q *= 1+0.03*m",trajectory_dir=str(rr),n_files=len(files),baseline_present=True,total_bus_P=ptotal,total_bus_Q=qtotal,generator_P=ngen,observed_voltage_mean=obs_vm,operating_point_distance_from_nominal=abs(opm),g_z_condition_number="NOT_EXPORTED_BY_HARNESS",stability="not_recomputed"))
     # summaries
     vr=pd.DataFrame(val_rows); er=pd.DataFrame(eta_rows)
     if not er.empty:
