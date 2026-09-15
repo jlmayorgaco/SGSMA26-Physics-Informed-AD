@@ -331,9 +331,14 @@ def analyze(stage_b: bool = False):
     for cid,g in adf[adf.horizon==120].groupby("target_case_id"):
         r=cases[cases.target_case_id==cid].iloc[0]; d0=g.iloc[0]; q=ldf[(ldf.target_case_id==cid)&(ldf.horizon==120)]
         if len(q):
-            z=q.loc[q.d_tds.idxmin()]; dl=float(z.d_tds); sp=str(z.competitor_support); b1=float(z.b1); b2=float(z.b2)
-        else: dl=float("nan"); sp=""; b1=b2=float("nan")
-        rows_out.append(dict(target_case_id=cid,op_tag=r.op_tag,true_support=r.true_support,eta_model=float(r.eta_model),d_analytic=float(d0.d_analytic_at_same_b),d_center=float(d0.d_center),d_tds_grid_local=dl,local_support=sp,local_b1=b1,local_b2=b2,e_S=float(d0.e_S),e_R=float(d0.e_R),triangle_bound=float(d0.triangle_bound)))
+            z=q.loc[q.d_tds.idxmin()]; dl=float(z.d_tds); sp=str(z.competitor_support); b1=float(z.b1); b2=float(z.b2); source="STAGE_B_LOCAL_GRID"
+        else:
+            # Non-activated controls still have a valid pointwise nonlinear
+            # center measurement.  Use it as the conservative local reference
+            # rather than silently turning a preregistered control into an
+            # inconclusive missing value.
+            dl=float(d0.d_center); sp=str(r.competitor_support_R1); b1=float(r.b1_R1); b2=float(r.b2_R1); source="STAGE_A_CENTER"
+        rows_out.append(dict(target_case_id=cid,op_tag=r.op_tag,true_support=r.true_support,eta_model=float(r.eta_model),d_analytic=float(d0.d_analytic_at_same_b),d_center=float(d0.d_center),d_tds_grid_local=dl,margin_source=source,local_support=sp,local_b1=b1,local_b2=b2,e_S=float(d0.e_S),e_R=float(d0.e_R),triangle_bound=float(d0.triangle_bound)))
     av=pd.DataFrame(rows_out); av["analytic_to_local_ratio"]=av.d_analytic/np.maximum(av.d_tds_grid_local,1e-30); av["center_to_local_ratio"]=av.d_center/np.maximum(av.d_tds_grid_local,1e-30); av.to_csv(RES/"analytic_vs_nonlinear_margin.csv",index=False)
     # Evidence categories are deterministic and use only the preregistered
     # tolerances: physical small margin (<0.5 whitened), competitor switch,

@@ -96,7 +96,8 @@ function main()
     isempty(pts) && error("No target points in $POINTS")
     # Point rows are already grouped by OP; no point is silently changed or
     # inferred from the TDS output.
-    outrows = DataFrame(trajectory_id=String[], op_tag=String[], op_m=Float64[], competitor_type=String[], competitor_support=String[], b1=Float64[], b2=Float64[], status=String[], path=String[], runtime_s=Float64[], retcode=String[], sha256=String[])
+    manifest_path = joinpath(RES, "tds_execution_manifest.csv")
+    outrows = isfile(manifest_path) ? CSV.read(manifest_path, DataFrame) : DataFrame(trajectory_id=String[], op_tag=String[], op_m=Float64[], competitor_type=String[], competitor_support=String[], b1=Float64[], b2=Float64[], status=String[], path=String[], runtime_s=Float64[], retcode=String[], sha256=String[])
     for (op, m) in (("op_m035",0.35),("op_m085",0.85),("op_m125",1.25))
         p = pts[pts.op_tag .== op, :]; nrow(p)==0 && continue
         data = joinpath(ROOT, "output", "t120_multi_op_independent_validation_v1", "op_data", op)
@@ -106,13 +107,15 @@ function main()
         for r in eachrow(p)
             x = run_point(nw, s0, r, groupdir)
             h = isfile(x[4]) ? bytes2hex(sha256(read(x[4]))) : ""
-            push!(outrows, (x[1],op,m,String(r.competitor_type),String(r.competitor_support),Float64(r.b1),Float64(r.b2),x[2] ? x[5] == "CHECKPOINT" ? "CHECKPOINT" : "EXECUTED_SUCCESS" : "EXECUTED_FAIL",x[4],x[3],x[5],h))
-            CSV.write(joinpath(RES, "tds_execution_manifest.csv"), outrows)
+            if !(x[1] in outrows.trajectory_id)
+                push!(outrows, (x[1],op,m,String(r.competitor_type),String(r.competitor_support),Float64(r.b1),Float64(r.b2),x[2] ? x[5] == "CHECKPOINT" ? "CHECKPOINT" : "EXECUTED_SUCCESS" : "EXECUTED_FAIL",x[4],x[3],x[5],h))
+            end
+            CSV.write(manifest_path, outrows)
             println(op, " ", x[1], " ", x[2], " ", x[3], " ", x[5]); flush(stdout)
         end
         GC.gc()
     end
-    CSV.write(joinpath(RES, "tds_execution_manifest.csv"), outrows)
+    CSV.write(manifest_path, outrows)
 end
 
 main()
