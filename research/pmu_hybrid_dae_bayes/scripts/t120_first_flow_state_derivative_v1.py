@@ -96,6 +96,7 @@ def main():
     second_median=float(pd.DataFrame(second).relative_error.median()) if second else float("nan")
     second_cos_min=float(pd.DataFrame(second).cosine.min()) if second else float("nan")
     uncertainty_median=float(pd.DataFrame(second).uncertainty.median()) if second else float("nan")
+    uncertainty_max=float(pd.DataFrame(second).uncertainty.max()) if second else float("nan")
     report=f"""# T120 FIRST-FLOW STATE DERIVATIVE V1
 
 START_HEAD = `318aa24db4d21a06229e7ade7bdb11254a27d4fc`  
@@ -107,7 +108,7 @@ The exact production callback/first numerical flow was replayed at `m=.35,.85,1.
 
 ## State derivative comparison
 
-Centered derivatives were Richardson extrapolated.  The stored self convention is `u_ii=2Q_i`.  Across the first-order rows, max relative error is `{first_max:.3e}`.  Across the second-order rows, median relative error is `{second_median:.4f}`, minimum cosine is `{second_cos_min:.6f}`, and median Richardson uncertainty is `{uncertainty_median:.3e}`.  Bus7 self second-order state parity has maximum relative error `{s7.relative_error.max() if not s7.empty else float('nan'):.4f}`; Bus7/12 cross has `{c712.relative_error.max() if not c712.empty else float('nan'):.4f}`.  Differential/algebraic errors and largest-coordinate discrepancies are in `current_vs_exact_initialization.csv`.
+Centered derivatives were Richardson extrapolated.  The stored self convention is `u_ii=2Q_i`.  Across the first-order rows, max relative error is `{first_max:.3e}`.  Across the second-order rows, median relative error is `{second_median:.4f}`, minimum cosine is `{second_cos_min:.6f}`, median Richardson uncertainty is `{uncertainty_median:.3e}`, and maximum uncertainty is `{uncertainty_max:.3e}`.  Bus7 self second-order state parity has maximum relative error `{s7.relative_error.max() if not s7.empty else float('nan'):.4f}`; Bus7/12 cross has `{c712.relative_error.max() if not c712.empty else float('nan'):.4f}`.  Differential/algebraic errors and largest-coordinate discrepancies are in `current_vs_exact_initialization.csv`.
 
 The PMU-only replay could not see controller/machine internal differential coordinates or most algebraic network coordinates.  Those hidden directions are now explicit in `pmu_hidden_state_visibility.csv`; they are precisely the directions that can alter second-order propagation while leaving 32-channel first-step output nearly unchanged.
 
