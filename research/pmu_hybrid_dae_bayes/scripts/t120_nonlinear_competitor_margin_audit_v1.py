@@ -228,6 +228,16 @@ def main():
         cls="INCONCLUSIVE_REFERENCE" if qual=="NO_USEFUL_REFERENCE" else ("TRUE_SMALL_MARGIN_SUPPORTED" if dgrid<0.5 and 0.5<dan/max(dgrid,1e-30)<2 else ("ANALYTIC_MARGIN_DISTORTION" if abs(math.log(max(dan,1e-30)/max(dgrid,1e-30)))>math.log(2) else "MIXED"))
         dec.append({"op_tag":r.op_tag,"pair":r.pair,"ai":r.ai,"aj":r.aj,"horizon":120,"e_model":r.model_error,"d_analytic":dan,"d_tds_grid":dgrid,"R_grid":dan/max(dgrid,1e-30),"reference_quality":qual,"classification":cls})
     ddf=pd.DataFrame(dec); ddf.to_csv(RES/"numerator_denominator_decomposition.csv",index=False); gdf.to_csv(RES/"margin_distortion.csv",index=False)
+    # Trace the previously published fixed-dictionary eta>1 rows without
+    # refitting or reusing them as development data.
+    hist_path = PD / "output" / "t120_op_conditioned_manifold_closure_v1" / "results" / "eta_tail_transition_classification.csv"
+    hist = pd.read_csv(hist_path) if hist_path.exists() else pd.DataFrame()
+    if not hist.empty:
+        hm = hist.merge(t120[["op_tag", "pair", "ai", "aj", "horizon", "eta_model"]], on=["op_tag", "pair", "ai", "aj", "horizon"], how="left", suffixes=("_historical", "_reoptimized"))
+        hm["reoptimized_classification"] = np.where(hm.eta_model <= 1.0, "RESOLVED_BY_MARGIN_REOPTIMIZATION", "REMAINS_ETA_GT1")
+        hm.to_csv(RES / "historical_eta_gt1_transition.csv", index=False)
+    else:
+        hm = pd.DataFrame()
     # Nearest analytic identity per horizon and hard-pair extract.
     adf[["op_tag","pair","ai","aj","horizon","competitor_type","competitor_support","optimal_b1","optimal_b2","optimizer_status","boundary","second_best_distance"]].to_csv(RES/"competitor_identity_by_horizon.csv",index=False)
     hp=adf[adf.pair.isin(HARD)].merge(cdf[["op_tag","pair","quality","n_stored_samples","nearest_severity_distance"]],on=["op_tag","pair"],how="left")
@@ -271,6 +281,8 @@ def main():
     cls_counts=ddf.classification.value_counts().to_dict() if not ddf.empty else {}
     eta_q=t120.eta_model.quantile([.5,.9,.95,.99,1.]).to_numpy() if not t120.empty else np.full(5,np.nan)
     eta_counts={x:int((t120.eta_model>x).sum()) for x in (.01,.05,.1,.25,.5,1.)}
+    historical_rows = int(len(hm))
+    historical_remaining = int((hm.reoptimized_classification == "REMAINS_ETA_GT1").sum()) if historical_rows else 0
     merged=audit_merge = adf[adf.horizon==120].merge(gdf[gdf.horizon==120],on=["op_tag","pair","ai","aj","horizon"],how="inner")
     identity_matches=int((merged.competitor_support==merged.grid_competitor_support).sum()) if not merged.empty else 0
     rgrid_med=float(gdf.groupby("horizon").R_grid.median().get(120,np.nan)) if not gdf.empty else float("nan")
@@ -308,6 +320,11 @@ At T120 the corrected `eta_model` quantiles (p50/p90/p95/p99/max) are
 decomposition and classification are in `numerator_denominator_decomposition.csv`
 (counts: `{cls_counts}`).  No conclusion is promoted to an exact continuous
 margin when the bank is sparse.
+
+The historical fixed-dictionary eta>1 set contains `{historical_rows}` rows;
+`historical_eta_gt1_transition.csv` shows that `{historical_remaining}` remain
+above one after corrected-margin reoptimization.  The newly identified
+reoptimized T120 tail is not conflated with that historical set.
 
 ## Information and hard pairs
 
