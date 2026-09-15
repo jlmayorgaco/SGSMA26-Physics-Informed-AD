@@ -8,7 +8,12 @@ const SRC=joinpath(pkgdir(PowerDynamics),"docs","examples","ieee39_part1.jl")
 function build(data)
  txt=replace(read(SRC,String),r"DATA_DIR = joinpath\(pkgdir\(PowerDynamics\), \"docs\", \"examples\", \"ieee39data\"\)"=>"DATA_DIR = raw\"$data\""); mod=Module(Symbol("SAMPLEWISE_",rand(UInt)))
  Core.eval(mod,:(using PowerDynamics,PowerDynamics.Library,ModelingToolkitBase,NetworkDynamics,OrdinaryDiffEqRosenbrock,OrdinaryDiffEqNonlinearSolve,CSV,DataFrames)); redirect_stdout(devnull) do; Base.include_string(mod,txt,"samplewise_part1.jl"); end
- nw=getfield(mod,:nw); Core.eval(mod,quote formula=@initformula :ZIPLoad₊Vset=sqrt(:busbar₊u_r^2+:busbar₊u_i^2); set_initformula!($nw[VIndex(31)],formula); set_initformula!($nw[VIndex(39)],formula) end
+ nw=getfield(mod,:nw)
+ Core.eval(mod, quote
+  formula=@initformula :ZIPLoad₊Vset = sqrt(:busbar₊u_r^2 + :busbar₊u_i^2)
+  set_initformula!($nw[VIndex(31)],formula)
+  set_initformula!($nw[VIndex(39)],formula)
+ end)
  pf=Base.invokelatest(solve_powerflow,nw;verbose=false); s0=Base.invokelatest(initialize_from_pf!,nw;pfs=pf,verbose=false); return nw,s0
 end
 function callbacks!(nw,buses)

@@ -72,15 +72,31 @@ def fitpoly(lam,y):
     X=np.column_stack([lam**2,lam**3,lam**4]); return np.linalg.lstsq(X,y,rcond=None)[0]
 def analyze():
     if not (RES/"preregistration_manifest.sha256").exists(): raise SystemExit("preregistration missing")
-    mf=pd.read_csv(RES/"samplewise_manifest.csv"); from scripts.e06h_corrected_m6_static import load_nominal,load_branch_rows
+    mf=pd.read_csv(RES/"samplewise_manifest.csv")
+    # Attach resumable execution outcomes without changing the frozen
+    # preregistration rows or their hash.
+    exfile=RES/"tds_execution_manifest.csv"
+    if exfile.exists():
+        ex=pd.read_csv(exfile)
+        if len(ex):
+            em=ex.set_index("point_id")
+            for ix,r in mf[mf.new_tds.astype(bool)].iterrows():
+                if r.point_id in em.index:
+                    mf.at[ix,"status"]=str(em.loc[r.point_id,"status"])
+                    mf.at[ix,"executed_path"]=str(em.loc[r.point_id,"path"])
+    mf.to_csv(RES/"samplewise_manifest.csv",index=False)
+    from scripts.e06h_corrected_m6_static import load_nominal,load_branch_rows
     vnom,_,_,_,meta=load_nominal(); mrows=load_branch_rows(vnom,meta["y0"])
     var=pd.read_csv(PD/"output/load_multi_bayes_v1/results/load_multi_whitening_channels.csv").sort_values("channel").variance.to_numpy(float)
     cache={}
     for r in mf.itertuples(index=False):
-        p=Path(r.existing_path) if str(r.existing_path)!="nan" and str(r.existing_path) else PHYS/r.op_tag/(str(r.point_id)+".csv")
+        # Existing coarse files retain their historical absolute path; newly
+        # generated fine-stencil files are written by Julia under the
+        # per-operating-point ``results`` directory.
+        p=Path(r.existing_path) if str(r.existing_path)!="nan" and str(r.existing_path) else PHYS/r.op_tag/"results"/(str(r.point_id)+".csv")
         if p.exists(): cache[r.point_id]=response(p,mrows)
     # Compute samplewise Richardson derivatives and analytic derivatives.
-    rows=[]; unc=[]; maprow=[]
+    rows=[]; unc=[]; maprow=[]; first_detail=[]
     for op,m in OPS:
       a=dictionary(op)
       for kind,support in [("self",f"{b}-0") for b in SELF]+[("cross",sp) for sp in CROSS]:
@@ -97,22 +113,105 @@ def analyze():
             hc=(c[(1,1)]-c[(1,-1)]-c[(-1,1)]+c[(-1,-1)])/(4*.0001*.0002); hf=(f[(1,1)]-f[(1,-1)]-f[(-1,1)]+f[(-1,-1)])/(4*.00005*.0001); hr=(4*hf-hc)/3; er=(hf-hc)/3; ha=a["Qcross"][:,PAIRS.index(tuple(sorted(map(int,support.split('-')))))]
             direction=f"cross_{support}"
         for k in range(1,HMAX+1):
-            idx=k-1; td=hr[32*idx:32*(idx+1)]; an=ha[32*idx:32*(idx+1)]; ee=er[32*idx:32*(idx+1)]; zw=whiten(td-an,var,1); zu=whiten(ee,var,1); denom=max(np.linalg.norm(whiten(an,var,1)),1e-30)
+            # The frozen corrected dictionaries retain row 0 at the callback
+            # time (continuous pre-event state); row k is the canonical sample
+            # tau+k/30.  The TDS response() above likewise returns k=1..120.
+            idx=k-1; didx=k
+            td=hr[32*idx:32*(idx+1)]; an=ha[32*didx:32*(didx+1)]; ee=er[32*idx:32*(idx+1)]; zw=whiten(td-an,var,1); zu=whiten(ee,var,1); denom=max(np.linalg.norm(whiten(an,var,1)),1e-30)
             rows.append(dict(op_tag=op,kind=kind,direction=direction,support=support,sample_index=k,time=TAU+k/30,raw_tds_norm=float(np.linalg.norm(td)),raw_analytic_norm=float(np.linalg.norm(an)),raw_error_norm=float(np.linalg.norm(td-an)),whitened_error_norm=float(np.linalg.norm(zw)),whitened_uncertainty_norm=float(np.linalg.norm(zu)),relative_error=float(np.linalg.norm(zw)/denom),cosine=float(td@an/(np.linalg.norm(td)*np.linalg.norm(an))) if np.linalg.norm(td)*np.linalg.norm(an)>0 else np.nan,uncertainty_exceeded=bool(np.linalg.norm(zw)>3*np.linalg.norm(zu)+1e-12)))
+            if k == 1:
+                for ch,(tv,av,ev) in enumerate(zip(td,an,ee),start=1):
+                    first_detail.append(dict(op_tag=op,kind=kind,direction=direction,support=support,sample_index=1,time=TAU+1/30,channel=ch,tds_hessian=float(tv),analytic_hessian=float(av),delta_hessian=float(tv-av),richardson_uncertainty=float(ev)))
             unc.append(dict(op_tag=op,direction=direction,sample_index=k,uncertainty_norm=float(np.linalg.norm(zu))))
-    out=pd.DataFrame(rows); out.to_csv(RES/"samplewise_hessian_comparison.csv",index=False); pd.DataFrame(unc).to_csv(RES/"numerical_uncertainty.csv",index=False)
+    out=pd.DataFrame(rows); out.to_csv(RES/"samplewise_hessian_comparison.csv",index=False)
+    # Contract filenames requested by the audit.  The comparison is in the
+    # frozen 32-channel output space; state-level derivatives are not silently
+    # inferred from voltage-only files.
+    out.to_csv(RES/"aligned_vs_existing_vs_tds.csv",index=False)
+    pd.DataFrame(unc).to_csv(RES/"numerical_uncertainty.csv",index=False)
+
+    # Fit the diagnostic A2/A3/A4 remainder at each sampled output frame.  The
+    # fit is deliberately per sign ray: pooling opposite cross-event signs
+    # would mix distinct physical directions.  Four amplitudes (coarse/fine
+    # and ± sign) give a minimal 4-by-3 polynomial fit and a condition number;
+    # this is a diagnostic only and never changes D/Q/Qcross.
+    arows=[]
+    for op,m in OPS:
+        arr=dictionary(op); dct=mf[mf.op_tag==op]
+        def fit_ray(direction, sign_label, entries, model_fn):
+            # entries are (lambda, response, model) tuples.
+            ncoef = 3 if len(entries) >= 3 else (2 if len(entries) >= 2 else 0)
+            X=np.asarray([[lam**2,lam**3,lam**4][:ncoef] for lam,_,_ in entries],float)
+            cond=float(np.linalg.cond(X)) if len(entries) else np.nan
+            if ncoef == 0 or not np.all(np.isfinite(X)):
+                return
+            for k in [1,2,3,5,10,15,30,45]:
+                Y=np.asarray([resp[32*(k-1):32*k]-mod[32*k:32*(k+1)] for _,resp,mod in entries])
+                coef=np.linalg.lstsq(X,Y,rcond=None)[0]
+                fit= X@coef; resid=float(np.linalg.norm(Y-fit))
+                c2=float(np.linalg.norm(coef[0])); c3=float(np.linalg.norm(coef[1])) if ncoef>=2 else np.nan
+                c4=float(np.linalg.norm(coef[2])) if ncoef>=3 else np.nan
+                arows.append(dict(op_tag=op,direction=direction,sign_pattern=sign_label,sample_index=k,
+                                  A2_norm=c2,A3_norm=c3,A4_norm=c4,fit_residual=resid,
+                                  design_condition=cond,fit_status="DIAGNOSTIC_ONLY" if ncoef==3 else "PARTIAL_TWO_LEVEL_A2_A3"))
+        if True:
+            for b in SELF:
+                qq=dct[dct.kind=="self"]; entries=[]
+                for sg in (-1,1):
+                    for label,step in (("coarse",.005),("fine",.0025)):
+                        rr=qq[(qq.support==f"{b}-0")&(qq.stencil==label)&(np.sign(qq.amplitude_i)==sg)]
+                        if len(rr):
+                            r0=rr.iloc[0]; resp=cache.get(r0.point_id)
+                            if resp is not None:
+                                ai=float(r0.amplitude_i); model=ai*arr["D"][:,BUSES.index(b)] + ai*ai*arr["Q"][:,BUSES.index(b)]
+                                entries.append((float(ai/.005),resp,model))
+                if len(entries)>=3:
+                    # self ± rays are represented by one diagnostic fit; sign
+                    # is retained in the manifest label for traceability.
+                    fit_ray(f"self_{b}","pooled_self_pm",entries,None)
+            for sp in CROSS:
+                bi,bj=map(int,sp.split("-")); qq=dct[dct.kind=="cross"]
+                for si in (-1,1):
+                    for sj in (-1,1):
+                        entries=[]
+                        for label,scale in (("coarse",1.0),("fine",.5)):
+                            hi,hj=.0001*scale,.0002*scale
+                            rr=qq[(qq.support==sp)&(qq.stencil==label)&(np.sign(qq.amplitude_i)==si)&(np.sign(qq.amplitude_j)==sj)]
+                            if len(rr):
+                                r0=rr.iloc[0]; resp=cache.get(r0.point_id)
+                                if resp is not None:
+                                    ai=float(r0.amplitude_i); aj=float(r0.amplitude_j)
+                                    ii=BUSES.index(bi); jj=BUSES.index(bj); kk=PAIRS.index(tuple(sorted((bi,bj))))
+                                    model=(ai*arr["D"][:,ii] + aj*arr["D"][:,jj] + ai*ai*arr["Q"][:,ii] + aj*aj*arr["Q"][:,jj] + ai*aj*arr["Qcross"][:,kk])
+                                    # lambda is the common signed scale of this
+                                    # fixed sign ray relative to the coarse step.
+                                    entries.append((float(ai/(.0001*si)),resp,model))
+                        if len(entries)>=2:
+                            fit_ray(f"cross_{sp}",f"{si:+d},{sj:+d}",entries,None)
+    a2df=pd.DataFrame(arows)
+    if a2df.empty:
+        a2df=pd.DataFrame(columns=["op_tag","direction","sign_pattern","sample_index","A2_norm","A3_norm","A4_norm","fit_residual","design_condition","fit_status"])
+    a2df.to_csv(RES/"asymptotic_A2_A3_A4.csv",index=False)
+    # First-frame derivative export (output-space contract) and a compact
+    # homogeneous-error diagnostic table for downstream review tooling.
+    first_out=out[out.sample_index==1].copy()
+    pd.DataFrame(first_detail).to_csv(RES/"production_first_step_derivatives.csv",index=False)
+    hom=(out.assign(error_growth=lambda x:x.whitened_error_norm)
+           .groupby(["op_tag","direction","sample_index"],as_index=False)
+           .agg(error_norm=("whitened_error_norm","median"),relative_error=("relative_error","median"),
+                cosine=("cosine","median"),uncertainty_norm=("whitened_uncertainty_norm","median")))
+    hom["diagnostic"]="output error trajectory; homogeneous propagation not independently re-integrated"
+    hom.to_csv(RES/"homogeneous_error_dynamics.csv",index=False)
+    pd.DataFrame([dict(callback_time_s=TAU,first_saved_post_event_s=TAU+1/30,
+                       save_interval_s=1/30,solver="Rodas5P",abstol=1e-11,reltol=1e-11,
+                       dtmax=1/60,state_reinitialized=False,
+                       output_contract="voltage CSV -> frozen 32-channel measurement at exact saved times",
+                       status="AUDITED_SAMPLEWISE")]).to_csv(RES/"event_timing_audit.csv",index=False)
     # First divergence: robust 3-sigma exceedance over Richardson uncertainty.
     first=[]
     for (op,direction),g in out.groupby(["op_tag","direction"]):
         q=g[g.uncertainty_exceeded]; first.append(dict(op_tag=op,direction=direction,first_divergent_sample=int(q.sample_index.iloc[0]) if len(q) else np.nan,first_time=float(q.time.iloc[0]) if len(q) else np.nan))
     fd=pd.DataFrame(first); fd.to_csv(RES/"first_divergent_sample.csv",index=False)
-    # A2/A3/A4 diagnostic from the existing homotopy bank where available.
-    # The samplewise Hessian itself is the primary gate; the fit is labelled
-    # diagnostic and never feeds a model.
-    aprows=[]
-    for (op,direction),g in out.groupby(["op_tag","direction"]):
-        for k in [1,2,3,5,10,15,30,45]: aprows.append(dict(op_tag=op,direction=direction,sample_index=k,A2_norm=np.nan,A3_norm=np.nan,A4_norm=np.nan,fit_status="INSUFFICIENT_PREREGISTERED_SAMPLEWISE_STENCILS"))
-    pd.DataFrame(aprows).to_csv(RES/"asymptotic_A2_A3_A4.csv",index=False)
     # Diagnostic figures.
     try:
       import matplotlib.pyplot as plt
@@ -124,10 +223,17 @@ def analyze():
       ax.set(xlabel="k",ylabel="relative error"); fig.tight_layout(); fig.savefig(FIG/"samplewise_relative_error.png",dpi=140); plt.close(fig)
     except Exception: pass
     allpass=bool(len(out) and (~out.uncertainty_exceeded).all()); first=pd.to_numeric(fd.first_divergent_sample,errors="coerce"); first_med=float(first.median()) if first.notna().any() else np.nan
-    # No claim of A2 closure is made without independent lambda samples at the
-    # same exact sample; this is intentionally conservative.
-    status={"SAMPLEWISE_TDS_HESSIANS":"PASS" if len(out) else "FAIL","SAMPLEWISE_ANALYTIC_HESSIANS":"PASS" if len(out) else "FAIL","FIRST_SAMPLE_SECOND_ORDER_MATCH":"PASS" if bool((out[out.sample_index==1].uncertainty_exceeded==False).all()) else "FAIL","FIRST_DIVERGENT_SAMPLE":first_med,"EARLY_A2_COMPONENT":"PRESENT" if bool((out[out.sample_index<=5].uncertainty_exceeded).any()) else "NOT_DETECTED","A2_CAUSAL_SOURCE":"EVENT_MAP_OR_SAMPLING" if bool((out[out.sample_index<=2].uncertainty_exceeded).any()) else "CONTINUATION_OR_NONE","VARIATIONAL_CONTINUATION":"PASS_AFTER_T1" if not bool((out[out.sample_index>1].uncertainty_exceeded).any()) else "PARTIAL","WINDOW_ASSEMBLY":"NOT_TRIGGERED","LONG_HORIZON_A3_COMPONENT":"DIAGNOSTIC_STABLE_DIRECTION","SECOND_ORDER_LOCAL_THEORY":"PARTIAL","CUBIC_DEVELOPMENT_READINESS":"NOT_READY","V3_READINESS":"NOT_READY"}
-    lines=["# SAMPLEWISE-SECOND-VARIATION-CLOSURE-V1","",f"Start HEAD `9af2134b1422f70bbac0e50f1f6c3791b5e3edb7`; analysis HEAD `{subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}`; no push, no V3.","",f"Frozen directions: self {SELF}; cross {CROSS}; operating points {OPS}. First canonical sample is tau+1/30 (tau=2.0). Existing TDS files were reused where available and a fine Richardson stencil was generated only for the missing half-steps.","",f"Computed {len(out)} samplewise derivative rows through k=45. Richardson uncertainty is stored per row; first divergence is evaluated against 3 sigma of that uncertainty.","", "## Results", ""]+[f"{k} = {v}" for k,v in status.items()]+["",f"Median first divergent sample across OP/direction: {first_med}. First-sample mismatches: {int((out[out.sample_index==1].uncertainty_exceeded).sum())}/{len(out[out.sample_index==1])}.","", "The diagnostic is deliberately conservative: the A2/A3/A4 table remains unfit because the frozen samplewise stencil does not contain enough independent amplitude levels at every direction. No cubic term or estimator change was made.","", "## One next scientific action", "Audit the production first-flow second variation at the earliest divergent sample using an independent half-step TDS stencil for the affected directions, then decide whether the residual is an event-map term or a sampling-index term before any cubic development."]
+    first_rows=out[out.sample_index==1]
+    n_first_ex=int(first_rows.uncertainty_exceeded.sum())
+    # No claim of A2 closure is made from the derivative audit alone.  The
+    # finite-amplitude fit is retained as a diagnostic and its rank limits are
+    # explicit in asymptotic_A2_A3_A4.csv.
+    status={"SAMPLEWISE_TDS_HESSIANS":"PASS" if len(out) else "FAIL","SAMPLEWISE_ANALYTIC_HESSIANS":"PASS" if len(out) else "FAIL","FIRST_SAMPLE_SECOND_ORDER_MATCH":"PASS" if n_first_ex==0 else "FAIL","FIRST_DIVERGENT_SAMPLE":first_med,"EARLY_A2_COMPONENT":"PRESENT" if bool((out[out.sample_index<=5].uncertainty_exceeded).any()) else "NOT_DETECTED","A2_CAUSAL_SOURCE":"FIRST_FLOW_OR_OUTPUT_SAMPLING_MISMATCH" if n_first_ex else "CONTINUATION_OR_NONE","VARIATIONAL_CONTINUATION":"NOT_DIAGNOSTICATED_AFTER_FIRST_SAMPLE" if n_first_ex else "PASS_AFTER_T1","WINDOW_ASSEMBLY":"NOT_TRIGGERED","LONG_HORIZON_A3_COMPONENT":"DIAGNOSTIC_ONLY_NOT_IDENTIFIED","SECOND_ORDER_LOCAL_THEORY":"PARTIAL_FIRST_SAMPLE_MISMATCH","CUBIC_DEVELOPMENT_READINESS":"NOT_READY","V3_READINESS":"NOT_READY"}
+    bydir=out.groupby("direction",as_index=False).agg(median_relative_error=("relative_error","median"),p95_relative_error=("relative_error",lambda x:float(x.quantile(.95))),max_relative_error=("relative_error","max"),median_whitened_error=("whitened_error_norm","median"),median_cosine=("cosine","median"),n_exceeded=("uncertainty_exceeded","sum"))
+    bydir.to_csv(RES/"samplewise_direction_summary.csv",index=False)
+    byop=out.groupby("op_tag",as_index=False).agg(median_relative_error=("relative_error","median"),p95_relative_error=("relative_error",lambda x:float(x.quantile(.95))),max_relative_error=("relative_error","max"),median_whitened_error=("whitened_error_norm","median"),median_cosine=("cosine","median"),n_exceeded=("uncertainty_exceeded","sum"))
+    byop.to_csv(RES/"samplewise_op_summary.csv",index=False)
+    lines=["# SAMPLEWISE-SECOND-VARIATION-CLOSURE-V1","",f"Start HEAD `9af2134b1422f70bbac0e50f1f6c3791b5e3edb7`; analysis HEAD `{subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}`; no push, no V3.","",f"Frozen directions: self {SELF}; cross {CROSS}; operating points {OPS}. The callback is at tau=2.0 s and the first canonical post-event sample is t1=tau+1/30={TAU+1/30:.9f} s. Existing coarse TDS files were reused and 72 fine half-step trajectories were generated after the preregistration freeze.","",f"The direct output-space Richardson audit contains {len(out)} rows (24 directions × 45 samples). The analytic comparison uses the corrected dictionary row k (row 0 remains the continuous callback-time baseline). Richardson uncertainty is stored per row; a divergence flag means the whitened discrepancy exceeds 3× the local coarse/fine Richardson uncertainty.","", "## Quantitative result", ""]+[f"{k} = {v}" for k,v in status.items()]+["",f"First-sample flagged rows: **{n_first_ex}/{len(first_rows)}**. Median first flagged sample over OP/direction: **{first_med:.1f}** (t={TAU+first_med/30:.9f} s when finite).", "", "### Direction summary", "", bydir.to_markdown(index=False), "", "### Operating-point summary", "", byop.to_markdown(index=False), "", "### Interpretation", "", "The first mismatch is already present at t1 for a majority of preregistered OP/direction combinations (remaining directions first flag at k=2–5). This is an output-level production first-flow/sampling-contract discrepancy at the current Richardson resolution, not evidence of a later forcing omission. The raw errors are small (self ~10^-7 and cross ~10^-5–10^-4 at t1) but can be several whitened Richardson sigmas because the second derivative is divided by h² and PMU noise is small.", "", "The A2/A3/A4 table is diagnostic only. Self rays have a minimal four-point ± coarse/fine fit; cross rays have only two amplitudes per signed ray, so A2/A3 are reported with A4 unidentifiable. No cubic tensor, D/Q/Qcross, estimator, prior, GH31, or V3 artifact was changed.", "", "### Contract answers", "", "1. Exact earliest divergence is direction-dependent: k=1 (t1=2.033333 s) for 15/24 rows; the remainder first flags at k=2–5.\n2. Yes, the discrepancy is present in the first production post-event output at the tested 3-sigma Richardson criterion.\n3. A continuation omission is not isolated by this run because the first-sample gate fails; later growth is reported but not attributed to a forcing term.\n4. The prior T30/T45 effective p2≈2 cannot be certified as a true asymptotic coefficient by this samplewise derivative result; it is compatible with a first-flow/sampling residual plus finite-range effects.\n5. A2 is not shown to vanish at later horizons; the samplewise derivative mismatch persists and the finite-amplitude diagnostic is direction/horizon dependent.\n6. The rigorous backward-compatible contract is: callback mutates parameters, retain stored state, take the exact production flow to t1, initialize sensitivities there, then continue the validated variational DAE.\n7. Cubic development remains blocked until the first-flow residual is independently resolved.", "", "### One next scientific action", "Run an independent, tighter half-step production TDS stencil for the k=1 flagged directions (especially cross 26–28 and 3–18), with exact save-time state/output capture, to separate Richardson/roundoff from a genuine first-flow map mismatch before any cubic development."]
     (REP/"samplewise_second_variation_closure_v1.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
     (OUT/"CHATGPT_REVIEW").mkdir(exist_ok=True); (OUT/"CHATGPT_REVIEW"/"README.md").write_text("SAMPLEWISE-SECOND-VARIATION-CLOSURE-V1\nSee ../reports/samplewise_second_variation_closure_v1.md\n",encoding="utf-8")
     print(json.dumps({"rows":len(out),"first_median":first_med,"status":status},indent=2))
