@@ -1,6 +1,6 @@
 # SAMPLEWISE-SECOND-VARIATION-CLOSURE-V1
 
-Start HEAD `9af2134b1422f70bbac0e50f1f6c3791b5e3edb7`; analysis HEAD `1ecda75ed53530002d8d5e8d681d3ed6675f0043`; no push, no V3.
+Start HEAD `9af2134b1422f70bbac0e50f1f6c3791b5e3edb7`; analysis HEAD `dd8aa618f0fd15659eff2fac17c2ffee1bd23c27`; no push, no V3.
 
 Frozen directions: self [7, 26, 3, 16]; cross ['7-12', '26-28', '3-18', '16-18']; operating points [('op_m035', 0.35), ('op_m085', 0.85), ('op_m125', 1.25)]. The callback is at tau=2.0 s and the first canonical post-event sample is t1=tau+1/30=2.033333333 s. Existing coarse TDS files were reused and 72 fine half-step trajectories were generated after the preregistration freeze.
 
