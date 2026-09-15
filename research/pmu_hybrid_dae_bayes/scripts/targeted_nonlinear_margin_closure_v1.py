@@ -441,7 +441,10 @@ V3_READINESS = {'READY' if contract == 'FREEZE_READY' else 'NOT_READY'}
 """
     (REP/"targeted_nonlinear_margin_closure_v1.md").write_text(report,encoding="utf-8")
     (OUT/"CHATGPT_REVIEW").mkdir(exist_ok=True)
-    (OUT/"CHATGPT_REVIEW"/"README.md").write_text(f"TARGETED-NONLINEAR-MARGIN-CLOSURE-V1\nHEAD={subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}\ntargets=48\nnew_tds={len(ex)}\nno_push=true\n",encoding="utf-8")
+    (OUT/"CHATGPT_REVIEW"/"README.md").write_text(f"TARGETED-NONLINEAR-MARGIN-CLOSURE-V1\nHEAD={subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}\ntargets=48\nnew_tds={len(ex)}\nno_push=true\n\nThe full report is in ../reports/targeted_nonlinear_margin_closure_v1.md; all 306 physical CSVs are listed and hashed in ../results/v3_exclusion_manifest_additions.csv.\n",encoding="utf-8")
+    # A self-contained compact copy makes the review package portable without
+    # duplicating the 124 MB physical trajectory bank.
+    (OUT/"CHATGPT_REVIEW"/"targeted_nonlinear_margin_closure_v1.md").write_text(report,encoding="utf-8")
     print(json.dumps({"classification_counts":counts,"eta_gt1":tail.classification.value_counts().to_dict(),"new_tds":len(ex)},indent=2))
 
 
