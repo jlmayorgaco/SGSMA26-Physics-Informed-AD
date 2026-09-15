@@ -1,6 +1,6 @@
 # FINITE-AMPLITUDE-REMAINDER-ORDER-V1
 
-HEAD: `592b97df062052d187698688cf3977d8ca475e2d`; branch `research/pmu-hybrid-dae-bayes-v1`; no push, no V3.
+HEAD: `efb7a8b6c0a769c4af8252d973c4acf5196e1075`; branch `research/pmu-hybrid-dae-bayes-v1`; no push, no V3.
 
 Selected 30 target cases: 18 eta>1, 6 mid (0.1<eta<=0.5), 6 low (eta<0.01), with true and frozen-nearest competitor rays. Lambda grid is [0.125, 0.25, 0.5, 0.75, 1.0]; all new trajectories are in the V3 exclusion manifest.
 
