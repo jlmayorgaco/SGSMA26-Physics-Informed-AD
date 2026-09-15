@@ -1,10 +1,8 @@
-"""Minimal, checkpoint-safe nonlinear TDS driver for the targeted margin audit.
-
-The input point list is frozen before execution.  The model is rebuilt at the
-specified operating point (the validated M6 bus-3 P/Q mutation), and the
-production callback changes ZIP parameters at t=2 without reinitialising the
-stored state.  No estimator/statistical code is present in this file.
-"""
+# Minimal, checkpoint-safe nonlinear TDS driver for the targeted margin audit.
+# The input point list is frozen before execution.  The model is rebuilt at
+# the specified operating point (the validated M6 bus-3 P/Q mutation), and
+# the production callback changes ZIP parameters at t=2 without
+# reinitialising the stored state.  No estimator/statistical code is present.
 using PowerDynamics, PowerDynamics.Library, ModelingToolkitBase, NetworkDynamics
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using CSV, DataFrames, LinearAlgebra, SHA, Random
