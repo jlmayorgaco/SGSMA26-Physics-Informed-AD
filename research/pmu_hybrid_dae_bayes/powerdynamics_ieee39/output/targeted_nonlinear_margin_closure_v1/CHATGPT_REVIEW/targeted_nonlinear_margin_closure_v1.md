@@ -1,6 +1,6 @@
 # TARGETED-NONLINEAR-MARGIN-CLOSURE-V1
 
-Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `9092c8dd262258864ece5cdef09c2790c8205d84`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
+Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `f0b36db0ce3d99ffeff5d826f40a00a8f3d044b5`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
 
 ## Frozen preregistration and data
 
@@ -22,7 +22,7 @@ The nonlinear grid is a local physical reference only (no global-margin claim). 
 
 PREREGISTRATION_MANIFEST = PASS  
 TARGET_CASES = PASS (48; mandatory strata and hard-pair coverage)  
-NEW_TDS_TRAJECTORIES = PARTIAL (0 unique successful trajectories; 306 duplicate centre files retained and excluded from scoring)  
+NEW_TDS_TRAJECTORIES = PARTIAL (294 unique successful trajectories; 12 duplicate centre files retained and excluded from scoring)  
 ZERO_FUTURE_V3_OVERLAP = PASS  
 STAGE_A_CENTER_CHECK = PASS  
 TRIANGLE_INEQUALITY_CERTIFICATES = PASS  

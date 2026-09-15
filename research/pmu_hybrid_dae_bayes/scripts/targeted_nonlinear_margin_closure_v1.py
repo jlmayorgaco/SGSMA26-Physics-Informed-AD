@@ -407,7 +407,8 @@ def analyze(stage_b: bool = False):
     tail_classes = set(tail.classification.astype(str))
     closure = "PASS" if not any(x.startswith(("D_","B_","E_")) for x in tail_classes) else "FAIL"
     contract = "FREEZE_READY" if closure == "PASS" and not any(cdf.classification.astype(str).str.startswith("E_")) else "OPEN_MARGIN_QUESTION"
-    n_unique = int((execmf.duplicate_of == "").sum()); n_dups = int((execmf.duplicate_of != "").sum())
+    dupcol = execmf.duplicate_of.fillna("")
+    n_unique = int((dupcol == "").sum()); n_dups = int((dupcol != "").sum())
     report=f"""# TARGETED-NONLINEAR-MARGIN-CLOSURE-V1
 
 Start HEAD: `f1d5fceed3d5b31320cbf2d748f63a89486129d8`; final HEAD: `{subprocess.check_output(['git','rev-parse','HEAD'],cwd=HERE,text=True).strip()}`; branch `research/pmu-hybrid-dae-bayes-v1`; no push and no V3.
