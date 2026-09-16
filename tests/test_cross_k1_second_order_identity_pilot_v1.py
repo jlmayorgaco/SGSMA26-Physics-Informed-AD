@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from research.pmu_hybrid_dae_bayes.scripts.cross_k1_second_order_identity_pilot_v1 import (
+    fit_even_cross_coefficients,
     fit_vector_coefficients,
     richardson,
 )
@@ -31,9 +32,19 @@ def test_vector_polynomial_recovers_a2():
     assert np.isfinite(cond)
 
 
+def test_even_cross_polynomial_recovers_a2():
+    lam = np.array([.5, 1.0, 5.0, 20.0])
+    a2 = np.array([2.0, -1.0]); a4 = np.array([.04, .07]); a6 = np.array([-2e-5, 1e-5])
+    y = lam[:, None] ** 2 * a2 + lam[:, None] ** 4 * a4 + lam[:, None] ** 6 * a6
+    coef, se, cond, fitted = fit_even_cross_coefficients(lam, y)
+    np.testing.assert_allclose(coef[0], a2, rtol=1e-8, atol=1e-8)
+    np.testing.assert_allclose(fitted, y, rtol=1e-10, atol=1e-10)
+    assert np.all(se < 1e-7)
+    assert np.isfinite(cond)
+
+
 def test_no_output_artifact_claims_v3_execution():
     source = Path(__file__).parents[1] / "research" / "pmu_hybrid_dae_bayes" / "scripts" / "cross_k1_second_order_identity_pilot_v1.py"
     text = source.read_text(encoding="utf-8")
     assert '"V3_READINESS": "NOT_READY"' in text
     assert '"future_v3_excluded": True' in text
-
