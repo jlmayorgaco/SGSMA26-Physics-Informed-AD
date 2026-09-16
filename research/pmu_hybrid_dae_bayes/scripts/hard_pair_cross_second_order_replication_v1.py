@@ -189,10 +189,13 @@ def analyze() -> None:
     value.to_csv(RES/"production_value_identity.csv",index=False); hess.to_csv(RES/"cross_state_output_hessian.csv",index=False)
     delta.to_csv(RES/"cross_delta_q.csv",index=False); a2.to_csv(RES/"cross_a2_deltaq_identity.csv",index=False)
     orderdf.to_csv(RES/"quadratic_removal.csv",index=False)
-    focus=[1,2,3,5,30,45]; outcomes=[]
+    outcomes=[]
     for pair in [f"{i}-{j}" for i,j in PAIRS]:
-        v=value[value.pair==pair]; h=hess[(hess.pair==pair)&hess.sample_index.isin(focus)]
-        aa=a2[(a2.pair==pair)&a2.sample_index.isin(focus)]; oo=orderdf[(orderdf.pair==pair)&orderdf.sample_index.isin(focus)]
+        # Acceptance is over every stored frame k=1..45; the value identity is
+        # checked at the frozen representative set because it is an algebraic
+        # value-level contract rather than a derivative fit.
+        v=value[value.pair==pair]; h=hess[hess.pair==pair]
+        aa=a2[a2.pair==pair]; oo=orderdf[orderdf.pair==pair]
         vp=bool(v.max_abs_direct_minus_canonical.max()<1e-10)
         hp=bool(h.error_over_richardson_uncertainty.max()<=3 and h.cosine.min()>.999999)
         ap=bool(aa.difference_sigma.max()<=3)
@@ -246,4 +249,3 @@ if __name__ == "__main__":
     if "--preregister" in sys.argv: preregister()
     elif "--analyze" in sys.argv: analyze()
     else: raise SystemExit("use --preregister or --analyze")
-
