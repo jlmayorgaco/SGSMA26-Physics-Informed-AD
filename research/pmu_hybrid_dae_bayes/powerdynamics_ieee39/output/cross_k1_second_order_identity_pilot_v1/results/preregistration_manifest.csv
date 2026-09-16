@@ -1,0 +1,11 @@
+key,value
+task,CROSS-K1-SECOND-ORDER-IDENTITY-PILOT-V1
+start_head,83d145382b75589abc3785569885baac419a1829
+branch,research/pmu-hybrid-dae-bayes-v1
+operating_points,"[""op_m035"", ""op_m085"", ""op_m125""]"
+cross_direction,"[7, 12]"
+richardson_levels,"{""coarse"": [0.0001, 0.0002], ""fine"": [5e-05, 0.0001]}"
+sample_indices,"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]"
+new_tds_count,24
+homotopy,reuse only; no new amplitudes
+future_v3_excluded,True
