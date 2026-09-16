@@ -1,0 +1,6 @@
+{
+  "H0_CANONICAL_measurement_noise": 260915001,
+  "BUS7_MODERATE_CANONICAL_NOISE_measurement_noise": 260915007,
+  "posterior_predictive_draws": 260915120,
+  "posterior_predictive_N": 2048
+}
