@@ -1,0 +1,4 @@
+scenario_id,op_tag,op_m,event_support,severity_fraction,severity_percent,onset_s,sampling_hz,post_event_frames,noise_mode,noise_seed,split,future_v3_excluded,reason
+H0_NO_EVENT_CANONICAL_NOISE,op_m085,0.85,,0,0,2.0,30,120,canonical,260915001,INTEGRATION,true,IEEE39_SPARSE_PMU_STATE_EVENT_ESTIMATION_V1
+BUS7_EVENT_NOISELESS,op_m085,0.85,7,0.0033,0.33,2.0,30,120,disabled,,INTEGRATION,true,IEEE39_SPARSE_PMU_STATE_EVENT_ESTIMATION_V1
+BUS7_EVENT_CANONICAL_NOISE,op_m085,0.85,7,0.0033,0.33,2.0,30,120,canonical,260915007,INTEGRATION,true,IEEE39_SPARSE_PMU_STATE_EVENT_ESTIMATION_V1

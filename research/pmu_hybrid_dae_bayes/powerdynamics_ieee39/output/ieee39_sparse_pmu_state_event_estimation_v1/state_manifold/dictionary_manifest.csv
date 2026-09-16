@@ -1,0 +1,4 @@
+quantity,shape,source,sha256
+D,"(120, 192, 16)",C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\research\pmu_hybrid_dae_bayes\powerdynamics_ieee39\output\ieee39_end2end_single_v1\state_manifold\corrected_full_state_manifold_op_m085.npz,d68a41651ef154a514632c5ec553ad03b35f8090aee94e0ac604818cfc8f32af
+Q,"(120, 192, 16)",C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\research\pmu_hybrid_dae_bayes\powerdynamics_ieee39\output\ieee39_end2end_single_v1\state_manifold\corrected_full_state_manifold_op_m085.npz,d68a41651ef154a514632c5ec553ad03b35f8090aee94e0ac604818cfc8f32af
+Qcross,"(120, 192, 120)",C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\research\pmu_hybrid_dae_bayes\powerdynamics_ieee39\output\ieee39_end2end_single_v1\state_manifold\corrected_full_state_manifold_op_m085.npz,d68a41651ef154a514632c5ec553ad03b35f8090aee94e0ac604818cfc8f32af

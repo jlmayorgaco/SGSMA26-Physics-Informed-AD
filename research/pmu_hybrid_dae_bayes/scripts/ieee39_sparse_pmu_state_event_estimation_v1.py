@@ -218,7 +218,7 @@ def _nominal_and_decomposition(rec: dict, sm: dict) -> None:
     truth = rec["truth"]
     methods = {"NOMINAL": np.repeat(sm["x0"][None], len(truth), axis=0),
                "ORACLE": rec["oracle"], "MAP": rec["map"], "BMA": rec["bma"]}
-    order = sm["order"]; rows = []
+    order = sm["order"]; rows = []; angle_rows = []
     vt = base.state_to_bus_v(truth, order)
     for method, x in methods.items():
         v = base.state_to_bus_v(x, order); err = v - vt
@@ -230,7 +230,14 @@ def _nominal_and_decomposition(rec: dict, sm: dict) -> None:
             rows.append({"method": method, "group": group, "quantity": "Vmag",
                          "rmse": float(np.sqrt(np.mean((np.abs(v[:, mask])-np.abs(vt[:, mask])) ** 2))),
                          "angle_rmse_rad": float(np.sqrt(np.mean(base.wrapped(np.angle(v[:, mask]) - np.angle(vt[:, mask])) ** 2)))})
+            ae = base.wrapped(np.angle(v[:, mask]) - np.angle(vt[:, mask]))
+            angle_rows.append({"method": method, "group": group, "quantity": "Vangle",
+                               "rmse_rad": float(np.sqrt(np.mean(ae * ae))),
+                               "mae_rad": float(np.mean(np.abs(ae))),
+                               "p95_abs_rad": float(np.quantile(np.abs(ae), .95)),
+                               "max_abs_rad": float(np.max(np.abs(ae)))})
     pd.DataFrame(rows).to_csv(REC / "voltage_absolute_metrics.csv", index=False)
+    pd.DataFrame(angle_rows).to_csv(REC / "angle_absolute_metrics.csv", index=False)
     # Explicit physical-vs-event-inference vector decomposition.
     out = []
     for method in ("MAP", "BMA"):
@@ -295,12 +302,22 @@ def _copy_required_tables(summary: pd.DataFrame) -> None:
                     "hypotheses": 137, "rho": RHO, "gh_order": 31}]).to_csv(AUDIT / "experiment_contract.csv", index=False)
     # Exact canonical output ordering (the source list is ordered by the
     # estimator contract, not by the user-facing descending list).
-    ptab = pd.read_csv(PREREG / "pmu_contract.csv")
-    pd.DataFrame([{"channel_index": int(r.channel_index), "channel_name": str(r.physical_quantity),
-                    "pmu_bus": PMU_BUSES[min(i // 2, 7)] if i < 16 else PMU_BUSES[(i - 16) // 2],
-                    "quantity": "voltage" if int(r.channel_index) < 16 else "terminal_current",
-                    "mapping": str(r.internal_measurement_mapping)}
-                   for i, r in ptab.iterrows()]).to_csv(AUDIT / "pmu_channels.csv", index=False)
+    rows = []
+    for i, bus in enumerate(PMU_BUSES):
+        rows.extend([{"channel_index": 2 * i, "channel_name": "V_re", "pmu_bus": bus,
+                       "quantity": "voltage", "mapping": f"VIndex({bus},:busbar_u_r)"},
+                      {"channel_index": 2 * i + 1, "channel_name": "V_im", "pmu_bus": bus,
+                       "quantity": "voltage", "mapping": f"VIndex({bus},:busbar_u_i)"}])
+    # Frozen terminal-current map from the canonical eight-PMU contract.
+    current_map = [(8, 11, "dst"), (35, 37, "dst"), (10, 18, "src"),
+                   (21, 35, "src"), (17, 31, "src"), (2, 1, "dst"),
+                   (5, 8, "dst"), (30, 5, "dst")]
+    for j, (bus, edge, terminal) in enumerate(current_map):
+        rows.extend([{"channel_index": 16 + 2 * j, "channel_name": "I_re", "pmu_bus": bus,
+                       "quantity": "terminal_current", "mapping": f"edge{edge}_{terminal}_I_re"},
+                      {"channel_index": 17 + 2 * j, "channel_name": "I_im", "pmu_bus": bus,
+                       "quantity": "terminal_current", "mapping": f"edge{edge}_{terminal}_I_im"}])
+    pd.DataFrame(rows).to_csv(AUDIT / "pmu_channels.csv", index=False)
 
 
 def publish_results() -> None:
@@ -313,6 +330,7 @@ def publish_results() -> None:
         "voltage_absolute_metrics.csv": REC / "voltage_absolute_metrics.csv",
         "voltage_delta_metrics.csv": REC / "voltage_delta_metrics.csv",
         "angle_delta_metrics.csv": REC / "angle_delta_metrics.csv",
+        "angle_absolute_metrics.csv": REC / "angle_absolute_metrics.csv",
         "native_state_metrics.csv": REC / "native_state_metrics.csv",
         "differential_state_summary.csv": REC / "differential_state_summary.csv",
         "algebraic_state_summary.csv": REC / "algebraic_state_summary.csv",
