@@ -1,6 +1,6 @@
 # CROSS-K1-SECOND-ORDER-IDENTITY-PILOT-V1
 
-Start HEAD `83d145382b75589abc3785569885baac419a1829`; analysis HEAD `8e4518ea87d3a69aff782cecc56fcb82382a025d`; branch `research/pmu-hybrid-dae-bayes-v1`; no push.
+Start HEAD `83d145382b75589abc3785569885baac419a1829`; analysis HEAD `580517efaa3963a6635273733d12e75206195316`; branch `research/pmu-hybrid-dae-bayes-v1`; no push.
 
 ## Frozen scope and execution
 
@@ -16,7 +16,7 @@ The independent A2 estimate uses only pre-pilot four-sign physical contrasts. Pu
 
 ## Idealized remainder
 
-After subtracting lambda^2 DeltaQ, no focus-row local remainder remains above the frozen TDS numerical floor. Because the four-sign mixed contrast cancels cubic monomials, a resolved fourth-order remainder would be expected; the observed below-floor result is compatible with O(lambda^3) but does not identify an exponent. The correction is diagnostic only and does not alter Qcross or the estimator.
+After subtracting lambda^2 DeltaQ, the lower local point (lambda=.5) is below the frozen TDS numerical floor for every focus row; some lambda=1 residuals are resolved, so a numerical exponent cannot be estimated. Because the four-sign mixed contrast cancels cubic monomials, a resolved fourth-order remainder would be expected; the absence of a resolved quadratic scaling is compatible with O(lambda^3) or higher. The correction is diagnostic only and does not alter Qcross or the estimator.
 
 ## Statuses
 
@@ -27,7 +27,7 @@ CROSS_DELTA_Q = PASS
 CROSS_A2_ESTIMATE = PASS
 CROSS_A2_DELTAQ_IDENTITY = PASS
 NUMERICAL_QUADRATIC_TERM_REMOVAL = PASS
-IDEALIZED_REMAINDER_ORDER = O3_COMPATIBLE_BELOW_NUMERICAL_FLOOR
+IDEALIZED_REMAINDER_ORDER = O3_COMPATIBLE_LOWER_POINT_BELOW_FLOOR
 CROSS_7_12_SECOND_ORDER_THEORY = PASS
 BROADER_CROSS_REPLICATION_READINESS = YES
 CUBIC_DEVELOPMENT_READINESS = BLOCKED
@@ -37,7 +37,7 @@ V3_READINESS = NOT_READY
 
 1. Under the matched stencil, H_output_7_12 = H_y H_state_7_12: **yes**; median/max relative error are 1.446e-04/3.021e-04, and max error/uncertainty is 0.2546.
 2. A2_7_12 = DeltaQ_7_12: **yes, within numerical uncertainty**; maximum discrepancy 1.1232 sigma.
-3. After subtracting lambda^2 DeltaQ, the remainder is **compatible** with O(lambda^3) but lies below the frozen numerical floor, so no exponent is claimed.
+3. After subtracting lambda^2 DeltaQ, the remainder is **compatible** with O(lambda^3) or higher, but lambda=.5 is below the frozen numerical floor, so no exponent is claimed.
 4. Evidence for an additional quadratic physical mechanism: **no**.
 5. Replication on 26--28, 3--18, and 16--18 is **justified**.
 

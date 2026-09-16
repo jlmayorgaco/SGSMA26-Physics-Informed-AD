@@ -410,7 +410,7 @@ def analyze() -> None:
     # compatible with the requested O(lambda^3) gate without inventing a
     # measurable exponent.
     cubic_compatible = bool((len(resolved_order) and pmed >= 2.7) or not len(resolved_order))
-    order_status = "O3_COMPATIBLE" if len(resolved_order) else "O3_COMPATIBLE_BELOW_NUMERICAL_FLOOR"
+    order_status = "O3_COMPATIBLE" if len(resolved_order) else "O3_COMPATIBLE_LOWER_POINT_BELOW_FLOOR"
     statuses = {
         "MATCHED_CROSS_STENCIL": "PASS",
         "PRODUCTION_VALUE_IDENTITY": "PASS" if value_pass else "FAIL",
@@ -455,13 +455,13 @@ def analyze() -> None:
         "## Cross DeltaQ and independent A2", "",
         f"The independent A2 estimate uses only pre-pilot four-sign physical contrasts. Pure self terms cancel; lambda=.5,1 form the local Richardson estimate, while lambda=5,20 are finite-amplitude stress only. Across the focus frames, median ||A2||/||DeltaQ|| = **{med(afocus,'norm_ratio'):.6g}**, median cosine = **{med(afocus,'cosine'):.9f}**, but these direction metrics are cancellation-sensitive. The decisive uncertainty-normalized maximum is **{a2_zmax:.4f} sigma**, so A2=DeltaQ is not rejected.", "",
         "## Idealized remainder", "",
-        (f"After subtracting lambda^2 DeltaQ, the resolved median local order is **{pmed:.4f}**. " if np.isfinite(pmed) else "After subtracting lambda^2 DeltaQ, no focus-row local remainder remains above the frozen TDS numerical floor. ") + "Because the four-sign mixed contrast cancels cubic monomials, a resolved fourth-order remainder would be expected; the observed below-floor result is compatible with O(lambda^3) but does not identify an exponent. The correction is diagnostic only and does not alter Qcross or the estimator.", "",
+        (f"After subtracting lambda^2 DeltaQ, the resolved median local order is **{pmed:.4f}**. " if np.isfinite(pmed) else "After subtracting lambda^2 DeltaQ, the lower local point (lambda=.5) is below the frozen TDS numerical floor for every focus row; some lambda=1 residuals are resolved, so a numerical exponent cannot be estimated. ") + "Because the four-sign mixed contrast cancels cubic monomials, a resolved fourth-order remainder would be expected; the absence of a resolved quadratic scaling is compatible with O(lambda^3) or higher. The correction is diagnostic only and does not alter Qcross or the estimator.", "",
         "## Statuses", "",
     ] + [f"{k} = {v}" for k, v in statuses.items()] + [
         "", "## Explicit answers", "",
         f"1. Under the matched stencil, H_output_7_12 = H_y H_state_7_12: **{'yes' if hessian_pass else 'no'}**; median/max relative error are {hfocus.relative_error.median():.3e}/{hfocus.relative_error.max():.3e}, and max error/uncertainty is {hfocus.error_over_richardson_uncertainty.max():.4f}.",
         f"2. A2_7_12 = DeltaQ_7_12: **{'yes, within numerical uncertainty' if a2_pass else 'not within the preregistered gate'}**; maximum discrepancy {a2_zmax:.4f} sigma.",
-        (f"3. After subtracting lambda^2 DeltaQ, the remainder is **compatible** with O(lambda^3) but lies below the frozen numerical floor, so no exponent is claimed." if cubic_compatible and not len(resolved_order) else f"3. After subtracting lambda^2 DeltaQ, the remainder is **{'compatible' if cubic_compatible else 'not compatible'}** with O(lambda^3); median resolved local p={pmed:.4f}."),
+        (f"3. After subtracting lambda^2 DeltaQ, the remainder is **compatible** with O(lambda^3) or higher, but lambda=.5 is below the frozen numerical floor, so no exponent is claimed." if cubic_compatible and not len(resolved_order) else f"3. After subtracting lambda^2 DeltaQ, the remainder is **{'compatible' if cubic_compatible else 'not compatible'}** with O(lambda^3); median resolved local p={pmed:.4f}."),
         f"4. Evidence for an additional quadratic physical mechanism: **{'no' if a2_pass and cubic_compatible else 'not excluded'}**.",
         f"5. Replication on 26--28, 3--18, and 16--18 is **{'justified' if statuses['BROADER_CROSS_REPLICATION_READINESS']=='YES' else 'not yet justified'}**.",
         "", "## One next scientific action", "",
