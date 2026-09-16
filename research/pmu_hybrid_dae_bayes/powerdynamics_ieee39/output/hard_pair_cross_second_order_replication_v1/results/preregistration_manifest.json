@@ -1,0 +1,41 @@
+{
+  "task": "HARD-PAIR-CROSS-SECOND-ORDER-REPLICATION-V1",
+  "start_head": "218fdfda69ea94c15664fa1f2e79096997432ee2",
+  "branch": "research/pmu-hybrid-dae-bayes-v1",
+  "pairs": [
+    "26-28",
+    "3-18",
+    "16-18"
+  ],
+  "operating_points": [
+    0.35,
+    0.85,
+    1.25
+  ],
+  "coarse_steps": [
+    0.0001,
+    0.0002
+  ],
+  "fine_steps": [
+    5e-05,
+    0.0001
+  ],
+  "solver": {
+    "name": "Rodas5P",
+    "abstol": 1e-11,
+    "reltol": 1e-11,
+    "dtmax": 0.016666666666666666
+  },
+  "k1": 2.033333333333333,
+  "frames": [
+    1,
+    45
+  ],
+  "whitening": "frozen W2 AR1",
+  "numerical_floor_source": "finite_amplitude_remainder_order_v1/results/numerical_floor.csv",
+  "sigma_acceptance": 3.0,
+  "a2": "pre-pilot mixed-sign Richardson lambda=.5,1",
+  "delta_q": "Qproduction-Qfrozen; cross factor=1",
+  "future_v3_excluded": true,
+  "new_tds_count": 72
+}
