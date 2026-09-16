@@ -1,0 +1,25 @@
+op_tag,term,dictionary_coefficient,factor,check,norm
+op_m035,self_7,Q=0.5 H_self,0.5,PASS,77.30410843880694
+op_m035,self_26,Q=0.5 H_self,0.5,PASS,49.225900421610035
+op_m035,self_3,Q=0.5 H_self,0.5,PASS,293.70857330133805
+op_m035,self_16,Q=0.5 H_self,0.5,PASS,288.6620782980883
+op_m035,cross_7_12,Qcross=H_cross,1.0,PASS,47.75593587761562
+op_m035,cross_26_28,Qcross=H_cross,1.0,PASS,154.68712842927033
+op_m035,cross_3_18,Qcross=H_cross,1.0,PASS,249.68649503246886
+op_m035,cross_16_18,Qcross=H_cross,1.0,PASS,247.51283113440851
+op_m085,self_7,Q=0.5 H_self,0.5,PASS,77.1863766811955
+op_m085,self_26,Q=0.5 H_self,0.5,PASS,49.149090764416385
+op_m085,self_3,Q=0.5 H_self,0.5,PASS,301.82231138541533
+op_m085,self_16,Q=0.5 H_self,0.5,PASS,288.28237005262366
+op_m085,cross_7_12,Qcross=H_cross,1.0,PASS,47.821108280424845
+op_m085,cross_26_28,Qcross=H_cross,1.0,PASS,154.46703220954143
+op_m085,cross_3_18,Qcross=H_cross,1.0,PASS,252.8015856334522
+op_m085,cross_16_18,Qcross=H_cross,1.0,PASS,247.0465685361773
+op_m125,self_7,Q=0.5 H_self,0.5,PASS,77.09213861787246
+op_m125,self_26,Q=0.5 H_self,0.5,PASS,49.08773713485476
+op_m125,self_3,Q=0.5 H_self,0.5,PASS,308.37842713928256
+op_m125,self_16,Q=0.5 H_self,0.5,PASS,287.9792333451827
+op_m125,cross_7_12,Qcross=H_cross,1.0,PASS,47.87366326461765
+op_m125,cross_26_28,Qcross=H_cross,1.0,PASS,154.29126785895212
+op_m125,cross_3_18,Qcross=H_cross,1.0,PASS,255.28155307414085
+op_m125,cross_16_18,Qcross=H_cross,1.0,PASS,246.67396992597267
