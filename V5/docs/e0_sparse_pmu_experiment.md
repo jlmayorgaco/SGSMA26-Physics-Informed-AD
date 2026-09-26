@@ -19,8 +19,9 @@ comparison/     REF vs EST tables created after inference
 
 It also writes uncertainty CSVs, windowed signal metrics, circular angle
 errors, complex voltage/current phasor errors, 95% coverage, electrical
-distance metadata, event scores, 39 per-bus figures, a 39-by-6 NRMSE heatmap,
-and a final report.
+distance metadata, event scores, latent-load `alpha` trajectories, an
+alpha heatmap, 39 per-bus figures, a 39-by-6 NRMSE heatmap, and a final
+report.
 
 ## Run
 
@@ -46,12 +47,27 @@ contract in `manifest.json` and `estimator_diagnostics.csv`:
 - `event_label_used_during_estimation = false`;
 - `REF_*` columns are created only in the evaluator's comparison stage.
 
-The first implementation is a regularized complex-voltage/current WLS
-baseline. It uses observed PMU phasors, temporal regularization, and network
-physics rows derived from the PowerDynamics PiLine convention. Generator-bus
-injections are left unknown. Results are intentionally reported per signal
-and per time window; voltage, current, frequency, and ROCOF are not collapsed
-into one mixed-unit score.
+The current implementation separates two gates:
+
+- **E0-R reconstruction:** the oracle supplies only the event class `load`.
+  The estimator receives eight positive-sequence voltage PMUs and the model
+  audit, but no hidden bus files, `Event` column, event bus, magnitude, or
+  interval. Static loads use latent power-factor-preserving multipliers,
+  `P=(1+alpha)P0` and `Q=(1+alpha)Q0`, with nominal values acting as sparse
+  priors rather than hard constraints.
+- **E0-I inference:** the bus, multiplier, and interval are read from the
+  inferred alpha trajectory. A voltage-only change gate is derived from the
+  sparse PMUs to relax alpha sparsity during the observed transient; it is
+  not the hidden event label.
+
+The core signals are voltage phasor, frequency, and ROCOF: sparse PMU
+frequency/ROCOF constrain observed phase increments while the voltage phasor
+drives the network solve. Current is derived from `Ybus @ V` and is explicitly
+reported as out-of-model validation because the current export is a fallback
+semantic. Results remain per signal and per time window; voltage, current,
+frequency, and ROCOF are not collapsed into one mixed-unit score. If alpha
+does not pass its localization threshold, the report marks the inference
+`needs_review` rather than claiming a bus.
 
 Run the unit checks with:
 

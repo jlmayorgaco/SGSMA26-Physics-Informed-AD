@@ -5,12 +5,14 @@ The estimator phase receives only the eight files in ``input_sparse``.  The
 post-estimation evaluator.  This separation is deliberate: it prevents a
 comparison artifact from silently becoming an estimator input.
 
-The state model is a regularized complex-voltage WLS estimator.  Its
-physics-informed rows are derived from the IEEE39 PiLine equations and the
-known static-load model: junction buses have zero net injection and static
-load buses use their nominal constant-impedance admittance.  Generator-bus
-injections remain unknown.  Observed voltage and current phasors, a temporal
-prior, and these network equations are combined in each frame.
+The E0-R reconstruction model is a regularized complex-voltage estimator with
+latent, power-factor-preserving load multipliers.  Nominal load admittances
+are priors, not hard constraints: for each static-load bus the equation is
+``S(V)=V*conj(YV)=(1 + alpha)S0`` and ``alpha`` is estimated from the
+observed voltage phasors plus the network model.  A sparse/temporal prior
+keeps most load multipliers at zero while allowing a short event.  Current is
+derived as ``Y V`` and is reported as out-of-model validation until its PMU
+semantics are canonicalized.
 """
 
 from __future__ import annotations
@@ -28,7 +30,8 @@ from typing import Any, Iterable, Mapping, Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm, TwoSlopeNorm
+from scipy.optimize import lsq_linear
 
 
 ALL_BUSES = tuple(f"BUS{i}" for i in range(1, 40))
@@ -43,6 +46,10 @@ SCENARIO_ID = "SIM_PD39_SPARSE_PMU_E0"
 BASE_MVA = 100.0
 NOMINAL_FREQUENCY_HZ = 60.0
 SAMPLE_RATE_HZ = 30.0
+LOAD_ALPHA_MIN = -0.5
+LOAD_ALPHA_MAX = 0.5
+CORE_SIGNALS = ("VA_MAG", "VA_ANG", "Freq", "ROCOF")
+CURRENT_VALIDATION_SIGNALS = ("IA_MAG", "IA_ANG")
 
 
 @dataclass(frozen=True)
@@ -70,6 +77,7 @@ class EstimateData:
     current_a: np.ndarray
     frequency_hz: np.ndarray
     rocof_hz_s: np.ndarray
+    alpha_estimates: np.ndarray
     sigma_voltage_v: np.ndarray
     sigma_voltage_angle_deg: np.ndarray
     sigma_current_a: np.ndarray
@@ -264,6 +272,37 @@ def _phase_derivatives(angles_rad: np.ndarray, times: np.ndarray) -> tuple[np.nd
     return frequency, rocof
 
 
+def _observed_change_gate(voltage_pu: np.ndarray, timestamps: np.ndarray) -> np.ndarray:
+    """Find a candidate transient interval from sparse voltage only.
+
+    This is an estimator-side change detector, not the hidden ``Event``
+    column.  It is used only to relax alpha sparsity during the interval in
+    which the observed PMUs show a coherent step.
+    """
+
+    magnitude = np.abs(voltage_pu)
+    edge_score = np.mean(
+        np.abs(np.diff(magnitude, axis=0)) / np.maximum(magnitude[:-1], 1e-9),
+        axis=1,
+    )
+    order = np.argsort(edge_score)[::-1]
+    selected: list[int] = []
+    minimum_gap = max(2, int(SAMPLE_RATE_HZ * 1.0))
+    for candidate in order:
+        if all(abs(int(candidate) - item) >= minimum_gap for item in selected):
+            selected.append(int(candidate))
+        if len(selected) == 2:
+            break
+    if len(selected) < 2:
+        return np.zeros(len(timestamps), dtype=bool)
+    selected.sort()
+    start = selected[0] + 1
+    end = selected[1] + 1
+    gate = np.zeros(len(timestamps), dtype=bool)
+    gate[start : min(end + 1, len(gate))] = True
+    return gate
+
+
 def _covariance_derived(
     x: np.ndarray,
     covariance: np.ndarray,
@@ -413,6 +452,386 @@ def _estimate_timeseries(
         current_a=np.abs(states @ ybus.T) * (BASE_MVA * 1e6 / (math.sqrt(3.0) * base_kv[None, :] * 1000.0)),
         frequency_hz=frequency,
         rocof_hz_s=rocof,
+        alpha_estimates=np.zeros((n_times, n_buses), dtype=float),
+        sigma_voltage_v=sigma_v,
+        sigma_voltage_angle_deg=sigma_va,
+        sigma_current_a=sigma_i,
+        sigma_current_angle_deg=sigma_ia,
+        sigma_frequency_hz=np.zeros_like(sigma_v),
+        sigma_rocof_hz_s=np.zeros_like(sigma_v),
+        diagnostics=pd.DataFrame(diagnostics),
+    )
+
+
+def _load_candidate_indices(audit: Mapping[str, Any], n_buses: int) -> tuple[np.ndarray, np.ndarray]:
+    """Return static-load buses and their nominal admittances.
+
+    Generator injections are deliberately excluded from the latent-load
+    parameterization.  A bus with both a generator and a load is also left
+    free because its net injection is not identifiable from a load-only
+    multiplier without adding a generator model.
+    """
+
+    buses = {int(row["bus"]): row for row in audit["buses"]}
+    admittances = _load_admittances(audit, n_buses)
+    candidates = [
+        number - 1
+        for number in range(1, n_buses + 1)
+        if bool(buses[number].get("has_load", False)) and not bool(buses[number].get("has_gen", False))
+    ]
+    return np.asarray(candidates, dtype=int), admittances
+
+
+def _latent_alpha_real_system(
+    ybus: np.ndarray,
+    load_indices: np.ndarray,
+    zero_injection_indices: np.ndarray,
+    generator_indices: np.ndarray,
+    load_admittances: np.ndarray,
+    observed_indices: np.ndarray,
+    observed_voltage: np.ndarray,
+    phase_increment_targets: np.ndarray | None,
+    x_reference: np.ndarray,
+    alpha_reference: np.ndarray,
+    previous_state: np.ndarray,
+    previous_alpha: np.ndarray,
+    state_anchor: np.ndarray,
+    *,
+    physics_weight: float,
+    voltage_weight: float,
+    state_prior_weight: float,
+    temporal_state_weight: float,
+    alpha_sparsity_weight: float,
+    alpha_temporal_weight: float,
+    generator_temporal_weight: float,
+    dynamic_phase_weight: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Assemble one Gauss--Newton linearization with real alpha variables.
+
+    The nonlinear term ``alpha * y_load * V`` is linearized around the
+    previous state.  Voltage observations are the only PMU measurements used
+    in the core solve; measured current remains an OOD validation signal.
+    """
+
+    n_buses = ybus.shape[0]
+    n_alpha = len(load_indices)
+    selector = np.zeros((len(observed_indices), n_buses), dtype=complex)
+    selector[np.arange(len(observed_indices)), observed_indices] = 1.0
+
+    complex_x_rows: list[np.ndarray] = []
+    complex_alpha_rows: list[np.ndarray] = []
+    complex_rhs: list[complex] = []
+    direct_x_rows: list[np.ndarray] = []
+    direct_alpha_rows: list[np.ndarray] = []
+    direct_rhs: list[complex] = []
+
+    def add_complex_row(row_x: np.ndarray, row_alpha: np.ndarray, rhs: complex, weight: float) -> None:
+        complex_x_rows.append(np.asarray(row_x, dtype=complex) * weight)
+        complex_alpha_rows.append(np.asarray(row_alpha, dtype=complex) * weight)
+        complex_rhs.append(complex(rhs) * weight)
+
+    for row_index, bus_index in enumerate(observed_indices):
+        alpha_row = np.zeros(n_alpha, dtype=complex)
+        add_complex_row(selector[row_index], alpha_row, observed_voltage[row_index], voltage_weight)
+
+    if phase_increment_targets is not None:
+        for row_index, bus_index in enumerate(observed_indices):
+            reference_voltage = previous_state[bus_index]
+            if abs(reference_voltage) < 1e-9:
+                continue
+            reciprocal = 1.0 / reference_voltage
+            angle_row = np.zeros(2 * n_buses, dtype=complex)
+            # i*Im((x - x_prev)/x_prev) is a complex row whose imaginary
+            # component is the measured phase increment.  The target uses
+            # both sparse PMU frequency and ROCOF.
+            angle_row[bus_index] = 1j * reciprocal.imag
+            angle_row[n_buses + bus_index] = 1j * reciprocal.real
+            direct_x_rows.append(angle_row * dynamic_phase_weight)
+            direct_alpha_rows.append(np.zeros(n_alpha, dtype=complex))
+            direct_rhs.append(1j * float(phase_increment_targets[row_index]) * dynamic_phase_weight)
+
+    load_set = set(int(index) for index in load_indices)
+    load_position = {int(index): position for position, index in enumerate(load_indices)}
+    for bus_index in range(n_buses):
+        alpha_row = np.zeros(n_alpha, dtype=complex)
+        if bus_index in load_set:
+            position = load_position[bus_index]
+            y_load = load_admittances[bus_index]
+            # PowerDynamics' ZIP export uses the load P/Q setpoint as a
+            # constant-power complex injection at this stage.  In current
+            # form this is YV = (1+alpha)*conj(S0)/conj(V).  Linearize the
+            # equivalent power equation S(V)=V*conj(YV), which also makes
+            # the requested P/Q-preserving alpha explicit.
+            row_y = ybus[bus_index]
+            v_ref = x_reference[bus_index]
+            i_ref = row_y @ x_reference
+            s_ref = v_ref * np.conj(i_ref)
+            s_nominal = np.conj(y_load)
+            jacobian = np.zeros(2 * n_buses, dtype=complex)
+            jacobian[:n_buses] = v_ref * np.conj(row_y)
+            jacobian[n_buses:] = -1j * v_ref * np.conj(row_y)
+            jacobian[bus_index] += np.conj(i_ref)
+            jacobian[n_buses + bus_index] += 1j * np.conj(i_ref)
+            direct_alpha = np.zeros(n_alpha, dtype=complex)
+            direct_alpha[position] = -s_nominal
+            state_reference_real = np.r_[x_reference.real, x_reference.imag]
+            rhs = -s_ref + jacobian @ state_reference_real + s_nominal
+            row_scale = max(float(np.linalg.norm(jacobian)), float(abs(s_nominal)), 1.0)
+            direct_x_rows.append(jacobian / row_scale * physics_weight)
+            direct_alpha_rows.append(direct_alpha / row_scale * physics_weight)
+            direct_rhs.append(rhs / row_scale * physics_weight)
+            continue
+        elif bus_index in set(int(index) for index in zero_injection_indices):
+            # Non-generator, non-load buses are zero-injection junctions.
+            row_x = ybus[bus_index].copy()
+            rhs = 0.0j
+        else:
+            # Generator injections and generator+load net injections are
+            # intentionally latent and receive no pseudo-measurement row.
+            continue
+        row_scale = max(float(np.linalg.norm(row_x)), float(np.linalg.norm(alpha_row)), 1.0)
+        add_complex_row(row_x / row_scale, alpha_row / row_scale, rhs / row_scale, physics_weight)
+
+    # Generator injections are not known pseudo-measurements.  A weak
+    # temporal prior on their *apparent power* prevents an unobserved load
+    # change from being explained for free by an arbitrary generator jump.
+    # The prior is deliberately soft because generator electromechanical
+    # dynamics are not part of this E0 model.
+    previous_generator_power = np.asarray(
+        [previous_state[index] * np.conj(ybus[index] @ previous_state) for index in generator_indices],
+        dtype=complex,
+    )
+    for generator_position, bus_index in enumerate(generator_indices):
+        v_ref = x_reference[bus_index]
+        row_y = ybus[bus_index]
+        i_ref = row_y @ x_reference
+        s_ref = v_ref * np.conj(i_ref)
+        jacobian = np.zeros(2 * n_buses, dtype=complex)
+        jacobian[:n_buses] = v_ref * np.conj(row_y)
+        jacobian[n_buses:] = -1j * v_ref * np.conj(row_y)
+        jacobian[bus_index] += np.conj(i_ref)
+        jacobian[n_buses + bus_index] += 1j * np.conj(i_ref)
+        rhs = previous_generator_power[generator_position] - s_ref + jacobian @ np.r_[x_reference.real, x_reference.imag]
+        row_scale = max(float(np.linalg.norm(jacobian)), 1.0)
+        direct_x_rows.append(jacobian / row_scale * math.sqrt(generator_temporal_weight))
+        direct_alpha_rows.append(np.zeros(n_alpha, dtype=complex))
+        direct_rhs.append(rhs / row_scale * math.sqrt(generator_temporal_weight))
+
+    identity_x = np.eye(n_buses, dtype=complex)
+    for row_index in range(n_buses):
+        add_complex_row(
+            identity_x[row_index],
+            np.zeros(n_alpha, dtype=complex),
+            state_anchor[row_index],
+            math.sqrt(state_prior_weight),
+        )
+        add_complex_row(
+            identity_x[row_index],
+            np.zeros(n_alpha, dtype=complex),
+            previous_state[row_index],
+            math.sqrt(temporal_state_weight),
+        )
+
+    complex_x = np.vstack(complex_x_rows)
+    complex_alpha = np.vstack(complex_alpha_rows)
+    complex_b = np.asarray(complex_rhs, dtype=complex)
+    real_x = np.block([[complex_x.real, -complex_x.imag], [complex_x.imag, complex_x.real]])
+    real_x = np.hstack([real_x, np.zeros((real_x.shape[0], n_alpha), dtype=float)])
+    real_alpha = np.vstack([complex_alpha.real, complex_alpha.imag])
+    real_b = np.concatenate([complex_b.real, complex_b.imag])
+    if direct_x_rows:
+        direct_x = np.vstack(direct_x_rows)
+        direct_alpha = np.vstack(direct_alpha_rows)
+        direct_b = np.asarray(direct_rhs, dtype=complex)
+        direct_real_x = np.vstack([direct_x.real, direct_x.imag])
+        direct_real_alpha = np.vstack([direct_alpha.real, direct_alpha.imag])
+        direct_real_b = np.concatenate([direct_b.real, direct_b.imag])
+        direct_matrix = np.hstack([direct_real_x, direct_real_alpha])
+        real_x = np.vstack([real_x, direct_matrix])
+        real_b = np.concatenate([real_b, direct_real_b])
+
+    # IRLS is a convex surrogate for the alpha L1/group-sparse penalty.  The
+    # small epsilon prevents a zero alpha from becoming an infinite hard row.
+    alpha_epsilon = 0.02
+    sparsity_rows = np.zeros((n_alpha, 2 * n_buses + n_alpha), dtype=float)
+    sparsity_rows[:, 2 * n_buses:] = np.diag(
+        np.sqrt(alpha_sparsity_weight / (np.abs(alpha_reference) + alpha_epsilon))
+    )
+    temporal_rows = np.zeros_like(sparsity_rows)
+    temporal_rows[:, 2 * n_buses:] = np.eye(n_alpha) * math.sqrt(alpha_temporal_weight)
+    real_a = np.vstack([real_x, sparsity_rows, temporal_rows])
+    real_rhs = np.concatenate(
+        [real_b, np.zeros(n_alpha, dtype=float), math.sqrt(alpha_temporal_weight) * previous_alpha]
+    )
+
+    lower = np.r_[np.full(2 * n_buses, -np.inf), np.full(n_alpha, LOAD_ALPHA_MIN)]
+    upper = np.r_[np.full(2 * n_buses, np.inf), np.full(n_alpha, LOAD_ALPHA_MAX)]
+    return real_a, real_rhs, lower, upper, complex_x
+
+
+def _estimate_timeseries_latent_alpha(
+    timestamps: np.ndarray,
+    voltage_pu: np.ndarray,
+    ybus: np.ndarray,
+    audit: Mapping[str, Any],
+    observed_indices: Sequence[int],
+    base_kv: np.ndarray,
+    observed_frequency_hz: np.ndarray | None = None,
+    observed_rocof_hz_s: np.ndarray | None = None,
+    *,
+    voltage_weight: float = 100.0,
+    physics_weight: float = 100.0,
+    state_prior_weight: float = 0.0001,
+    temporal_state_weight: float = 0.005,
+    alpha_sparsity_weight: float = 0.0005,
+    alpha_temporal_weight: float = 0.001,
+    generator_temporal_weight: float = 0.1,
+    dynamic_phase_weight: float = 10.0,
+    linearization_steps: int = 3,
+) -> EstimateData:
+    """Estimate all voltages and latent load multipliers from sparse V PMUs.
+
+    This is the E0-R model.  It knows the *class* of event (load multiplier)
+    through its parameterization, but it does not receive the event bus,
+    event magnitude, event timestamps, hidden PMUs, or hidden event labels.
+    """
+
+    n_times = voltage_pu.shape[0]
+    n_buses = ybus.shape[0]
+    observed = np.asarray(observed_indices, dtype=int)
+    load_indices, load_admittances = _load_candidate_indices(audit, n_buses)
+    observed_change_gate = _observed_change_gate(voltage_pu, timestamps)
+    buses = {int(row["bus"]): row for row in audit["buses"]}
+    generator_indices = np.asarray(
+        [number - 1 for number in range(1, n_buses + 1) if bool(buses[number].get("has_gen", False))],
+        dtype=int,
+    )
+    zero_injection_indices = np.asarray(
+        [
+            number - 1
+            for number in range(1, n_buses + 1)
+            if not bool(buses[number].get("has_load", False))
+            and not bool(buses[number].get("has_gen", False))
+        ],
+        dtype=int,
+    )
+    n_alpha = len(load_indices)
+    state_anchor = np.ones(n_buses, dtype=complex)
+    previous_state = state_anchor.copy()
+    previous_alpha = np.zeros(n_alpha, dtype=float)
+
+    states = np.zeros((n_times, n_buses), dtype=complex)
+    alphas = np.zeros((n_times, n_buses), dtype=float)
+    sigma_v = np.zeros((n_times, n_buses), dtype=float)
+    sigma_va = np.zeros_like(sigma_v)
+    sigma_i = np.zeros_like(sigma_v)
+    sigma_ia = np.zeros_like(sigma_v)
+    diagnostics: list[dict[str, Any]] = []
+
+    for time_index in range(n_times):
+        x_reference = previous_state.copy()
+        alpha_reference = previous_alpha.copy()
+        state = previous_state.copy()
+        alpha = previous_alpha.copy()
+        covariance = np.eye(2 * n_buses + n_alpha, dtype=float)
+        real_a = np.eye(2 * n_buses + n_alpha, dtype=float)
+        real_b = np.zeros(2 * n_buses + n_alpha, dtype=float)
+        for iteration in range(linearization_steps):
+            phase_targets = None
+            if time_index > 0 and observed_frequency_hz is not None and observed_rocof_hz_s is not None:
+                dt = 1.0 / SAMPLE_RATE_HZ
+                phase_targets = 2.0 * np.pi * (
+                    (observed_frequency_hz[time_index] - NOMINAL_FREQUENCY_HZ) * dt
+                    + 0.5 * observed_rocof_hz_s[time_index] * dt * dt
+                )
+            real_a, real_b, lower, upper, _ = _latent_alpha_real_system(
+                ybus=ybus,
+                load_indices=load_indices,
+                zero_injection_indices=zero_injection_indices,
+                generator_indices=generator_indices,
+                load_admittances=load_admittances,
+                observed_indices=observed,
+                observed_voltage=voltage_pu[time_index],
+                phase_increment_targets=phase_targets,
+                x_reference=x_reference,
+                alpha_reference=alpha_reference,
+                previous_state=previous_state,
+                previous_alpha=previous_alpha,
+                state_anchor=state_anchor,
+                physics_weight=physics_weight,
+                voltage_weight=voltage_weight,
+                state_prior_weight=state_prior_weight,
+                temporal_state_weight=temporal_state_weight,
+                alpha_sparsity_weight=alpha_sparsity_weight
+                * (2.0 if time_index == 0 else 1.0)
+                * (0.05 if observed_change_gate[time_index] else 1.0),
+                alpha_temporal_weight=alpha_temporal_weight * (0.1 if observed_change_gate[time_index] else 1.0),
+                generator_temporal_weight=generator_temporal_weight,
+                dynamic_phase_weight=dynamic_phase_weight,
+            )
+            solved = lsq_linear(real_a, real_b, bounds=(lower, upper), lsmr_tol="auto", verbose=0)
+            vector = solved.x
+            state = vector[:n_buses] + 1j * vector[n_buses : 2 * n_buses]
+            alpha = vector[2 * n_buses:]
+            # Damping avoids a single poorly conditioned frame moving the
+            # linearization point too far before the next Gauss--Newton step.
+            if iteration + 1 < linearization_steps:
+                x_reference = 0.5 * x_reference + 0.5 * state
+                alpha_reference = 0.5 * alpha_reference + 0.5 * alpha
+
+        residual = real_a @ solved.x - real_b
+        normal = real_a.T @ real_a
+        try:
+            covariance = np.linalg.pinv(normal, rcond=1e-10)
+        except np.linalg.LinAlgError:
+            covariance = np.eye(real_a.shape[1], dtype=float) * 1e-6
+        degrees_of_freedom = max(len(real_b) - len(solved.x), 1)
+        sigma2 = float(np.sum(residual**2) / degrees_of_freedom)
+        covariance *= max(sigma2, 1e-12)
+        state_covariance = covariance[: 2 * n_buses, : 2 * n_buses]
+        sv, sva, si, sia = _covariance_derived(state, state_covariance, ybus, base_kv)
+        states[time_index] = state
+        alphas[time_index, load_indices] = alpha
+        sigma_v[time_index] = sv
+        sigma_va[time_index] = sva
+        sigma_i[time_index] = si
+        sigma_ia[time_index] = sia
+        diagnostics.append(
+            {
+                "TIMESTAMP": float(timestamps[time_index]),
+                "FRAME_INDEX": time_index,
+                "N_OBSERVED_PMUS": len(observed),
+                "MEASUREMENT_ROWS": int(len(real_b)),
+                "RESIDUAL_NORM": float(np.sqrt(np.mean(residual**2))),
+                "MATRIX_CONDITION": float(np.linalg.cond(normal)),
+                "POSTERIOR_SIGMA2": sigma2,
+                "N_ACTIVE_LOAD_ALPHAS": int(np.sum(np.abs(alpha) >= 0.02)),
+                "MAX_ABS_LOAD_ALPHA": float(np.max(np.abs(alpha))) if len(alpha) else 0.0,
+                "OBSERVED_CHANGE_GATE": bool(observed_change_gate[time_index]),
+                "SOLVER_SUCCESS": bool(solved.success),
+                "ESTIMATOR_SEES_GROUND_TRUTH": False,
+                "ESTIMATOR_SEES_EVENT_LABEL": False,
+            }
+        )
+        previous_state = state
+        previous_alpha = alpha
+        if time_index == 0:
+            # The first sparse frame is the model-only operating-point
+            # anchor.  This is an online baseline choice, not a ground-truth
+            # or event-label lookup.
+            state_anchor = state.copy()
+
+    current = states @ ybus.T
+    frequency, rocof = _phase_derivatives(np.angle(states), np.arange(n_times) / SAMPLE_RATE_HZ)
+    return EstimateData(
+        timestamps=timestamps,
+        voltage_pu=states,
+        current_pu=current,
+        voltage_v=np.abs(states) * (base_kv[None, :] * 1000.0 / math.sqrt(3.0)),
+        current_a=np.abs(current) * (BASE_MVA * 1e6 / (math.sqrt(3.0) * base_kv[None, :] * 1000.0)),
+        frequency_hz=frequency,
+        rocof_hz_s=rocof,
+        alpha_estimates=alphas,
         sigma_voltage_v=sigma_v,
         sigma_voltage_angle_deg=sigma_va,
         sigma_current_a=sigma_i,
@@ -555,63 +974,73 @@ def _shortest_path_distances(audit: Mapping[str, Any], observed: Sequence[str]) 
 
 
 def _event_inference(estimate: EstimateData, timestamps: np.ndarray) -> tuple[pd.DataFrame, dict[str, Any]]:
-    voltage = np.abs(estimate.voltage_pu)
-    current = np.abs(estimate.current_pu)
-    dv = np.abs(np.diff(voltage, axis=0)) / np.maximum(np.mean(voltage, axis=0, keepdims=True), 1e-6)
-    di = np.abs(np.diff(current, axis=0)) / np.maximum(np.mean(current, axis=0, keepdims=True), 1e-6)
-    edge_score = np.nanmean(np.nan_to_num(dv, nan=0.0), axis=1) + np.nanmean(np.nan_to_num(di, nan=0.0), axis=1)
-    order = np.argsort(edge_score)[::-1]
-    chosen: list[int] = []
-    minimum_gap = max(2, int(SAMPLE_RATE_HZ * 1.0))
-    for candidate in order:
-        if candidate <= 0 or candidate >= len(timestamps) - 2:
-            continue
-        if all(abs(int(candidate) - item) >= minimum_gap for item in chosen):
-            chosen.append(int(candidate))
-        if len(chosen) == 2:
-            break
-    chosen.sort()
-    onset_index = chosen[0] if chosen else int(np.argmax(edge_score))
-    end_index = chosen[1] if len(chosen) > 1 else min(onset_index + int(5 * SAMPLE_RATE_HZ), len(timestamps) - 1)
+    """Perform E0-I localization from the inferred latent load multipliers."""
+
+    alpha = np.asarray(estimate.alpha_estimates, dtype=float)
+    baseline_count = max(10, min(len(timestamps) // 5, len(timestamps) - 1))
+    baseline = np.median(alpha[:baseline_count], axis=0)
+    centered = alpha - baseline[None, :]
+    strength = np.max(np.abs(centered), axis=1)
+    edge_score = np.nanmax(np.abs(np.diff(centered, axis=0)), axis=1)
+    gate = estimate.diagnostics.get("OBSERVED_CHANGE_GATE") if not estimate.diagnostics.empty else None
+    gated_indices = np.flatnonzero(np.asarray(gate, dtype=bool)) if gate is not None else np.asarray([], dtype=int)
+    if len(gated_indices):
+        onset_index = int(gated_indices[0])
+        end_index = int(gated_indices[-1])
+    else:
+        order = np.argsort(edge_score)[::-1]
+        chosen: list[int] = []
+        minimum_gap = max(2, int(SAMPLE_RATE_HZ * 1.0))
+        for candidate in order:
+            if candidate <= 0 or candidate >= len(timestamps) - 2:
+                continue
+            if all(abs(int(candidate) - item) >= minimum_gap for item in chosen):
+                chosen.append(int(candidate))
+            if len(chosen) == 2:
+                break
+        chosen.sort()
+        onset_index = chosen[0] if chosen else int(np.argmax(edge_score))
+        end_index = chosen[1] if len(chosen) > 1 else min(onset_index + int(5 * SAMPLE_RATE_HZ), len(timestamps) - 1)
     onset = float(timestamps[onset_index])
     end = float(timestamps[end_index])
     middle = (timestamps >= onset + 0.5) & (timestamps < end - 0.5)
     pre = timestamps < onset
+    post = timestamps >= end
     scores: list[dict[str, Any]] = []
-    for index in range(voltage.shape[1]):
-        apparent_s = estimate.voltage_pu[:, index] * np.conj(estimate.current_pu[:, index])
-        p_pre = float(np.mean(apparent_s[pre].real)) if np.any(pre) else float(apparent_s[0].real)
-        q_pre = float(np.mean(apparent_s[pre].imag)) if np.any(pre) else float(apparent_s[0].imag)
-        p_mid = float(np.mean(apparent_s[middle].real)) if np.any(middle) else p_pre
-        q_mid = float(np.mean(apparent_s[middle].imag)) if np.any(middle) else q_pre
-        p_ratio = abs(p_mid) / max(abs(p_pre), 1e-9)
-        q_ratio = abs(q_mid) / max(abs(q_pre), 1e-9)
+    for index in range(alpha.shape[1]):
+        alpha_pre = float(np.median(centered[pre, index])) if np.any(pre) else float(centered[0, index])
+        alpha_mid = float(np.median(centered[middle, index])) if np.any(middle) else alpha_pre
+        alpha_post = float(np.median(centered[post, index])) if np.any(post) else alpha_pre
+        delta = alpha_mid - alpha_pre
         scores.append(
             {
                 "BUS": f"BUS{index + 1}",
-                "P_PRE_PU": p_pre,
-                "P_EVENT_PU": p_mid,
-                "Q_PRE_PU": q_pre,
-                "Q_EVENT_PU": q_mid,
-                "P_ABS_RATIO": p_ratio,
-                "Q_ABS_RATIO": q_ratio,
-                "LOAD_CHANGE_SCORE": abs(p_ratio - 1.0) + abs(q_ratio - 1.0),
+                "ALPHA_PRE": alpha_pre,
+                "ALPHA_EVENT": alpha_mid,
+                "ALPHA_POST": alpha_post,
+                "ALPHA_CHANGE": delta,
+                "MAX_ABS_ALPHA": float(np.max(np.abs(centered[:, index]))),
+                "LOAD_CHANGE_SCORE": abs(delta),
             }
         )
     score_df = pd.DataFrame(scores).sort_values("LOAD_CHANGE_SCORE", ascending=False).reset_index(drop=True)
     winner = score_df.iloc[0].to_dict()
-    multiplier_plausible = 0.5 <= float(winner["P_ABS_RATIO"]) <= 1.5 and 0.5 <= float(winner["Q_ABS_RATIO"]) <= 1.5
+    alpha_event = float(winner["ALPHA_EVENT"])
+    multiplier_plausible = LOAD_ALPHA_MIN <= alpha_event <= LOAD_ALPHA_MAX
+    alpha_detected = abs(alpha_event) >= 0.02
     inference = {
-        "estimator_input": "estimated virtual PMU signals only",
+        "estimator_input": "sparse positive-sequence voltage PMUs plus model audit",
+        "reconstruction_gate": "E0-R: oracle event type=load only",
+        "inference_gate": "E0-I: bus, magnitude, and interval inferred from latent alpha",
         "ground_truth_used": False,
         "event_label_used": False,
         "estimated_onset_s": onset,
         "estimated_end_s": end,
         "candidate_bus": winner["BUS"],
-        "classification": "load_change" if winner["P_ABS_RATIO"] > 1.0 and winner["Q_ABS_RATIO"] > 1.0 and multiplier_plausible else "change_detected_needs_review",
-        "quality_flag": "plausible_multiplier" if multiplier_plausible else "needs_localization_or_model_review",
-        "estimated_P_abs_multiplier": float(winner["P_ABS_RATIO"]),
-        "estimated_Q_abs_multiplier": float(winner["Q_ABS_RATIO"]),
+        "classification": "load_change" if alpha_detected and multiplier_plausible else "change_detected_needs_review",
+        "quality_flag": "plausible_multiplier" if alpha_detected and multiplier_plausible else "insufficient_local_alpha_or_model_review",
+        "estimated_load_multiplier": 1.0 + alpha_event,
+        "event_strength_max_abs_alpha": float(np.max(strength)),
         "top_candidates": score_df.head(5).to_dict(orient="records"),
     }
     return score_df, inference
@@ -698,6 +1127,55 @@ def _write_summary_plots(plot_dir: Path, metrics: pd.DataFrame, distances: pd.Da
     ax.set_xlabel("|P ratio - 1| + |Q ratio - 1|")
     fig.tight_layout()
     fig.savefig(plot_dir / "event_localization_scores.png", dpi=150)
+    plt.close(fig)
+
+
+def _write_alpha_artifacts(
+    metrics_dir: Path,
+    plot_dir: Path,
+    estimate: EstimateData,
+    audit: Mapping[str, Any],
+) -> None:
+    """Persist the latent-load result used by E0-I and its diagnostic plot."""
+
+    load_buses = {
+        f"BUS{int(row['bus'])}"
+        for row in audit.get("buses", [])
+        if bool(row.get("has_load", False)) and not bool(row.get("has_gen", False))
+    }
+    rows = []
+    for time_index, timestamp in enumerate(estimate.timestamps):
+        for bus_index, bus in enumerate(ALL_BUSES):
+            rows.append(
+                {
+                    "TIMESTAMP": float(timestamp),
+                    "BUS": bus,
+                    "ALPHA_EST": float(estimate.alpha_estimates[time_index, bus_index]),
+                    "LOAD_CANDIDATE": bus in load_buses,
+                }
+            )
+    pd.DataFrame(rows).to_csv(metrics_dir / "alpha_estimates.csv", index=False)
+
+    matrix = estimate.alpha_estimates.T
+    limit = max(0.05, float(np.nanpercentile(np.abs(matrix), 99.0)))
+    fig, ax = plt.subplots(figsize=(14, 10))
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        cmap="coolwarm",
+        norm=TwoSlopeNorm(vmin=-limit, vcenter=0.0, vmax=limit),
+        extent=[float(estimate.timestamps[0]), float(estimate.timestamps[-1]), len(ALL_BUSES) + 0.5, 0.5],
+    )
+    ax.set_yticks(np.arange(1, len(ALL_BUSES) + 1), ALL_BUSES)
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Bus")
+    ax.set_title("E0 latent load multiplier alpha — model-only inference")
+    ax.axvline(5.0, color="black", linestyle="--", linewidth=0.8, alpha=0.6)
+    ax.axvline(10.0, color="black", linestyle="--", linewidth=0.8, alpha=0.6)
+    fig.colorbar(image, ax=ax, label="alpha (P,Q multiplier = 1 + alpha)")
+    fig.tight_layout()
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(plot_dir / "alpha_heatmap_bus_time.png", dpi=150)
     plt.close(fig)
 
 
@@ -827,6 +1305,7 @@ def _evaluate(reference: ReferenceData, estimate: EstimateData, comparison_dir: 
     event_scores, event_inference = _event_inference(estimate, reference.timestamps)
     event_scores.to_csv(metrics_dir / "event_localization_scores.csv", index=False)
     (metrics_dir / "event_inference.json").write_text(json.dumps(_jsonable(event_inference), indent=2), encoding="utf-8")
+    _write_alpha_artifacts(metrics_dir, plot_dir, estimate, audit)
 
     all_metrics = metrics[metrics["WINDOW"] == "all"]
     observed_metrics = all_metrics[all_metrics["OBSERVABILITY"] == "observed"]
@@ -838,7 +1317,11 @@ def _evaluate(reference: ReferenceData, estimate: EstimateData, comparison_dir: 
     )
     summary = {
         "scenario_id": SCENARIO_ID,
-        "estimator": "complex_voltage_current_wls_with_network_physics_prior",
+        "estimator": "latent_sparse_load_alpha_voltage_state_estimator",
+        "reconstruction_gate": "E0-R",
+        "inference_gate": "E0-I",
+        "core_signals": list(CORE_SIGNALS),
+        "current_validation_signals": list(CURRENT_VALIDATION_SIGNALS),
         "bus_count": len(ALL_BUSES),
         "observed_bus_count": len(OBSERVED_BUSES),
         "unobserved_bus_count": len(ALL_BUSES) - len(OBSERVED_BUSES),
@@ -851,6 +1334,12 @@ def _evaluate(reference: ReferenceData, estimate: EstimateData, comparison_dir: 
         "mean_coverage_95_observed": float(coverage[coverage["OBSERVABILITY"] == "observed"]["COVERAGE_95"].mean()),
         "mean_coverage_95_unobserved": float(coverage[coverage["OBSERVABILITY"] == "unobserved"]["COVERAGE_95"].mean()),
         "event_inference": event_inference,
+        "latent_alpha": {
+            "parameterization": "P(t)=(1+alpha(t))*P0; Q(t)=(1+alpha(t))*Q0",
+            "candidate_count": int(np.sum(np.any(np.abs(estimate.alpha_estimates) > 0.0, axis=0))),
+            "max_abs_alpha": float(np.max(np.abs(estimate.alpha_estimates))),
+            "ground_truth_used_for_inference": False,
+        },
     }
     (metrics_dir / "summary.json").write_text(json.dumps(_jsonable(summary), indent=2), encoding="utf-8")
     _write_summary_plots(plot_dir, metrics, distances, event_scores)
@@ -875,7 +1364,9 @@ def _write_report(output_dir: Path, summary: Mapping[str, Any], estimate: Estima
         "",
         "## Estimation model",
         "",
-        "Complex voltage/current WLS with observed PMU phasors, temporal regularization, and IEEE39 PiLine/load physics rows. Generator-bus injections are not treated as known pseudo-measurements.",
+        "E0-R uses only positive-sequence voltage PMUs and the model audit. Static-load buses have latent power-factor-preserving multipliers, `P=(1+alpha)P0` and `Q=(1+alpha)Q0`; nominal values are soft sparse priors. Generator-bus injections remain unknown. Current is derived from `YV` only for out-of-model validation.",
+        "",
+        "The reconstruction gate receives the oracle event class `load` but not its bus, magnitude, or interval. The inference gate then estimates those quantities from the latent alpha trajectory.",
         "",
         "## Results",
         "",
@@ -901,10 +1392,10 @@ def _write_report(output_dir: Path, summary: Mapping[str, Any], estimate: Estima
             f"- Candidate: `{inference['candidate_bus']}`",
             f"- Classification: `{inference['classification']}`",
             f"- Estimated interval: `{inference['estimated_onset_s']:.3f}`–`{inference['estimated_end_s']:.3f}` s",
-            f"- Estimated |P| multiplier: `{inference['estimated_P_abs_multiplier']:.6g}`",
-            f"- Estimated |Q| multiplier: `{inference['estimated_Q_abs_multiplier']:.6g}`",
+            f"- Estimated load multiplier: `{inference['estimated_load_multiplier']:.6g}`",
+            f"- Maximum absolute latent alpha: `{inference['event_strength_max_abs_alpha']:.6g}`",
             "",
-            "The complete per-bus comparisons, windowed metrics, uncertainty coverage, event scores, electrical distances, and figures are stored alongside this report.",
+            "The complete per-bus comparisons, windowed metrics, uncertainty coverage, alpha trajectories/heatmap, event scores, electrical distances, and figures are stored alongside this report.",
         ]
     )
     (report_dir / "FINAL_REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -930,16 +1421,16 @@ def run_e0_sparse_pmu_experiment(reference_dir: str | Path, output_dir: str | Pa
     # its signature or data path; evaluation happens in a later phase.
     sparse = _load_reference(sparse_dir, audit, buses=OBSERVED_BUSES, include_event=False)
     ybus = build_ybus_from_audit(audit)
-    physics = _physics_rows(audit, ybus, {_bus_number(bus) - 1 for bus in OBSERVED_BUSES})
     base_kv_full = np.asarray([float(row["base_kv"]) for row in sorted(audit["buses"], key=lambda row: int(row["bus"]))])
-    estimated = _estimate_timeseries(
+    estimated = _estimate_timeseries_latent_alpha(
         timestamps=sparse.timestamps,
         voltage_pu=sparse.voltage_pu,
-        current_pu=sparse.current_pu,
         ybus=ybus,
-        physics_rows=physics,
+        audit=audit,
         observed_indices=[_bus_number(bus) - 1 for bus in OBSERVED_BUSES],
         base_kv=base_kv_full,
+        observed_frequency_hz=sparse.frequency_hz,
+        observed_rocof_hz_s=sparse.rocof_hz_s,
     )
     estimated = _fill_dynamic_uncertainty(estimated)
 
@@ -985,7 +1476,23 @@ def run_e0_sparse_pmu_experiment(reference_dir: str | Path, output_dir: str | Pa
             "ground_truth_used_during_estimation": False,
             "event_label_used_during_estimation": False,
             "ref_columns_visible_to_estimator": False,
-            "model": "complex voltage/current WLS + PiLine and static-load physics rows + temporal prior",
+            "reconstruction_gate": "E0-R: oracle event type=load only",
+            "inference_gate": "E0-I: latent alpha bus/magnitude/interval inference",
+            "model": "positive-sequence voltage Gauss-Newton WLS + PiLine equations + sparse temporal latent load alpha",
+            "dynamic_measurements": "observed sparse PMU frequency and ROCOF constrain observed phase increments",
+            "current_semantics": "Ybus@V derived validation only; not used in the core solve",
+            "hyperparameters": {
+                "voltage_weight": 100.0,
+                "physics_weight": 100.0,
+                "state_prior_weight": 0.0001,
+                "temporal_state_weight": 0.005,
+                "alpha_sparsity_weight": 0.0005,
+                "alpha_temporal_weight": 0.001,
+                "generator_temporal_weight": 0.1,
+                "dynamic_phase_weight": 10.0,
+                "alpha_bounds": [LOAD_ALPHA_MIN, LOAD_ALPHA_MAX],
+                "linearization_steps": 3,
+            },
         },
         "timestamps": int(len(sparse.timestamps)),
         "summary": summary,

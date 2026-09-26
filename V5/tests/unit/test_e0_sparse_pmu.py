@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.estimation.e0_sparse_pmu.pipeline import build_ybus_from_audit, circular_error_deg, wrap_angle_deg
+from src.estimation.e0_sparse_pmu.pipeline import (
+    _observed_change_gate,
+    build_ybus_from_audit,
+    circular_error_deg,
+    wrap_angle_deg,
+)
 
 
 def test_circular_angle_error_handles_wraparound() -> None:
@@ -33,3 +38,15 @@ def test_powerdynamics_tap_convention_is_used() -> None:
     assert np.isclose(ybus[1, 1], y)
     assert np.isclose(ybus[0, 1], -2.0 * y)
     assert np.isclose(ybus[1, 0], -2.0 * y)
+
+
+def test_observed_change_gate_uses_sparse_voltage_only() -> None:
+    timestamps = np.arange(451, dtype=float) / 30.0
+    voltage = np.ones((451, 2), dtype=complex)
+    voltage[150:, :] *= 0.999
+    voltage[300:, :] /= 0.999
+    gate = _observed_change_gate(voltage, timestamps)
+    assert gate[151]
+    assert gate[299]
+    assert not gate[100]
+    assert not gate[350]
