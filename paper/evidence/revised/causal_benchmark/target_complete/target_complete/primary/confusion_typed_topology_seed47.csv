@@ -1,0 +1,10 @@
+true_event,normal,fault,line_outage,generation_change,load_change,missing_data,physical_plus_missing,bad_data,unknown_mixed
+normal,12761,16,134,0,0,0,0,0,0
+fault,32,317,0,0,0,2,0,0,0
+line_outage,74,0,2825,32,116,80,1,0,0
+generation_change,44,0,0,666,186,24,0,0,0
+load_change,34,0,0,8,1511,95,0,0,8
+missing_data,176,0,0,0,0,0,0,0,0
+physical_plus_missing,44,0,1,9,32,29,805,0,0
+bad_data,0,0,0,0,0,0,0,127,49
+unknown_mixed,2,0,4,0,0,1,0,41,892

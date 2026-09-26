@@ -16,6 +16,9 @@ release/
 plots/
 *.log
 *.tmp
+temp/
+.codex_tmp/
+*.egg-info/
 
 # Large local model/training artifacts not used by the reviewer entrypoint
 models/

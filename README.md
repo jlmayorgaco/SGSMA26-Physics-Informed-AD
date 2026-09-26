@@ -12,18 +12,32 @@ TIMESTAMP, Bus, Predicted_Event, Predicted_Location
 
 ```text
 main.py                         Reviewer-facing inference entrypoint
-src/models/hybrid_submission.py Final windowed ML runtime with physics fallback only if ML bundle is absent
-src/models/bus_agnostic.py      Runtime bus-agnostic physics model
-src/features/pmu_discovery.py   Dynamic PMU bus discovery utilities
-models/                         Validated ExtraTrees detector/classifier/localizer bundle
-models_bus_agnostic/            Physics fallback config and legacy RAW metric tables
-figures/                        IEEE-ready report figures
-MODEL.md                        Final model details, metrics, and efficiency notes
+src/                            Competition package and physics-informed runtime
+tests/                          Unit, smoke, integration, and regression tests
+pipelines/                      Reproducible competition data pipelines
+research/pmu_hybrid_dae_bayes/  Standalone sparse-PMU hybrid-DAE campaign
+paper/                          Conference manuscript, evidence, figures, and review notes
+presentation/ and slides/       Tutorials and presentation sources
+data/ and configs/              Small checked-in inputs and configuration
+MODEL.md                        Final model contract and reported metrics
 sgsma_2026_final_submission.zip Minimal reviewer package
 ```
 
-Large local training artifacts and exploratory outputs are intentionally not part of the committed reviewer path.
+Large local training artifacts, simulator outputs, caches, and scratch runs are intentionally ignored.
 The compact submission archive includes the `models/` runtime bundle even though that directory is ignored in normal development.
+
+## Research and paper
+
+The post-competition hidden-state reconstruction study is documented in:
+
+- `research/pmu_hybrid_dae_bayes/README.md` — scope, leakage contract, and commands;
+- `research/pmu_hybrid_dae_bayes/src/` — physics, measurement, simulation, and estimator code;
+- `research/pmu_hybrid_dae_bayes/tests/` — campaign-specific validation.
+
+The current IEEE manuscript and its reproducibility evidence live in `paper/`. Build and
+benchmark commands are documented in `paper/README.md`.
+
+`RAW0001` is treated as an organizer-supplied IEEE-39 reference simulation, not field PMU data or independent external validation.
 
 ## Quick Start
 
@@ -109,7 +123,7 @@ J_Mayorga_Results_Test1.xlsx
 J_Mayorga_Results_Test2.xlsx
 ```
 
-The workbook adapter preserves each bus sheet, fills the `label` column, and adds the `Evaluation Metrics` sheet required by the live-test email. See `COMPETITION_DAY.md` for the short runbook.
+The workbook adapter preserves each bus sheet, fills the `label` column, and adds the `Metrics` sheet required by the policy PDF. See `COMPETITION_DAY.md` for the short runbook.
 Diagnostics are written outside the upload folder under `output\competition_day\_diagnostics\`.
 
 ## Validate the Reviewer Package
@@ -140,13 +154,9 @@ The full historical test suite includes legacy migration/regression tests that m
 
 ## Report Metrics and Figures
 
-Final selected-model metrics are stored in:
-
-```text
-models/final_metrics.json
-```
-
-IEEE-ready figures are in `figures/` as both `.pdf` and `.png`.
+The final selected-model metrics and runtime contract are maintained in `MODEL.md`.
+The manuscript figures and quantitative evidence are under `paper/figures/` and
+`paper/evidence/`.
 
 Current selected-model validation summary:
 

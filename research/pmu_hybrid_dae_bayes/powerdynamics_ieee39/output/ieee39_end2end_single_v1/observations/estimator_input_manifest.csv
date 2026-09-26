@@ -1,4 +1,0 @@
-case_id,artifact,sha256,rows,channels,keys
-case_a,C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\research\pmu_hybrid_dae_bayes\powerdynamics_ieee39\output\ieee39_end2end_single_v1\observations\estimator_input_case_a.npz,cd3e9515372f6c8a78ebe734da045629ccea8189718aae123308fd9abe734f23,120,32,time_s|pmu_32|contract_sha256
-case_b,C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\research\pmu_hybrid_dae_bayes\powerdynamics_ieee39\output\ieee39_end2end_single_v1\observations\estimator_input_case_b.npz,54041118826bc301c68f1d3f4ef7177e980b8557a3065b42129ee8ecd38b3795,120,32,time_s|pmu_32|contract_sha256
-case_c,C:\Users\walla\Documents\Github\SGSMA26-Physics-Informed-AD\research\pmu_hybrid_dae_bayes\powerdynamics_ieee39\output\ieee39_end2end_single_v1\observations\estimator_input_case_c.npz,237192d7c6c39521b753d1fd0211def1368253ac8e84cc587b5766d8f64527f1,120,32,time_s|pmu_32|contract_sha256

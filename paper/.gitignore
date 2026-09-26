@@ -1,0 +1,15 @@
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+final_text.txt
+qa_render_final/
+review/render_final/
+
+# Local renders and scratch data
+tmp/
+.render_slides_revision/

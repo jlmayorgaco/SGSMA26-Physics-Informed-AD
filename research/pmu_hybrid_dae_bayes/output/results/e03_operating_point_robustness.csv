@@ -1,7 +1,0 @@
-point,ac_pf,dynamic_linearization
-nominal,PASS,PASS
-g1_scale_0.98,PASS,NOT_RUN
-g1_scale_0.99,PASS,NOT_RUN
-g1_scale_1.00,PASS,NOT_RUN
-g1_scale_1.01,PASS,NOT_RUN
-g1_scale_1.02,PASS,NOT_RUN

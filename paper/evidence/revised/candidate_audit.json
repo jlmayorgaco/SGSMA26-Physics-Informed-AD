@@ -1,0 +1,131 @@
+{
+  "archive": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\sgsma_2026_final_submission.zip",
+  "archive_sha256": "e0bfc17e4c5ee9b595fa51fd94d736145c2f48755696c8d2eadcff00cb23a243",
+  "model_member": "models/localizer/final_dynamic_localizers.joblib",
+  "topology": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\data\\topology\\ieee39\\branches_physical.csv",
+  "topology_partition": {
+    "physical_branches": 46,
+    "transmission_lines": 34,
+    "transformers": 12
+  },
+  "line_event": {
+    "event": 2,
+    "expected_count": 34,
+    "fitted_count": 34,
+    "covered_count": 24,
+    "coverage": 0.7058823529411765,
+    "covered": [
+      "LINE1-2",
+      "LINE1-39",
+      "LINE2-25",
+      "LINE3-18",
+      "LINE4-14",
+      "LINE6-11",
+      "LINE10-11",
+      "LINE10-13",
+      "LINE13-14",
+      "LINE14-15",
+      "LINE15-16",
+      "LINE16-17",
+      "LINE16-19",
+      "LINE16-21",
+      "LINE16-24",
+      "LINE17-18",
+      "LINE17-27",
+      "LINE21-22",
+      "LINE22-23",
+      "LINE23-24",
+      "LINE25-26",
+      "LINE26-27",
+      "LINE26-28",
+      "LINE26-29"
+    ],
+    "missing": [
+      "LINE2-3",
+      "LINE3-4",
+      "LINE4-5",
+      "LINE5-6",
+      "LINE5-8",
+      "LINE6-7",
+      "LINE7-8",
+      "LINE8-9",
+      "LINE9-39",
+      "LINE28-29"
+    ],
+    "invalid": [
+      "LINE2-30",
+      "LINE10-32",
+      "LINE11-12",
+      "LINE12-13",
+      "LINE19-20",
+      "LINE19-33",
+      "LINE20-34",
+      "LINE22-35",
+      "LINE23-36",
+      "LINE25-37"
+    ]
+  },
+  "generation_event_after_report_bus_mapping": {
+    "event": 3,
+    "expected_count": 10,
+    "fitted_count": 10,
+    "covered_count": 10,
+    "coverage": 1.0,
+    "covered": [
+      "BUS2",
+      "BUS6",
+      "BUS10",
+      "BUS19",
+      "BUS20",
+      "BUS22",
+      "BUS23",
+      "BUS25",
+      "BUS29",
+      "BUS39"
+    ],
+    "missing": [],
+    "invalid": []
+  },
+  "load_event": {
+    "event": 4,
+    "expected_count": 18,
+    "fitted_count": 19,
+    "covered_count": 18,
+    "coverage": 1.0,
+    "covered": [
+      "BUS3",
+      "BUS4",
+      "BUS7",
+      "BUS8",
+      "BUS12",
+      "BUS15",
+      "BUS16",
+      "BUS18",
+      "BUS20",
+      "BUS21",
+      "BUS23",
+      "BUS24",
+      "BUS25",
+      "BUS26",
+      "BUS27",
+      "BUS28",
+      "BUS29",
+      "BUS39"
+    ],
+    "missing": [],
+    "invalid": [
+      "BUS31"
+    ]
+  },
+  "pmu_sites": [
+    "BUS2",
+    "BUS5",
+    "BUS6",
+    "BUS10",
+    "BUS19",
+    "BUS22",
+    "BUS29",
+    "BUS39"
+  ],
+  "interpretation": "Generation labels admit a one-to-one reporting conversion. The missing line classes require regenerated training data and cannot be repaired by relabeling."
+}

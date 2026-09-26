@@ -1,4 +1,4 @@
-﻿[build-system]
+[build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -25,9 +25,21 @@ dev = [
   "pytest>=8.0",
   "pytest-cov>=5.0"
 ]
+simulation = [
+  "andes>=1.9.3",
+  "pyarrow>=14.0"
+]
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools.package-data]
+rawsim39 = ["configs/*.yaml"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "rawsim39*"]
+exclude = ["tests*", "experiments*", "output*", "examples*"]
 
 [tool.pytest.ini_options]
 pythonpath = [

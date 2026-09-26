@@ -9,9 +9,11 @@ formats while preserving the original workbook layout.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 import shutil
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -19,8 +21,10 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
+from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from openpyxl.cell import WriteOnlyCell
 from sklearn.metrics import accuracy_score, f1_score
 
 from src.models.hybrid_submission import run_hybrid_submission_prediction
@@ -67,6 +71,25 @@ class PreparedBusSheet:
 class WorkbookPreparation:
     csv_dir: Path
     bus_sheets: list[PreparedBusSheet]
+    total_rows: int
+    source_truth: dict[tuple[int, tuple[str, Any]], int] | None
+    warnings: list[str]
+
+
+@dataclass(frozen=True)
+class CsvBusSource:
+    sheet_name: str
+    bus: int
+    source_name: str
+    original_columns: list[str]
+    model_csv_path: Path
+    rows: int
+
+
+@dataclass(frozen=True)
+class CsvPreparation:
+    csv_dir: Path
+    bus_sources: list[CsvBusSource]
     total_rows: int
     source_truth: dict[tuple[int, tuple[str, Any]], int] | None
     warnings: list[str]
@@ -123,6 +146,10 @@ def infer_bus_from_sheet(sheet_name: str, columns: list[object]) -> int | None:
     if match:
         return int(match.group(1))
     return _infer_bus_from_columns(columns)
+
+
+def sheet_name_for_bus(bus: int) -> str:
+    return f"Bus{int(bus)}"
 
 
 def _canonical_signal_suffix(suffix: str) -> str:
@@ -263,6 +290,92 @@ def prepare_workbook_for_inference(input_xlsx: Path, work_dir: Path) -> Workbook
     )
 
 
+def _safe_extract_zip_csvs(zip_path: Path, extract_dir: Path) -> list[Path]:
+    if extract_dir.exists():
+        shutil.rmtree(extract_dir)
+    extract_dir.mkdir(parents=True, exist_ok=True)
+    csv_paths: list[Path] = []
+    with zipfile.ZipFile(zip_path) as zf:
+        for info in zf.infolist():
+            if info.is_dir() or not info.filename.lower().endswith(".csv"):
+                continue
+            name = Path(info.filename).name
+            if not name:
+                continue
+            target = extract_dir / name
+            with zf.open(info) as src, target.open("wb") as dst:
+                shutil.copyfileobj(src, dst)
+            csv_paths.append(target)
+    return sorted(csv_paths)
+
+
+def _csv_paths_from_input(input_path: Path, work_dir: Path) -> list[Path]:
+    input_path = Path(input_path)
+    if input_path.suffix.lower() == ".zip":
+        return _safe_extract_zip_csvs(input_path, work_dir / "zip_csvs")
+    if input_path.is_dir():
+        return sorted(input_path.rglob("*.csv"))
+    if input_path.suffix.lower() == ".csv":
+        return [input_path]
+    raise ValueError(f"Expected .xlsx, .xlsm, .zip, .csv, or CSV folder input, got {input_path}")
+
+
+def prepare_csv_input_for_inference(input_path: Path, work_dir: Path) -> CsvPreparation:
+    input_path = Path(input_path)
+    if not input_path.exists():
+        raise FileNotFoundError(input_path)
+    csv_dir = work_dir / "csv_input"
+    if csv_dir.exists():
+        shutil.rmtree(csv_dir)
+    csv_dir.mkdir(parents=True, exist_ok=True)
+
+    warnings: list[str] = []
+    truth_lookup: dict[tuple[int, tuple[str, Any]], int] = {}
+    bus_sources: list[CsvBusSource] = []
+    seen_buses: dict[int, str] = {}
+
+    for csv_path in _csv_paths_from_input(input_path, work_dir):
+        frame = pd.read_csv(csv_path)
+        frame.columns = [str(column).strip() for column in frame.columns]
+        if frame.empty or "TIMESTAMP" not in [_column_key(column) for column in frame.columns]:
+            continue
+        bus = infer_bus_from_sheet(csv_path.stem, list(frame.columns))
+        if bus is None:
+            continue
+        if int(bus) in seen_buses:
+            raise ValueError(f"Duplicate bus {bus} CSV files detected: {seen_buses[int(bus)]} and {csv_path.name}")
+        seen_buses[int(bus)] = csv_path.name
+        warnings.extend(_validate_bus_frame(frame, csv_path.name, int(bus)))
+        model_frame = canonicalize_frame_for_inference(frame, int(bus))
+        model_csv_path = csv_dir / f"Bus{bus}_Competition_Data_nanmask.csv"
+        model_frame.to_csv(model_csv_path, index=False)
+        truth = _label_truth_from_frame(frame)
+        if truth is not None:
+            for timestamp, value in zip(frame["TIMESTAMP"], truth, strict=False):
+                if pd.notna(value):
+                    truth_lookup[(int(bus), _timestamp_key(timestamp))] = int(value)
+        bus_sources.append(
+            CsvBusSource(
+                sheet_name=sheet_name_for_bus(int(bus)),
+                bus=int(bus),
+                source_name=csv_path.name,
+                original_columns=list(frame.columns),
+                model_csv_path=model_csv_path,
+                rows=int(len(frame)),
+            )
+        )
+
+    if not bus_sources:
+        raise ValueError(f"No bus CSV files were detected in {input_path}")
+    return CsvPreparation(
+        csv_dir=csv_dir,
+        bus_sources=sorted(bus_sources, key=lambda item: item.bus),
+        total_rows=int(sum(item.rows for item in bus_sources)),
+        source_truth=truth_lookup if truth_lookup else None,
+        warnings=warnings,
+    )
+
+
 def validate_preparation(prep: WorkbookPreparation, expected_buses: tuple[int, ...] | None) -> None:
     if expected_buses is None:
         return
@@ -275,6 +388,22 @@ def validate_preparation(prep: WorkbookPreparation, expected_buses: tuple[int, .
         errors.append(f"missing expected bus sheets: {missing}")
     if extra:
         errors.append(f"unexpected bus sheets: {extra}")
+    if errors:
+        raise ValueError("; ".join(errors))
+
+
+def validate_csv_preparation(prep: CsvPreparation, expected_buses: tuple[int, ...] | None) -> None:
+    if expected_buses is None:
+        return
+    actual = {item.bus for item in prep.bus_sources}
+    expected = set(expected_buses)
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    errors = []
+    if missing:
+        errors.append(f"missing expected bus CSVs: {missing}")
+    if extra:
+        errors.append(f"unexpected bus CSVs: {extra}")
     if errors:
         raise ValueError("; ".join(errors))
 
@@ -334,6 +463,36 @@ def _write_metrics_sheet(wb, rows: list[tuple[str, Any]]) -> None:
     ws.column_dimensions["B"].width = 78
 
 
+def _write_metrics_sheet_write_only(wb: Workbook, rows: list[tuple[str, Any]]) -> None:
+    ws = wb.create_sheet("Evaluation Metrics")
+    header = []
+    for value in ("Metric", "Value"):
+        cell = WriteOnlyCell(ws, value=value)
+        cell.font = Font(bold=True)
+        cell.fill = METRICS_HEADER_FILL
+        header.append(cell)
+    ws.append(header)
+    for metric, value in rows:
+        ws.append([metric, value])
+    ws.column_dimensions["A"].width = 34
+    ws.column_dimensions["B"].width = 78
+
+
+def _excel_cell_value(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped == "":
+            return None
+        try:
+            numeric = float(stripped)
+        except ValueError:
+            return value
+        return numeric if np.isfinite(numeric) else value
+    return value
+
+
 def label_workbook(
     input_xlsx: Path,
     output_xlsx: Path,
@@ -370,6 +529,64 @@ def label_workbook(
     wb.save(output_xlsx)
 
 
+def create_labeled_workbook_from_csvs(
+    output_xlsx: Path,
+    bus_sources: list[CsvBusSource],
+    predictions: pd.DataFrame,
+    metrics_rows: list[tuple[str, Any]],
+) -> None:
+    lookup = _prediction_lookup(predictions)
+    wb = Workbook(write_only=True)
+    if wb.worksheets:
+        wb.remove(wb.worksheets[0])
+    missing: list[str] = []
+
+    for source in sorted(bus_sources, key=lambda item: item.bus):
+        ws = wb.create_sheet(source.sheet_name)
+        header_values = list(source.original_columns)
+        if not header_values or not _is_label_column(header_values[-1]):
+            header_values.append("label")
+        else:
+            header_values[-1] = "label"
+        header = []
+        for value in header_values:
+            cell = WriteOnlyCell(ws, value=value)
+            if _is_label_column(value):
+                cell.font = Font(bold=True)
+                cell.fill = HEADER_FILL
+            header.append(cell)
+        ws.append(header)
+
+        with source.model_csv_path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row_index, row in enumerate(reader, start=2):
+                timestamp = row.get("TIMESTAMP")
+                key = (int(source.bus), _timestamp_key(timestamp))
+                if key not in lookup:
+                    missing.append(f"{source.sheet_name}!row{row_index}")
+                    label = None
+                else:
+                    label = int(lookup[key])
+                output_row = [
+                    _excel_cell_value(row.get(_canonical_inference_column(column, source.bus), row.get(column)))
+                    for column in source.original_columns
+                ]
+                has_label_last = bool(source.original_columns and _is_label_column(source.original_columns[-1]))
+                if has_label_last:
+                    output_row[-1] = label
+                else:
+                    output_row.append(label)
+                ws.append(output_row)
+
+    if missing:
+        sample = ", ".join(missing[:10])
+        raise ValueError(f"Missing predictions for {len(missing)} CSV rows; first rows: {sample}")
+
+    _write_metrics_sheet_write_only(wb, metrics_rows)
+    output_xlsx.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(output_xlsx)
+
+
 def _model_size_mb(model_dir: Path) -> float:
     if not model_dir.exists():
         return 0.0
@@ -399,6 +616,17 @@ def _load_feature_count(model_dir: Path) -> int | None:
 def _distribution(predictions: pd.DataFrame) -> dict[str, int]:
     counts = predictions["Predicted_Event"].astype(int).value_counts().sort_index()
     return {str(int(label)): int(count) for label, count in counts.items()}
+
+
+def _jsonable_bus_source(source: CsvBusSource) -> dict[str, Any]:
+    return {
+        "sheet_name": source.sheet_name,
+        "bus": int(source.bus),
+        "source_name": source.source_name,
+        "original_columns": list(source.original_columns),
+        "model_csv_path": str(source.model_csv_path),
+        "rows": int(source.rows),
+    }
 
 
 def _maybe_metrics_from_truth(
@@ -507,6 +735,81 @@ def process_test_workbook(
     return summary
 
 
+def process_test_csv_input(
+    input_path: Path,
+    output_xlsx: Path,
+    work_dir: Path,
+    diagnostics_dir: Path,
+    model_dir: Path = DEFAULT_MODEL_DIR,
+    window_seconds: float = 30.0,
+    expected_buses: tuple[int, ...] | None = DEFAULT_EXPECTED_BUSES,
+) -> dict[str, Any]:
+    prep = prepare_csv_input_for_inference(input_path=input_path, work_dir=work_dir)
+    validate_csv_preparation(prep, expected_buses=expected_buses)
+    predictions, diagnostics = run_hybrid_submission_prediction(
+        input_dir=prep.csv_dir,
+        output_csv=work_dir / "predictions.csv",
+        ml_model_dir=model_dir,
+        ml_window_seconds=window_seconds,
+    )
+    metrics_rows = build_metrics_rows(
+        predictions=predictions,
+        diagnostics=diagnostics,
+        total_rows=prep.total_rows,
+        source_truth=prep.source_truth,
+        model_dir=model_dir,
+    )
+    create_labeled_workbook_from_csvs(
+        output_xlsx=output_xlsx,
+        bus_sources=prep.bus_sources,
+        predictions=predictions,
+        metrics_rows=metrics_rows,
+    )
+    summary = {
+        "input": str(Path(input_path).resolve()),
+        "output": str(output_xlsx.resolve()),
+        "bus_sheets": [_jsonable_bus_source(item) for item in prep.bus_sources],
+        "total_rows": prep.total_rows,
+        "validation_warnings": prep.warnings,
+        "predicted_label_distribution": _distribution(predictions),
+        "diagnostics": diagnostics,
+    }
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    (diagnostics_dir / f"{output_xlsx.stem}.diagnostics.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    return summary
+
+
+def process_test_input(
+    input_path: Path,
+    output_xlsx: Path,
+    work_dir: Path,
+    diagnostics_dir: Path,
+    model_dir: Path = DEFAULT_MODEL_DIR,
+    window_seconds: float = 30.0,
+    expected_buses: tuple[int, ...] | None = DEFAULT_EXPECTED_BUSES,
+) -> dict[str, Any]:
+    suffix = Path(input_path).suffix.lower()
+    if suffix in {".xlsx", ".xlsm"}:
+        return process_test_workbook(
+            input_xlsx=input_path,
+            output_xlsx=output_xlsx,
+            work_dir=work_dir,
+            diagnostics_dir=diagnostics_dir,
+            model_dir=model_dir,
+            window_seconds=window_seconds,
+            expected_buses=expected_buses,
+        )
+    return process_test_csv_input(
+        input_path=input_path,
+        output_xlsx=output_xlsx,
+        work_dir=work_dir,
+        diagnostics_dir=diagnostics_dir,
+        model_dir=model_dir,
+        window_seconds=window_seconds,
+        expected_buses=expected_buses,
+    )
+
+
 def process_submission(
     test_inputs: list[Path],
     output_dir: Path = DEFAULT_OUTPUT_DIR,
@@ -533,8 +836,8 @@ def process_submission(
     summaries = []
     for index, input_xlsx in enumerate(test_inputs, start=1):
         output_xlsx = submission_dir / f"{participant}_Results_Test{index}.xlsx"
-        summary = process_test_workbook(
-            input_xlsx=Path(input_xlsx),
+        summary = process_test_input(
+            input_path=Path(input_xlsx),
             output_xlsx=output_xlsx,
             work_dir=work_root / f"test{index}",
             diagnostics_dir=diagnostics_dir,

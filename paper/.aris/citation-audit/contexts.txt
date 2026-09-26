@@ -1,0 +1,32 @@
+main.tex:43 [sgsmaGuide2026, sgsmaPolicy2026]
+The SGSMA 2026 task asks for three outputs at every timestamp: normal or abnormal status, an event label from 0 to 8, and a location.
+
+main.tex:43 [phadke2008, ieee2018]
+Voltage, angle, current, frequency, and rate-of-change-of-frequency describe what happens at an instrumented bus; they do not identify an unobserved origin on their own.
+
+main.tex:52 [pandey2020, taghipour2023, yuan2023gnn]
+PMU event identification has been approached through statistical and physics-based variables, modal analysis, and learned interactions among measurements.
+
+main.tex:52 [yuan2021, liu2023]
+Missing or corrupted records need a distinct treatment because their signatures may resemble a physical transient.
+
+main.tex:54 [li2019]
+Prior methods infer faulted lines jointly.
+
+main.tex:54 [yildiz2024]
+Prior methods learn patterns under sparse PMU placement.
+
+main.tex:54 [ahmed2024, ganjkhani2024]
+Prior methods represent the grid through graphs and multiple measurement sources.
+
+main.tex:54 [li2024knowledge]
+Network knowledge has also been introduced directly into transmission-grid models, through connectivity, impedance-derived distance, candidate variables, or physical constraints.
+
+main.tex:127 [sgsmaGuide2026, sgsmaPolicy2026]
+The non-anticipative interpretation follows the policy's requirement for a label at every timestamp and the guide's use of streaming delay and false alarms; the recommended window length is treated as guidance for the online pipeline, not as a restriction on separate offline analysis.
+
+main.tex:168 [athay1979, cui2021andes]
+The benchmark contains 690 five-second ANDES simulations of the IEEE 39-bus case.
+
+main.tex:182 [geurts2006, pedregosa2011]
+All variants use ExtraTrees with depth 14, at least two samples per leaf, square-root feature subsampling, and class_weight=balanced_subsample. These settings are manuscript-specific implementation choices rather than claims attributed to the cited papers.

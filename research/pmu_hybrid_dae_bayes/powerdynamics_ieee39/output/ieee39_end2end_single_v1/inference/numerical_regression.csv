@@ -1,9 +1,0 @@
-horizon,check,value,status
-30,AR1_vs_dense,0.0,PASS
-30,support_normalization,3.019806626980426e-14,PASS
-30,cardinality_normalization,3.019806626980426e-14,PASS
-120,AR1_vs_dense,0.0,PASS
-120,support_normalization,3.128608483393691e-13,PASS
-120,cardinality_normalization,3.128608483393691e-13,PASS
-30,observation_prefix,0.0,PASS
-30,physical_mean_prefix,0.0,PASS

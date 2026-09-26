@@ -1,0 +1,689 @@
+Physics-Informed PMU Event
+Detection and Localization
+Jorge Luis Mayorga Taborda, Yessica Africano Rodriguez
+Universidad de los Andes   |   SGSMA 2026
+     Method overview
+
+Pipeline                                           Input and output
+ 1. Convert raw PMU waveforms into                 Eight PMU streams go in. For each 30-second
+    physics-aware features.                        window the model returns the event type and where
+ 2. Use a hierarchical ExtraTrees classifier to    it happened, written at timestamp resolution as the
+    identify event type.                           challenge CSV.
+
+ 3. Route each event to a specialized BUS, LINE,
+                                                   Why this design
+    or PMU localizer.
+                                                   Physics-aware features and tree ensembles run on a
+ 4. Produce the challenge CSV output at
+                                                   laptop CPU, stay readable, and never look at the
+    timestamp resolution.
+                                                   hidden test labels.
+
+
+
+
+                                          2/40
+              Problem and Data
+PMU streams, event labels, and the prediction contract
+        Task, event labels, and outputs
+                                                        Label     Name                Meaning
+Input                                                    0        normal             no disturbance or major data
+Eight synchronized PMU CSV files: one per                                            issue
+                                                         1        fault              fast, strong voltage disturbance
+observed bus, about 90 min at 30 fps, with               2        line outage        current redistribution without
+voltage/current phasors, frequency, ROCOF,                                           fault-level voltage collapse
+                                                         3        generation         frequency/ROCOF and power-
+DATA_PRESENT, and hidden or blank Event.                                             proxy shift
+                                                         4        load               sustained current and power
+                                                                                     change
+Output                                                   5        missing            data loss without physical evi-
+                                                                                     dence
+TIMESTAMP, Bus, Predicted_Event, and                     6        missing + physical missing data plus physical event
+                                                         7        bad data           isolated     inconsistent    sen-
+Predicted_Location.
+                                                                                     sor/channel
+                                                         8        unknown            mixed physical evidence not ex-
+                                                                                     plained by 1–4
+ Decision structure: detection, event classification, and localization are coupled, not one flat label.
+
+
+
+                                          4/40                  Problem and Data
+     PMU signals and phasor inputs
+
+Raw columns                                     Measurement model
+ Group               Columns                                            V                            I
+ Voltage magnitude   VA_MAG, VB_MAG, VC_MAG      Vϕ (t) = |Vϕ (t)|e jθϕ (t) ,   Iϕ (t) = |Iϕ (t)|e jθϕ (t)
+ Current magnitude   IA_MAG, IB_MAG, IC_MAG
+ Voltage angle       VA_ANG, VB_ANG, VC_ANG            ϕ ∈ {A, B, C },     θrad = πθdeg /180
+ Current angle       IA_ANG, IB_ANG, IC_ANG
+ Dynamics            Freq, ROCOF                                f˙ (t) = ROCOF(t)
+ Quality/time        DATA_PRESENT, TIMESTAMP
+
+                                                Inference scope
+Observed PMUs                                   The extractor uses magnitudes, unwrapped
+Buses 2, 5, 6, 10, 19, 22, 29, and 39.          angles, frequency, ROCOF, and availability. It
+                                                does not solve a full AC power-flow at inference
+                                                time.
+
+
+
+                                         5/40     Problem and Data
+          IEEE 39-bus system view
+                       39
+                                                   30                                     observed PMU
+
+                                                                                          generator bus
+                                                                                                                                    9         Observed PMUs
+                                              2
+                           1
+                                                             3
+                                                                                                                      31
+                                                                                                                                8                          {2, 5, 6, 10, 19, 22, 29, 39}
+                 37
+                                                                                4              5
+                                                                                                                           7
+                                                                                                             6
+                      25
+38         28
+                                                  18                                 13                                                       Electrical reading
+                                                                                                        11
+     29         26
+                                                                            14            12                     10                           The localizer sees eight sparse PMU views. Events
+                               27                                                                                          32
+                                     17
+                                                                 15
+                                                                                                                                              must be inferred from the disturbance pattern across
+                                                        16                                                                                    those locations.
+                                                                      24
+                                    19
+                                                             21
+                                                                                          23
+                               20
+                                                                           22                                                                 Topology used
+                                                                                                   36
+                               33
+                                         34
+                                                                                35
+                                                                                                                                              Electrical distances come from the IEEE 39-bus
+                                                                                                                                              admittance model, not drawing geometry.
+
+
+
+
+                                                                                                        6/40                            Problem and Data
+     Topology math: from branches to electrical distance
+                                                             branch table
+Admittance and impedance                                      r , x , b, tap
+
+         Ybus : network admittance matrix
+                             +
+                     Zbus = Ybus                                  Ybus
+            dijeff = |Zii + Zjj − Zij − Zji |
+
+Meaning                                                         Zbus                         dijeff
+                                                            pseudo-inverse              distance table
+Two buses are close if an injection at one bus is
+expected to have a similar voltage effect at the       Where it appears
+other.
+                                                       Graph-temporal features use 1/dijeff weights.
+
+
+
+
+                                                7/40      Problem and Data
+Windowing and Baseline
+     30-second windows and segment statistics
+           30-second window and segment design
+                             full 30 s window
+                                                                                  Segments
+     pre        early         mid                        late
+                                                                                          Spre = [0, 3),   Searly = [3, 8)
+                                                                      time
+0s         3s           8s                18s      25s          30s                     Smid = [8, 18),    Slate = [25, 30)
+                                                                                                  Sfull = [0, 30)
+
+                                                                                  Reason
+                                                                                  The window is long enough to capture
+                                                                                  onset, transient, and settling, but short
+                                                                                  enough to produce one stable event
+                                                                                  decision.
+
+
+
+
+                                                9/40                  Windowing and Baseline
+     Local baseline, robust scale, and subtraction
+                                                     signal
+Per PMU and signal
+                                                                                      raw
+          bp,s = mediant∈Spre xp,s (t)
+ rob
+σp,s = 1.4826 mediant∈Spre |xp,s (t) − bp,s | + ϵ                                                 baseline
+             ′                                                                     centered       t
+            xp,s (t) = xp,s (t) − bp,s
+                         ′         rob
+            zp,s (t) = |xp,s (t)|/σp,s
+                                                    Scale fallback
+                                                    If MAD is too small, the code falls back to standard
+                                                    deviation and then to a safe value.
+
+
+
+
+                                           10/40          Windowing and Baseline
+         Base Feature
+          Engineering
+Per-window statistical feature families
+       Feature schema and base families
+                                                             Family                       Purpose
+Canonical feature key
+                                                             Segment statistics           magnitude, spread, persistence
+        <PMU/BUS>__<SIGNAL>__<SEGMENT>__<STAT>               Temporal deltas              onset and post-event shift
+                                                             Derivatives                  fast transients and ramps
+Bus2__VA_MAG__early__span                                    Robust z-score               scale-normalized abnormality
+Bus10__Freq__late__mean                                      Sustained anomaly            duration above threshold
+GLOBAL__single_signal_score_max                              Data quality                 NaNs, gaps, missing runs
+                                                             Bad-data score               isolated channel faults
+                                                             Phase spread                 three-phase coherence
+Meaning                                                      Power proxy                  rough P/Q movement
+                                                             Global aggregation           system-wide maxima and counts
+The name stores source, physical signal, temporal segment,
+and statistic.
+
+
+
+
+                                                  12/40        Base Feature Engineering
+    Robust z-score separates two failure modes
+z
+         physical event: sustained
+                                                    What it measures
+                                                    The robust z-score is how far a signal sits from its
+                                                    own pre-event normal, measured in robust units
+                                                    (median and MAD). Scale and noise drop out, so
+                                             time   one threshold works across buses and channels.
+z
+            bad data: isolated                      Why the shape matters
+                                                    A real event pushes z high and holds it there
+                                                    (top). A bad sample spikes for one frame and
+                                                    falls back (bottom). We give the model both the
+                                             time
+                                                    peak and how long z stays high, so it tells events
+                                                    from sensor glitches.
+
+
+
+                                     13/40          Base Feature Engineering
+     Data quality, bad data, and phase consistency
+
+Missing-data features                                        Bad-data score
+  • n_samples, duration_s, dt_s                                          top anomaly
+                                                                                      ≥ 3 ⇒ bad data
+  • max_timestamp_gap_s, max_timestamp_gap_ratio                       second anomaly
+  • data_present_fraction, data_present_min
+                                                             Phase consistency
+  • missing_run_max_samples/s
+                                                             Phase-to-phase spread and angle coherence
+  • nan_fraction_max/mean
+                                                             separate grid events from corrupted single
+                                                             channels.
+Missing route
+Missing only → Event 5. Missing plus physical evidence
+→ Event 6.
+
+
+
+
+                                        14/40            Base Feature Engineering
+       Power proxy, global aggregation, and base count
+
+Per-unit magnitudes
+                                                                                                     V
+                                 |Vϕ (t)|
+            Vpu,ϕ (t) =
+                           max(medianpre |Vϕ |, ϵ)
+
+                                 |Iϕ (t)|                                                     ϕ          I
+             Ipu,ϕ (t) =
+                           max(medianpre |Iϕ |, ϵ)
+
+                                                                                      Pproxy = Vpu Ipu cos ϕ
+Proxy, not calibrated power                                                           Qproxy = Vpu Ipu sin ϕ
+The challenge data does not require a full power-flow solve.
+Sign depends on the PMU current convention, but the proxy      Global summaries and count
+gives the classifier a stable active/reactive signature.
+                                                               Stores cross-PMU mean, max, min, std. Base statistical total:
+                                                               39,744 features.
+
+
+
+
+                                                     15/40         Base Feature Engineering
+                 Dynamic Feature
+                     Engineering
+Rolling, adaptive-residual, and graph-temporal evidence
+       Rolling features: summarize a sliding window
+centered signal
+                  one window                                        Idea
+                                                                    Slide a window over the centered signal and
+                                                                    summarize what is inside: mean level, spread,
+                                                         time
+                                                                    slope, energy, and when the peak arrives.
+                                  slides along
+
+                                                                    Why several lengths
+  We use window lengths w = 5, 15, 30, 60, 120 samples.
+                                                                    Short windows catch fast switching and fault
+                                                                    onset. Long windows catch slow load or
+                                                                    generation drift. Time-to-peak shows how late
+                                                                    the change shows up.
+
+
+
+
+                                                 17/40          Dynamic Feature Engineering
+     RLS residual: tracking the normal level online
+                                                            signal
+What it does                                                                          observation
+
+RLS keeps a running estimate of each signal’s normal                                                tracked level
+level and slope and updates it every sample. A
+forgetting factor λ sets how fast it adapts: we run a                                                               t
+
+fast tracker (λ=0.92) and a slow one (λ=0.985).
+
+                                                         Why it helps
+The residual is the surprise
+                                                         A sharp residual spike marks an abrupt event
+                   rt = yt − ŷt                         (fault, outage). A slow level change with small
+Small while the signal behaves, large the instant it     residuals marks a ramp (generation, load). Static
+breaks from its recent trend. We keep its peak, mean,    window statistics miss that timing.
+p95, and late-minus-pre shift.
+
+
+
+                                         18/40          Dynamic Feature Engineering
+ Graph-temporal features: how an event spreads
+ across PMUs
+     39
+                                                                        What we read
+           2                                                            PMUs sit on different buses. A real event
+                3                                                       reaches them with a pattern: how much they
+                              4           5                             disagree, which pair differs most, whether
+                                                       6                they move together, and the timing offset
+29                                     event                            between buses.
+                                  14
+                                                           10           Closer buses count more
+                    15
+           16
+                                                                        Each PMU pair is weighted by 1/distance, so
+      19                                                                electrically near buses dominate the score.
+                         22
+                                                                        ExtraTrees turns these into the localization
+                                                                        vote.
+
+                                               19/40            Dynamic Feature Engineering
+Hierarchical ML Method
+ExtraTrees detection, classification, and event routing
+      The ML model in one slide
+What model                                                      Why ExtraTrees here
+ExtraTrees (Extremely Randomized Trees), from scikit-learn.         • Handles 45,162 features with no scaling.
+Each model = SimpleImputer(median) +                                • Tolerates NaN via median imputer (real PMU gaps).
+ExtraTreesClassifier.
+                                                                    • Works with few labeled windows.
+Not a neural network: 0 trainable NN parameters, CPU-only,
+deterministic.                                                      • Interpretable: feature thresholds + vote.
+                                                                    • Tiny bundle, fast CPU inference.
+Four models, same feature row X , different label y
+  1. Physical event classifier → events 0,1,2,3,4,8             Forest vote
+  2. Bad-data detector → event 7
+                                                                                                    T
+  3. Missing detector → events 5 vs 6                                                           1
+                                                                                                    X
+  4. Typed localizers → BUS / LINE / PMU                                         ŷ = arg max             pt (c | X )
+                                                                                          c     T
+                                                                                                    t=1
+
+
+
+
+                                                      21/40   Hierarchical ML Method
+       Which feature explains which event
+  Event                    Discriminating feature (physics)                            Localizer
+  1 fault                  Voltage span Vspan + voltage derivative DV + robust         BUS (spatial severity)
+                           z (fast deep V sag)
+  2 line outage            Current span Ispan + current-angle change + graph           LINE (graph candidates)
+                           pairwise diff, with V guard
+  3 generation             Freq shift + ROCOF span + P/Q proxy (sustained              BUS
+                           frequency/power move)
+  4 load                   Sustained current shift + active-power proxy + rolling      BUS
+                           energy
+  5 missing                data-present fraction <1, NaN max, timestamp-gap            PMU
+                           ratio
+  6 missing+phys           missing gate AND physical evidence present                  physical route
+  7 bad data               one channel huge robust z, others coherent (isolated        PMU (the sensor)
+                           spike)
+  8 unknown                physical evidence + low confidence for events 1–4           BUS
+
+Four feature families, in plain terms
+Window statistics and derivatives measure abruptness. Robust z separates anomaly from noise. The RLS residual tells a break from a
+ramp. Graph-temporal features show how the event spreads across PMUs.
+
+
+
+                                                    22/40               Hierarchical ML Method
+      ExtraTrees: one tree and the forest vote
+                                one window row                                h1
+                                    xPMU
+                                                                              h2
+                                                                                                        average                  arg maxc
+                                Vspan ≤ 50k?                                  h3                   leaf probabilities              class
+                          yes                    no                          ···
+            missing                                                          hM
+                                                      DV > 500k?
+         fraction high?
+       no             yes                        yes            no
+
+
+   normal             missing              Event 1              Event 8
+                                                                          Forest probability
+or non-fault         candidate              fault                mixed
+
+                                                                                             nleaf,c                         1
+                                                                                                                                 X
+                                                                            pm (c | x ) =            ,        p̂(c | x ) =           pm (c | x )
+                                                                                              nleaf                          M
+                                                                                                                                 m
+
+
+                                                                                                    ĉ = arg max p̂(c | x )
+                                                                                                               c
+ One tree follows a threshold path; ExtraTrees averages many randomized trees, so the submitted decision is a
+                                     probability vote, not one manual rule.
+
+
+                                                             23/40        Hierarchical ML Method
+        How the ExtraTrees forest is trained
+
+Growing one tree (greedy split, random cuts)                              Split score: Gini impurity
+Training rows are labeled windows (x , y ): x ∈ R≈45k features, y the
+event class. At every node:                                                              X
+                                                                                                  2
+                                                                                                                   X
+                                                                                                                           n
+                                                                             G =1−               pc ,   ∆G = Gnode −       N Gchild
+   1.   draw K random features (not all 45k);
+   2.   pick one random threshold for each;                                                 c                      child
+   3.   keep the cut with the best impurity drop;
+   4.   recurse until leaves are pure or min_samples_leaf.                Keep the random cut with the largest ∆G.
+
+
+The “Extra” part                                                          From tree to forest
+Thresholds are random, not optimized per feature, and each tree sees      Grow M independent trees with different random features
+the full set (no bootstrap). This makes trees fast and diverse, which     and cuts. Each leaf stores class frequencies; the forest
+lowers variance.                                                          averages the leaf probabilities. Tuned controls are
+                                                                          n_estimators, max_features, and
+                                                                          min_samples_leaf: CPU-only, no scaling, NaN via
+                                                                          median imputer.
+
+
+
+
+                                                    24/40               Hierarchical ML Method
+     Why a learned forest, not hand-written if/else
+
+Why if/else on our own features fails                           What the forest does instead
+  • ≈ 45,000 features, 9 event classes, 3 localizer types:        • Learns thresholds and feature combinations from labeled
+    hand-tuning thresholds is infeasible and brittle.               windows; finds the few discriminative ones among 45k.
+  • One cutoff per feature misses interactions: high robust-z     • Emits calibrated probabilities → feed the physics gates
+    and sustained and low missing ⇒ fault; high z alone ⇒           (bad-data, missing) and the confidence checks.
+    bad data.                                                     • Tolerates correlated/redundant features and NaN, needs no
+  • Hand-picked cutoffs overfit RAW0001 noise and scale, and        scaling, and is deterministic, tiny, and fast.
+    break on a hidden RAW with different PMUs.
+
+ The forest finds threshold combinations across thousands of features that nobody could set by hand,
+ and averages many trees so no single cutoff decides the call.
+
+
+
+
+                                                25/40              Hierarchical ML Method
+     Hierarchical event routing
+                        feature row                missing detector                 bad-data detector
+
+
+
+
+                         typed localizer                                              physical event
+                                                       event 0–8
+                                                                                       ExtraTrees
+
+
+Decision order
+Missing and bad-data evidence is routed before the physical classifier so communication failures and sensor
+artifacts do not contaminate physical events.
+
+
+
+
+                                           26/40                   Hierarchical ML Method
+Event-by-Event
+ Interpretation
+How each event type is recognized
+      Event 1: fault
+
+Main evidence                                       Manual recipe
+  • Voltage magnitude span.                          1. Build baseline from pre-event voltage.
+  • Voltage derivative.                              2. Detect large voltage sag/transient.
+  •   Robust z-score in voltage channels.            3. Reject missing-only and bad-data-only cases.
+  •   Early segment changes.                         4. Localize to BUS using spatial severity.
+  •   Cross-PMU severity pattern.
+
+
+
+
+                                            28/40   Event-by-Event Interpretation
+      Event 2: line outage
+
+Main evidence                                    Manual recipe
+  •   Current magnitude span.                     1. Look for current redistribution.
+  •   Current derivative.                         2. Guard against fault-like voltage collapse.
+  •   Current-angle changes.                      3. Use graph features to score candidate lines.
+  • Voltage span not as extreme as a fault.       4. Localize to LINE.
+  •   Graph-temporal pairwise PMU differences.
+
+
+
+
+                                        29/40    Event-by-Event Interpretation
+      Event 7: bad data
+
+Main evidence                                     Localizer
+  •   One signal has extreme robust z-score.      Event 7 localizes to PMU, not BUS or LINE. The
+  • Top anomaly is much larger than second        object that failed is the measurement
+      anomaly.                                    device/channel source.
+
+  •   Other PMUs/channels remain coherent.
+  •   Missing features do not dominate.
+
+
+
+
+                                          30/40    Event-by-Event Interpretation
+      Event 8: unknown physical proxy
+Main evidence
+Event 8 captures cases with physical evidence that does not cleanly fit fault, line outage, generation change,
+or load change.
+
+
+Useful features                                          Routing
+  •   Power proxy.                                      The final runtime routes Event 8 to a BUS localizer
+  •   Rolling dynamics.                                 because it represents a physical-grid signature
+                                                        rather than a PMU-only failure.
+  • Adaptive residual and innovation features.
+
+  •   Graph-temporal pattern.
+
+
+
+
+                                           31/40          Event-by-Event Interpretation
+                 Localization
+Typed localizers and the hybrid bus estimate
+        Typed origin localization
+
+Route before predicting origin                                 Implemented decision
+                                                               The model does not rank every possible label together. It first
+    Predicted event             Candidate origin set
+                                                               chooses a type, then runs the localizer trained for that type.
+       0 normal                 NONE
+         1 fault                BUS labels                                              event outputs
+     2 line outage              LINE labels                                                ê, êphys
+ 3 generation change            BUS labels
+    4 load change               BUS labels
+    5 missing data              PMU labels                                              routing rule
+ 6 missing + physical           physical route                                        τ = r (ê, êphys )
+      7 bad data                PMU labels
+8 mixed physical proxy          BUS labels
+                                                                                        candidate set
+For event 6: êphys = 2 ⇒ LINE; otherwise BUS.
+                                                                                             Cτ
+
+
+
+
+                                                       33/40          Localization
+Training, Validation,
+                and Results
+ Evaluation protocol and reported metrics
+      Training data and split
+
+Training sources                                        Validation
+  •   5,000 synthetic SGSMA scenario windows.               •   30% stratified SIM holdout.
+  •   3,500 train windows and 1,500 stratified              •   RAW0001 transfer validation.
+      holdout windows.                                      •   Metrics: detector, classifier, macro-F1,
+  •   Base statistical and dynamic tables generated             localization.
+      by the repo feature extractors.
+  •   Random state: 20260503.
+
+Transfer principle
+RAW labels were used for validation and analysis, not to train the final production-feasible submission path.
+
+
+
+
+                                          35/40         Training, Validation, and Results
+     Final metrics
+
+SIM holdout                                             RAW0001
+
+           Metric                 Score                                   Metric                 Score
+           Detector accuracy     0.9693                                   Detector accuracy     1.0000
+           Classifier accuracy   0.9673                                   Classifier accuracy   1.0000
+           Classifier macro-F1   0.9598                                   Classifier macro-F1   1.0000
+           Localizer Top-1       0.8524                                   Localizer Top-1       0.6667
+
+
+Interpretation
+Detection and classification transferred perfectly on RAW0001; localization remained the hard part.
+
+
+
+
+                                          36/40        Training, Validation, and Results
+            Ablation
+     What each component con-
+tributes, and why we measure it
+Ablation evidence
+RAW0001 Top-1 (%)
+                                                       What ablation is
+                                                       We add one feature family at a time and
+     60
+                                                       re-measure localization. Each bar is the score
+     40                                                with that group added.
+
+     20                                                Why it matters
+                                                       Every group earns its place: rolling, then the
+                                                       RLS residual, then graph features each lift the
+                       g
+
+
+
+                                     l
+           se
+
+
+
+
+                                          al
+                                ua
+                    lin
+
+
+
+
+                                         fin
+          ba
+
+
+
+
+                               sid
+                   l
+                ro
+
+
+
+
+                                                       score, and the full set is best. Nothing is there
+                           re
+                +
+
+
+
+                           +
+
+
+
+
+                                                       just for show.
+
+
+
+
+                                               38/40      Ablation
+      Closing
+Submitted method
+We turn each PMU window into physics-aware features, classify the event with hierarchical ExtraTrees, and
+localize it with a typed localizer.
+
+
+Feature engine                        Classifier                         Localizer
+Base statistical features + rolling   Physical event model + missing     Specialized BUS, LINE, and PMU
+dynamics + adaptive residuals +       detector + bad-data detector +     ExtraTrees localizers.
+graph temporal features.              rules.
+
+              Selected features: base statistical + rolling +
+                  residual/innovation + graph temporal
+
+
+                                            39/40             Ablation
+      Conclusion
+
+Core method                          Why it worked                         Localization
+Raw PMU windows are converted        Robust statistics capture abnormal    Typed localizers keep BUS, LINE,
+into physically meaningful feature   behavior. Residual, innovation, and   and PMU targets separate. Each
+rows. Hierarchical ExtraTrees        graph-temporal features add timing    model ranks valid candidates
+models classify the event type.      and network evidence.                 inside its own target space.
+
+
+Reproducible by design
+Every output traces back to a feature row, a routing rule, or a tree vote, so any prediction can be explained
+and rebuilt.
+
+
+
+
+                                           40/40                Ablation
+

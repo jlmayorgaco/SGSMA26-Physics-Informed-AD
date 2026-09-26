@@ -1,4 +1,0 @@
-scenario_id,support,severity_fraction,noise,seed
-H0_CANONICAL,H0,0.0,canonical,260915001
-BUS7_MODERATE_NOISELESS,{7},0.0033,disabled,
-BUS7_MODERATE_CANONICAL_NOISE,{7},0.0033,canonical,260915007

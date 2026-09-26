@@ -1,2 +1,0 @@
-method,kind,n_states,median_nrmse,p95_nrmse,max_nrmse,median_event_delta_relative_l2,p95_event_delta_relative_l2
-BMA,algebraic,78,8.88324533872542e-06,0.00017790482297862703,0.0031738023199451145,0.0011177662565838497,0.0011689969182441407

@@ -2283,14 +2283,14 @@ Window statistics and derivatives measure \emph{abruptness}. Robust z separates 
   leafr/.style={rounded corners=4pt,draw=Red,fill=SoftRed,thick,text width=1.65cm,minimum height=0.52cm,align=center,font=\scriptsize},
   arrow/.style={-{Latex[length=1.8mm]},thick,draw=Muted}
 ]
-\node[feat] (row) at (0,2.45) {one window row\\$x_{\mathrm{PMU}}$};
-\node[test] (root) at (0,1.25) {$V_{\mathrm{span}}\le 50k$?};
-\node[test] (left) at (-2.15,0.05) {missing\\fraction high?};
-\node[test] (right) at (2.15,0.05) {$D_V>500k$?};
-\node[leaf] (normal) at (-3.25,-1.05) {normal\\or non-fault};
-\node[leaf] (miss) at (-1.05,-1.05) {missing\\candidate};
-\node[leafr] (fault) at (1.05,-1.05) {Event 1\\fault};
-\node[leaf] (mixed) at (3.25,-1.05) {Event 8\\mixed};
+\node[feat] (row) at (0,2.45) {shared multi-PMU row\\$x_{p,s,g}$};
+\node[test] (root) at (0,1.25) {$x_{p_a,V,\Delta}\le \tau_1$?};
+\node[test] (left) at (-2.15,0.05) {$x_{p_b,m,\mathrm{frac}}\le \tau_2$?};
+\node[test] (right) at (2.15,0.05) {$x_{p_c,f,\mathrm{std}}\le \tau_3$?};
+\node[leaf] (normal) at (-3.25,-1.05) {normal\\class score};
+\node[leaf] (miss) at (-1.05,-1.05) {missing\\class score};
+\node[leafr] (fault) at (1.05,-1.05) {fault\\class score};
+\node[leaf] (mixed) at (3.25,-1.05) {mixed\\class score};
 \draw[arrow] (row) -- (root);
 \draw[arrow] (root) -- node[above left,font=\tiny]{yes} (left);
 \draw[arrow] (root) -- node[above right,font=\tiny]{no} (right);
@@ -2313,28 +2313,28 @@ Window statistics and derivatives measure \emph{abruptness}. Robust z separates 
 \node[tree] (t3) at (0,0.0) {$h_3$};
 \node[tree] (t4) at (0,-0.5) {$\cdots$};
 \node[tree] (t5) at (0,-1.0) {$h_M$};
-\node[vote] (v) at (2.35,0) {average\\leaf probabilities};
+\node[vote] (v) at (2.35,0) {average\\leaf class scores};
 \node[vote] (o) at (4.85,0) {$\arg\max_c$\\class};
 \foreach \t in {t1,t2,t3,t4,t5} {
   \draw[arrow] (\t) -- (v);
 }
 \draw[arrow] (v) -- (o);
 \end{tikzpicture}
-\begin{block}{Forest probability}
+\begin{block}{Forest class score}
 \[
-p_m(c\mid x)=\frac{n_{\mathrm{leaf},c}}{n_{\mathrm{leaf}}},
+s_m(c\mid x)=\frac{n_{\mathrm{leaf},c}}{n_{\mathrm{leaf}}},
 \qquad
-\hat p(c\mid x)=\frac{1}{M}\sum_m p_m(c\mid x)
+S(c\mid x)=\frac{1}{M}\sum_m s_m(c\mid x)
 \]
 \[
-\hat c=\arg\max_c \hat p(c\mid x)
+\hat c=\arg\max_c S(c\mid x)
 \]
 \end{block}
 \end{column}
 \end{columns}
 \vspace{-1mm}
 \centering
-{\footnotesize One tree follows a threshold path; ExtraTrees averages many randomized trees, so the submitted decision is a probability vote, not one manual rule.}
+{\footnotesize $p_a$, $p_b$, and $p_c$ may be different PMUs; each node can also change signal, statistic, and threshold. ExtraTrees averages many randomized trees, so no tree is fixed to one bus or source.}
 \end{frame}
 
 \begin{frame}{How the ExtraTrees forest is trained}
