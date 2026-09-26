@@ -1,0 +1,12 @@
+name: smoke
+seed: 20260911
+duration_s: 1.0
+sample_rate_hz: 30.0
+scenario_count: 4
+event_cardinalities: [0, 1]
+ibr_penetration_pct: [0]
+noise:
+  voltage_std_pu: 0.0005
+  current_std_pu: 0.001
+  frequency_std_hz: 0.001
+  rocof_std_hz_s: 0.01

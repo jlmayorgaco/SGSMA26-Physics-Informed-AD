@@ -1,0 +1,73 @@
+{
+  "status": "complete",
+  "method": "paired event-stratified scenario-block and paired model-seed bootstrap",
+  "predictions": "C:\\Users\\walla\\Documents\\Github\\SGSMA26-Physics-Informed-AD\\paper\\evidence\\revised\\causal_benchmark\\target_complete\\target_complete\\primary\\test_predictions.csv",
+  "results": [
+    {
+      "comparison": "typed-flat",
+      "metric": "detection_f1",
+      "estimate": -0.011249075943600473,
+      "ci95_low": -0.02071573419537625,
+      "ci95_high": -0.004546559423096703,
+      "bootstrap_replicates": 5000,
+      "bootstrap_seed": 20260807,
+      "scenario_blocks": 138,
+      "model_seed_blocks": 3
+    },
+    {
+      "comparison": "typed-flat",
+      "metric": "false_alarm_episodes_per_normal_min",
+      "estimate": 0.7924399981136774,
+      "ci95_low": -1.213132408876968,
+      "ci95_high": 2.936689404774216,
+      "bootstrap_replicates": 5000,
+      "bootstrap_seed": 20260807,
+      "scenario_blocks": 138,
+      "model_seed_blocks": 3
+    },
+    {
+      "comparison": "typed-flat",
+      "metric": "physical_top1",
+      "estimate": -0.03971362392082545,
+      "ci95_low": -0.07719519898926092,
+      "ci95_high": -0.002939566224468385,
+      "bootstrap_replicates": 5000,
+      "bootstrap_seed": 20260807,
+      "scenario_blocks": 138,
+      "model_seed_blocks": 3
+    },
+    {
+      "comparison": "typed-flat",
+      "metric": "physical_scenario_top1",
+      "estimate": 0.024793388429752095,
+      "ci95_low": -0.05509641873278237,
+      "ci95_high": 0.10192837465564741,
+      "bootstrap_replicates": 5000,
+      "bootstrap_seed": 20260807,
+      "scenario_blocks": 138,
+      "model_seed_blocks": 3
+    },
+    {
+      "comparison": "typed_topology-typed",
+      "metric": "physical_top1",
+      "estimate": -0.033691303432301534,
+      "ci95_low": -0.07340808591282376,
+      "ci95_high": 0.004717835333754453,
+      "bootstrap_replicates": 5000,
+      "bootstrap_seed": 20260807,
+      "scenario_blocks": 138,
+      "model_seed_blocks": 3
+    },
+    {
+      "comparison": "typed_topology-typed",
+      "metric": "physical_scenario_top1",
+      "estimate": -0.03305785123966942,
+      "ci95_low": -0.11294765840220389,
+      "ci95_high": 0.04414600550964087,
+      "bootstrap_replicates": 5000,
+      "bootstrap_seed": 20260807,
+      "scenario_blocks": 138,
+      "model_seed_blocks": 3
+    }
+  ]
+}

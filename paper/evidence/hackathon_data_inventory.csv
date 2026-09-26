@@ -1,0 +1,4 @@
+source,sha256,pmus,rows_per_pmu,columns,elapsed_seconds,label_status,role
+Competition Testing Data Set 1.zip,99e14dc3062070c02fbcde5a4137788e9e968ac05859212e9b0f66c2971972f2,"2;5;6;10;19;22;29;39",43472,15,1449.033,"No Event, label, or DATA_PRESENT column",Unlabeled execution check
+Competition Testing Data Set 2.zip,660103453d015cb95a07644baa97446402f359052589331e9cc033933f6dfd22,"2;5;6;10;19;22;29;39",42750,15,1424.967,"No Event, label, or DATA_PRESENT column",Unlabeled execution check
+RAW0001,"repository directory; eight PMU nanmask files","2;5;6;10;19;22;29;39",161379,17,5379.266,"Event and DATA_PRESENT retained",Representation selection and conditional development evaluation

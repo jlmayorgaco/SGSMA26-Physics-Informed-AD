@@ -1,0 +1,7 @@
+name: standard
+seed: 20260912
+duration_s: 10.0
+sample_rate_hz: 30.0
+scenario_count: 128
+event_cardinalities: [0, 1, 2]
+ibr_penetration_pct: [0, 20, 40, 60, 80]

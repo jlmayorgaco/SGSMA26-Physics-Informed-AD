@@ -1,0 +1,30 @@
+\frametitle{Inference pseudocode}
+\small
+\vspace{-2mm}
+\begin{lstlisting}[language=Python,aboveskip=2pt,belowskip=2pt]
+case = read_pmu_case(input_dir)
+windows = split_into_windows(case, seconds=30)
+
+for window in windows:
+    x_base = extract_base_features(window)
+    x_dyn = extract_dynamic_features(
+        window,
+        include_blocks=("rolling", "adaptive_residual", "graph_temporal"),
+    )
+
+    p_phys = physical_model.predict_proba(x_base)
+    physical = argmax(p_phys)          # 0,1,2,3,4,8
+    p_bad = bad_data_model.predict_proba(x_base)[BAD]
+    p_missing = missing_model.predict_proba(x_base)[MISSING]
+
+    event = apply_physics_rule_engine(
+        physical, p_phys, p_bad, p_missing, x_base
+    )
+
+    loc_type = route_event_to_localizer(event, physical)
+    x_loc = concat(x_base, x_dyn)
+    p_loc = localizers[loc_type].predict_proba(x_loc)
+    location = argmax(p_loc)
+
+    emit_rows_for_all_timestamps(window, event, location)
+\end{lstlisting}

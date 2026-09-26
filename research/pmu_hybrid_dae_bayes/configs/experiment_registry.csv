@@ -1,0 +1,17 @@
+experiment_id,phase,description,status,gate
+E00,1,Environment audit and reproducibility manifest,PENDING,G-ENV
+E01,2,ANDES pandapower static AC parity,PENDING,G0
+E02,3,PMU branch terminal and measurement operator audit,PENDING,G1
+E03,4,Scenario configuration jump and noise smoke,PENDING,G-SCENARIO
+E04,5,Virtual PMU extraction,PENDING,G2
+E05,6,Fixed lag state estimator,PENDING,G2
+E06,7,Observability and functional observability,PENDING,G2
+E07,8,Exact zero one two event Bayesian oracle,PENDING,G3
+E08,9,Model discrepancy layer,PENDING,G5
+E09,10,Single double sequential event battery,PENDING,G4
+E10,11,Scalable three-plus-event solver,PENDING,G4
+E11,12,Explicit IBR scenarios,PENDING,G7
+E12,13,Probability calibration,PENDING,G6
+E13,14,Learned discrepancy extension,PENDING,G6
+E14,15,Baseline comparison,PENDING,G2
+E15,16,External holdout replay,PENDING,G8

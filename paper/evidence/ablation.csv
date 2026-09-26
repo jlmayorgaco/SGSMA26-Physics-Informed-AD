@@ -1,0 +1,17 @@
+representation,dynamic_blocks,n_features,simulation_localization_top1,RAW0001_correct,RAW0001_support,RAW0001_localization_top1,selected
+base_v2_plus_rolling_plus_graph_temporal,"rolling,graph_temporal",43818,0.8558178752,6,12,0.5000000000,no
+base_v2_plus_rolling_plus_rls_kalman_plus_graph_temporal,"rolling,rls_kalman,graph_temporal",45162,0.8524451939,8,12,0.6666666667,yes
+base_v2_plus_rolling_plus_hilbert_plus_graph_temporal,"rolling,hilbert,graph_temporal",44490,0.8524451939,8,12,0.6666666667,no
+base_v2_plus_rls_kalman_plus_hilbert_plus_graph_temporal,"rls_kalman,hilbert,graph_temporal",42474,0.8499156830,6,12,0.5000000000,no
+base_v2_plus_rls_kalman_plus_graph_temporal,"rls_kalman,graph_temporal",41802,0.8482293423,7,12,0.5833333333,no
+base_v2_plus_rolling_plus_rls_kalman_plus_hilbert_plus_graph_temporal,"rolling,rls_kalman,hilbert,graph_temporal",45834,0.8482293423,7,12,0.5833333333,no
+base_v2_plus_rolling_plus_rls_kalman_plus_hilbert,"rolling,rls_kalman,hilbert",45120,0.8456998314,6,12,0.5000000000,no
+base_v2_plus_rolling,"rolling",43104,0.8440134907,6,12,0.5000000000,no
+base_v2_plus_rolling_plus_rls_kalman,"rolling,rls_kalman",44448,0.8431703204,7,12,0.5833333333,no
+base_v2_plus_rolling_plus_hilbert,"rolling,hilbert",43776,0.8431703204,7,12,0.5833333333,no
+base_v2_plus_hilbert_plus_graph_temporal,"hilbert,graph_temporal",41130,0.8431703204,7,12,0.5833333333,no
+base_v2_plus_graph_temporal,"graph_temporal",40458,0.8414839798,7,12,0.5833333333,no
+base_v2_plus_rls_kalman,"rls_kalman",41088,0.8389544688,7,12,0.5833333333,no
+base_v2,"none",39744,0.8381112985,6,12,0.5000000000,no
+base_v2_plus_rls_kalman_plus_hilbert,"rls_kalman,hilbert",41760,0.8381112985,6,12,0.5000000000,no
+base_v2_plus_hilbert,"hilbert",40416,0.8355817875,5,12,0.4166666667,no

@@ -1,0 +1,3 @@
+split,n_windows,n_localizable,detection_accuracy,event_accuracy,event_macro_f1,localization_top1,localization_correct,localization_support,localization_wilson95_low,localization_wilson95_high
+simulation_holdout,1500,1186,0.9693333333,0.9673333333,0.9597812294,0.8524451939,1011,1186,0.8311230134,0.8714915195
+RAW0001_representation_selection_validation,21,12,1.0,1.0,1.0,0.6666666667,8,12,0.3906175874,0.8618821601

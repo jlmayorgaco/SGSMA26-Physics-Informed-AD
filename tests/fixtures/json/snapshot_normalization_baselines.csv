@@ -1,0 +1,3 @@
+bus_id,raw_signal,transform,baseline_method,baseline_value
+Bus10,BUS10_ROCOF,subtract_center,mean,0.1
+Bus10,BUS10_VA_MAG,divide_by_baseline,mean,100.0

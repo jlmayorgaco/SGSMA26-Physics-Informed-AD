@@ -1,0 +1,31 @@
+{
+  "chunk_order": 1,
+  "label": 1,
+  "label_name": "Fault",
+  "description": "Fault",
+  "chunk_type": "event",
+  "start_time_s": 0.0,
+  "end_time_s": 1.0,
+  "duration_s": 1.0,
+  "start_time_min": 0.0,
+  "end_time_min": 0.016666666666666666,
+  "duration_min": 0.016666666666666666,
+  "source_event_instance_id": null,
+  "category": "Physical",
+  "impact_scope": null,
+  "affected_buses": [
+    "Bus10"
+  ],
+  "labels_present": [
+    0,
+    1
+  ],
+  "labels_names": [
+    "Normal operation",
+    "Fault"
+  ],
+  "per_bus_labels": {
+    "Bus10": 1,
+    "Bus19": 0
+  }
+}

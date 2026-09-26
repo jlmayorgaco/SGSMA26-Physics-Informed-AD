@@ -1,0 +1,7 @@
+name: paper
+seed: 20260913
+duration_s: 30.0
+sample_rate_hz: 30.0
+scenario_count: 1000
+event_cardinalities: [0, 1, 2, 3]
+ibr_penetration_pct: [0, 20, 40, 60, 80]

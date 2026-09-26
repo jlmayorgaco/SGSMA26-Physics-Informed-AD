@@ -1,0 +1,3 @@
+source,windows,output_rows,normal,fault,line_outage,generation,load,missing,missing_plus_physical,bad_data,mixed_unknown,interpretation
+Competition Test 1,49,347776,42,4,0,0,1,0,0,2,0,"Frozen model outputs; not ground truth"
+Competition Test 2,48,342000,41,2,0,0,3,0,0,2,0,"Frozen model outputs; not ground truth"

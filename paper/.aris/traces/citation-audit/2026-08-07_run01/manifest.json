@@ -1,0 +1,15 @@
+{
+  "workflow": "citation-audit",
+  "date": "2026-08-07",
+  "run": 1,
+  "reviewer_model": "gpt-5.6-sol",
+  "reasoning_effort": "xhigh",
+  "reviewer_thread_id": "/root/citation_audit_final",
+  "fresh_context": true,
+  "main_tex_sha256": "66edace86dcf3d9132f0f504a435b2ec7e6eff5fd957875ffc8e293b54f13fb4",
+  "references_bib_sha256": "de1e73c853de02780bd1d955cc319f6c45ec0ac16d71ff0f4c256c76ecad215d",
+  "contexts_sha256": "ecb72639ccadaf0b3994355b555888e19128e2dd310e48c967eec9d8d75dad88",
+  "final_pdf_sha256": "3eb2a4cd07d0d203bfd86431dadab88f295ad21aafd5fdd5d3b5bd6f5852efc1",
+  "initial_result": "WARN",
+  "final_result_after_resolution": "PASS"
+}

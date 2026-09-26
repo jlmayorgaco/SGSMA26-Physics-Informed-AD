@@ -1,0 +1,98 @@
+pmu_buses: [2, 5, 6, 10, 19, 22, 29, 39]
+pmus:
+  PMU1:
+    bus: 39
+    current:
+      element_id: Line_2
+      remote_bus: 1
+      terminal: to
+      positive_direction: "39 -> 1"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU2:
+    bus: 29
+    current:
+      element_id: Line_33
+      remote_bus: 26
+      terminal: to
+      positive_direction: "29 -> 26"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU3:
+    bus: 10
+    current:
+      element_id: Line_16
+      remote_bus: 11
+      terminal: from
+      positive_direction: "10 -> 11"
+      y_convention: "I_ij = Yff*V_i + Yft*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU4:
+    bus: 22
+    current:
+      element_id: Line_27
+      remote_bus: 21
+      terminal: to
+      positive_direction: "22 -> 21"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU5:
+    bus: 19
+    current:
+      element_id: Line_22
+      remote_bus: 16
+      terminal: to
+      positive_direction: "19 -> 16"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU6:
+    bus: 2
+    current:
+      element_id: Line_1
+      remote_bus: 1
+      terminal: to
+      positive_direction: "2 -> 1"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU7:
+    bus: 5
+    current:
+      element_id: Line_7
+      remote_bus: 4
+      terminal: to
+      positive_direction: "5 -> 4"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+  PMU8:
+    bus: 6
+    current:
+      element_id: Line_9
+      remote_bus: 5
+      terminal: to
+      positive_direction: "6 -> 5"
+      y_convention: "I_ji = Ytf*V_i + Ytt*V_j"
+    source: controlled_synthetic
+    confidence: AMBIGUOUS
+representation:
+  fields: [V_RE, V_IM, I_TERMINAL_RE, I_TERMINAL_IM, F_HZ, ROCOF_HZ_S, DATA_PRESENT]
+  sequence_model: positive_sequence
+  phase_export: balanced_compatibility_only
+terminal_current:
+  status: CONTROLLED_SYNTHETIC_TERMINAL_MAP
+  authority: no_competition_terminal_metadata_available_to_campaign
+  selection_rule: lowest_canonical_incident_edge
+  direction: current_leaving_named_pmu_bus_into_selected_branch
+  polarity: 1
+  calibration: none
+frequency_operator:
+  status: causal_phase_slope_baseline
+  window_frames: 5
+  sample_rate_hz: 30.0
+  ideal_derivative_comparison: required_ablation

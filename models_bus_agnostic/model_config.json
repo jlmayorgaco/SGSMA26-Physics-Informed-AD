@@ -1,0 +1,22 @@
+{
+  "model_name": "bus_agnostic_physics_v1",
+  "random_state": 20260504,
+  "input_contract": "Any IEEE-39 PMU folder with Bus*.csv files and TIMESTAMP-aligned PMU measurement columns.",
+  "output_contract": "predictions.csv with TIMESTAMP, Bus, Predicted_Event, Predicted_Location.",
+  "physical_severity_threshold": 10.0,
+  "physical_voltage_threshold": 8.0,
+  "physical_current_threshold": 8.0,
+  "physical_frequency_threshold": 7.0,
+  "physical_rocof_threshold": 0.03,
+  "bad_data_single_signal_threshold": 25.0,
+  "fault_voltage_threshold": 12.0,
+  "fault_current_threshold": 6.0,
+  "line_current_threshold": 10.0,
+  "line_voltage_max": 10.0,
+  "generation_frequency_threshold": 8.0,
+  "generation_rocof_threshold": 0.05,
+  "notes": [
+    "This bundle is bus-agnostic: it does not require the fixed RAW001 PMU bus set.",
+    "Thresholds are deliberately stored outside code so they can be recalibrated without changing the reviewer entrypoint."
+  ]
+}

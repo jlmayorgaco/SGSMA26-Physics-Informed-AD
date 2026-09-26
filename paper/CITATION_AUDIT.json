@@ -1,0 +1,88 @@
+{
+  "status": "PASS",
+  "audit_date": "2026-08-12",
+  "reviewer": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "xhigh",
+    "thread_id": "/root/citation_audit_final",
+    "fresh_context": true,
+    "delta_reaudit": {
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "xhigh",
+      "thread_id": "/root/citation_delta_audit",
+      "fresh_context": true
+    }
+  },
+  "inputs": {
+    "main_tex_sha256": "d0fc0aec2e33a23a1c0b35819dc5f9e50dfbdb55cd4f8ae9f872c43bdd4505ec",
+    "references_bib_sha256": "5a65c4f06486fe53070f5083c35f035a968a6b16c74f066523e43a2752e8a371",
+    "contexts_sha256": "a75d70c1f4cd2ff4f01557945846fb10174172cc2004a95a58510623f46b0014",
+    "final_pdf_sha256": "6479ca1469926298584e3dfa3f94aca931ecaad939f6b548452c7664b6e432fe"
+  },
+  "counts": {
+    "cited_keys": 18,
+    "bibliography_entries": 18,
+    "missing_keys": 0,
+    "uncited_entries": 0,
+    "unverified_sources": 0,
+    "unresolved_findings": 0
+  },
+  "initial_status": "WARN",
+  "resolved_before_final": [
+    {
+      "key": "yuan2021",
+      "axis": "context",
+      "resolution": "Replaced domain-mismatch claim with nonstationarity and missing/corrupt measurement claim."
+    },
+    {
+      "key": "ganjkhani2024",
+      "axis": "context",
+      "resolution": "Reworded category to distinguish multi-source from graph and knowledge-driven methods."
+    },
+    {
+      "key": "sgsmaPolicy2026",
+      "axis": "metadata",
+      "resolution": "Removed unsupported organizing-committee attribution and used the documented SGSMA 2026 corporate identity."
+    },
+    {
+      "key": "pedregosa2011",
+      "axis": "metadata",
+      "resolution": "Normalized title, author diacritics, and JMLR article number."
+    },
+    {
+      "key": "pandey2020",
+      "axis": "context",
+      "resolution": "Limited the description to engineered statistical and physics-based features."
+    },
+    {
+      "key": "sgsmaGuide2026",
+      "axis": "metadata",
+      "resolution": "Added the documented revision date and official organizer URL."
+    },
+    {
+      "key": "sgsmaPolicy2026",
+      "axis": "metadata",
+      "resolution": "Added the documented revision date and official organizer URL."
+    }
+  ],
+  "citations": [
+    {"key":"phadke2008","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"ieee2018","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"sgsmaGuide2026","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"sgsmaPolicy2026","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"pandey2020","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"yuan2021","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"taghipour2023","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"yuan2023gnn","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"liu2023","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"li2019","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"yildiz2024","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"ahmed2024","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"ganjkhani2024","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"li2024knowledge","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"athay1979","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"cui2021andes","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"geurts2006","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"},
+    {"key":"pedregosa2011","existence":"PASS","metadata":"PASS","context":"PASS","verdict":"KEEP"}
+  ]
+}

@@ -1,0 +1,10 @@
+\beamer@sectionintoc {1}{Problem and Data}{3}{0}{1}
+\beamer@sectionintoc {2}{Windowing and Baseline}{10}{0}{2}
+\beamer@sectionintoc {3}{Base Feature Engineering}{12}{0}{3}
+\beamer@sectionintoc {4}{Dynamic Feature Engineering}{18}{0}{4}
+\beamer@sectionintoc {5}{Hierarchical ML Method}{25}{0}{5}
+\beamer@sectionintoc {6}{Event-by-Event Interpretation}{31}{0}{6}
+\beamer@sectionintoc {7}{Localization}{35}{0}{7}
+\beamer@sectionintoc {8}{Training, Validation, and Results}{40}{0}{8}
+\beamer@sectionintoc {9}{Ablation and Reimplementation}{44}{0}{9}
+\beamer@sectionintoc {10}{Reimplementation Sequence}{57}{0}{10}

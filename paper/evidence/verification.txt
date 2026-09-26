@@ -1,0 +1,65 @@
+Evidence verification date: 2026-08-07
+
+Repository test command
+  python -m pytest -q
+
+Observed result
+  253 passed, 10 skipped in 10.59 s
+  process exit code: 0
+
+The skipped tests require ANDES or removed legacy scripts. After pytest returned
+success, the Windows interpreter printed a teardown exception from the local
+gmpy2/ANDES installation. No test failed. Passing software tests establish code
+hygiene; they do not validate the paper's scientific claims.
+
+Citation verification
+  Phadke and Thorp (2008):              10.1007/978-0-387-76537-2
+  IEC/IEEE 60255-118-1:2018:            10.1109/IEEESTD.2018.8577045
+  Pandey et al. (2020):                 10.1109/TPWRS.2020.2986019
+  Yuan et al. (2021):                   10.1109/TPWRS.2021.3081608
+  Taghipourbazargani et al. (2023):     10.1109/TPWRS.2022.3212323
+  Yuan et al. (2023), GNN:              10.1109/TPWRS.2022.3158248
+  Cheng et al. (2022):                  10.1109/TPWRS.2022.3153591
+  Jalali et al. (2022):                 10.1109/TPWRS.2022.3144935
+  Li et al. (2019):                     10.1109/TPWRS.2019.2917794
+  Li, Ma, and Weng (2022):              10.1109/TPWRS.2022.3153445
+  Liu et al. (2023):                    10.1109/JIOT.2022.3177686
+  Geurts et al. (2006):                 10.1007/s10994-006-6226-1
+  Pedregosa et al. (2011):              JMLR 12:2825-2830
+  Athay, Podmore, and Virmani (1979):   10.1109/TPAS.1979.319407
+  SGSMA 2026 competition page:          https://sgsma2026.cl/call-for-applications.html
+  Wilson (1927):                        10.1080/01621459.1927.10502953
+
+Final manuscript build
+  class/style: IEEEtran conference / IEEEtran BibTeX
+  paper size: US Letter, 10 pt
+  pages: 6
+  bytes: 422,679
+  SHA-256: D2A967F892DBB1F34E47182AF9539032A3335F0DBFD3BB7B43D7780BF4A988D8
+  LaTeX warnings: 0
+  overfull boxes: 0
+  underfull boxes: 1 vertical float-page stretch; no content overflow
+  citation keys: 16
+  missing citations: 0
+  unused bibliography entries: 0
+  font families: 21 Type 1/CID TrueType, all embedded and subset
+  unresolved reference/tool markers in extracted text: 0
+
+Visual and prose inspection
+  all six pages rendered at 150 dpi and inspected
+  no clipping, overlap, black boxes, unreadable glyphs, or table overflow
+  final reference columns balanced
+  title, abstract, four figures, four tables, equations, acknowledgment, and references legible
+  anti-AI pattern audit found no stock transition phrases, inflated claims,
+  fake quotations, generic conclusion boilerplate, or unsupported causal language
+
+Scientific interpretation checks
+  RAW0001 identified as representation-selection validation, not an independent test
+  integrity versus physical/mixed localization shown as 7/7 versus 1/5
+  all 16 feature combinations preserved in the evidence package
+  selected graph-temporal block described as fixed cross-PMU summaries, not
+  effective-impedance candidate evidence
+  fixed PMU identities, output-class universe, first-3-s reference, batch execution,
+  and inference-only reproducibility boundaries disclosed
+  both unlabeled competition archives audited and executed through the frozen model
+  official hidden-test labels, score, and rank correctly reported as unavailable

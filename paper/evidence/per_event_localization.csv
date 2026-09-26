@@ -1,0 +1,16 @@
+domain,event_id,event,group,correct,support,top1
+simulation_holdout,1,fault,physical_or_mixed,223,260,0.8576923077
+simulation_holdout,2,line_outage,physical_or_mixed,221,239,0.9246861925
+simulation_holdout,3,generation,physical_or_mixed,175,179,0.9776536313
+simulation_holdout,4,load,physical_or_mixed,121,164,0.7378048780
+simulation_holdout,5,missing_data,integrity,81,81,1.0000000000
+simulation_holdout,6,missing_plus_physical,physical_or_mixed,128,135,0.9481481481
+simulation_holdout,7,bad_data,integrity,47,77,0.6103896104
+simulation_holdout,8,mixed_unknown,physical_or_mixed,15,51,0.2941176471
+RAW0001_representation_selection_validation,1,fault,physical_or_mixed,1,1,1.0000000000
+RAW0001_representation_selection_validation,2,line_outage,physical_or_mixed,0,1,0.0000000000
+RAW0001_representation_selection_validation,3,generation,physical_or_mixed,0,1,0.0000000000
+RAW0001_representation_selection_validation,4,load,physical_or_mixed,0,1,0.0000000000
+RAW0001_representation_selection_validation,5,missing_data,integrity,4,4,1.0000000000
+RAW0001_representation_selection_validation,6,missing_plus_physical,physical_or_mixed,0,1,0.0000000000
+RAW0001_representation_selection_validation,7,bad_data,integrity,3,3,1.0000000000

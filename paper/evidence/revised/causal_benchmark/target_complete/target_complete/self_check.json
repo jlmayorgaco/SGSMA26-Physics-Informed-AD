@@ -1,0 +1,8 @@
+{
+  "causal_prefix_rows_verified": 35,
+  "feature_count": 136,
+  "smoke_scenarios": 45,
+  "status": "passed",
+  "transformers_excluded": 12,
+  "transmission_lines": 34
+}

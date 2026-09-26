@@ -1,0 +1,52 @@
+Artifact audit date: 2026-08-06
+
+Selected localizer feature schema
+  packaged base features: 39,716
+  dynamic metadata:          28
+  rolling features:       3,360
+  RLS/Kalman features:    1,344
+  graph-temporal features:  714
+  total:                 45,162
+
+The graph-temporal block contains six signals. For each signal it stores five
+aggregate spatial/peak descriptors, four statistics for each of 28 fixed PMU pairs,
+and two nominal weighted summaries: 6 * (5 + 28 * 4 + 2) = 714.
+
+The production call to extract_dynamic_features_from_frames enables rolling,
+rls_kalman, and graph_temporal blocks without passing topology_distances. In the
+extractor, missing pair distances default to 1.0. The selected schema contains no
+GSP candidate, RESID candidate, or effective-impedance candidate columns. The paper
+therefore describes these 714 variables as cross-PMU spatial-temporal summaries,
+not topology-weighted candidate evidence.
+
+Selected estimators
+  physical-event ExtraTrees:        750 trees
+  bad-data detector:                650 trees
+  missing-composition detector:     650 trees
+  eight event-specific localizers:  180 trees each
+
+Fitted output classes
+  generic BUS:            39 buses
+  generic LINE:           34 line labels
+  PMU:                     8 PMUs
+  fault BUS:event1:       39 buses
+  line LINE:event2:       34 line labels
+  generation BUS:event3: 10 buses
+  load BUS:event4:        19 buses
+  mixed BUS:event8:       38 buses
+
+The supplied topology manifest contains 46 physical branches. The frozen line model
+can emit 34 line labels. No eligibility map in the paper evidence explains the
+12-label difference; candidates absent from fitted classes cannot be predicted.
+
+Deployment boundary
+  fixed PMU buses: 2, 5, 6, 10, 19, 22, 29, 39
+  bus names and fixed PMU-pair names are present in the packaged feature schema
+  file discovery is order-independent, but the learned schema is not PMU-placement
+  invariant
+
+Reproducibility boundary
+  the inference archive is executable on CPU
+  the original training corpus, generated feature tables, and complete training
+  products are not included in the ordinary repository tree
+  exact retraining is therefore not reproduced by the released archive
