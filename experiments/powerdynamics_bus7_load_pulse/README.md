@@ -50,3 +50,14 @@ julia --project=experiments/powerdynamics_bus7_load_pulse experiments/powerdynam
 ```
 
 Set `PD39_RUN_INTEGRATION_TEST=1` to make the test script also execute the full 15-second IEEE39 simulation in a temporary output directory.
+
+## Next stage: sparse-PMU E0 estimator
+
+The Python E0 pipeline consumes this experiment as a controlled reference and
+withholds 31 buses from inference. Only Bus2, Bus5, Bus6, Bus10, Bus19, Bus22,
+Bus29, and Bus39 are copied to `input_sparse/` with the `Event` label removed; all 39 buses are later used
+by the evaluator in `ground_truth/`. It produces 39 virtual-PMU estimates,
+REF-vs-EST comparisons, windowed metrics, uncertainty coverage, electrical
+distance analysis, and plots. See
+[`V5/docs/e0_sparse_pmu_experiment.md`](../../V5/docs/e0_sparse_pmu_experiment.md)
+for the command and leakage contract.
